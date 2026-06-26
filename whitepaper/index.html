@@ -175,6 +175,23 @@ a:hover { text-decoration: underline; }
 
 <div class="whitepaper">
 
+
+<div style="padding:40px 20px 30px;border-bottom:1px solid var(--border);margin-bottom:0">
+  <h1 style="font-size:48px;margin-bottom:8px;color:var(--accent);font-weight:800;line-height:1.1">WayChain</h1>
+  <p style="font-size:20px;color:var(--fg);margin-bottom:20px;font-weight:600">Actually Decentralized.</p>
+  <p style="font-size:18px;line-height:1.8;margin-bottom:24px;color:var(--fg)">
+    WayChain is a Layer 1 blockchain built from scratch — a new virtual machine written in Go, with custom consensus, custom precompiles, and a custom state model. No EVM compatibility layer. No fork. Just purpose-built code that runs at 1-second block time with instant BFT finality.
+  </p>
+  <p style="font-size:18px;line-height:1.8;margin-bottom:24px;color:var(--fg)">
+    What makes it different: <strong style="color:var(--fg)">one verified human equals one voice</strong>. Token weight does not touch governance. Validator seats are capped at 200, each held by a uniquely identified person through Dox_Dev — an on-chain identity system where verified humans earn soulbound badges that gate contract deployment, validator admission, and governance voting.
+  </p>
+  <p style="font-size:18px;line-height:1.8;margin-bottom:24px;color:var(--fg)">
+    What is live right now: 18 core features running on mainnet at chain ID 10008. Native oracle consensus with VRF. Cross-chain attestation layer. Binary Journal for immutable truth anchoring. Mineral Rights Tokenization. Progressive staking with anti-whale reward brackets. Fixed fees — 0.001/0.005/0.01 WAY, never auctioned.
+  </p>
+  <p style="font-size:18px;line-height:1.8;color:var(--fg2)">
+    18 features live. 6 fully specified and being built. 20 precompiles deployed. 29 design documents. 5,470+ lines of Go. This paper describes what is running, what is being built, and why — with radical transparency about the difference.
+  </p>
+</div>
     <div class="chapter" id="abstract">
       <div class="chapter-header" onclick="toggleChapter(this)">
         <div>
@@ -389,201 +406,11 @@ This three-layer enforcement is why WayChain's security guarantee is structural,
 Most blockchains have a single point of enforcement. A malicious actor who bypasses that point has free reign. WayChain's three-layer model means an attacker must simultaneously:
 
 - Bypass the RPC mempool filter (requires controlling the transaction submission path)
-- Bypass the block production check (requires being the current proposer AND having their check corrupted)
-- Bypass the EVM opcode check (requires modifying the EVM itself)
+- Bypass the block production check (requires
 
-The probability of all three failing simultaneously is effectively zero. This is the same defense-in-depth principle used in nuclear facilities and aircraft control systems — no single point of failure can compromise the system.
+... [OUTPUT TRUNCATED - 11408 chars omitted out of 61408 total] ...
 
-### 2.5 Privacy-Preserving Verification: You Don't Have to Be Public
-
-A common misconception: "If I have to verify my identity, I'm doxxed." This is not true. WayChain's identity system separates **verification** from **disclosure**.
-
-**What happens on-chain:**
-- A soulbound badge token (ERC-721, non-transferable) is minted to your address
-- The badge contains a cryptographic commitment proving you passed verification
-- The badge has an expiry date and revocation status
-- No personal information, no name, no ID number is stored on-chain
-
-**What happens off-chain (curator side):**
-- A curator privately verifies your identity through a secure channel
-- The curator signs an attestation that you passed verification
-- The attestation is submitted to the Dox_Dev precompile, which mints the badge
-- The verification data (ID, video, etc.) is stored by the curator in an encrypted database
-- If you are verified, the curator can (optionally) disclose your identity to authorities with a court order
-- If you are NOT verified, no data exists — there is nothing to披露
-
-**What governance can see:**
-- Address 0x123... holds Level 2 badge, valid until block 500,000, not revoked
-
-**What governance cannot see:**
-- Your name, address, phone number, government ID, or any personal information
-
-This design achieves **accountability without surveillance**. The chain knows you are a unique human who can be held accountable. It does not know who you are. Only under a verified legal process (court order) can a curator disclose identity — and this disclosure is itself on-chain, auditable, and can be challenged.
-
-### 2.6 Usage ≠ Building: The Critical Distinction
-
-**Yes. 100% yes. Anyone can use WayChain without a badge.**
-
-This is not a secondary feature or a loophole. It is a core design principle. WayChain makes a sharp distinction between **using** the chain and **building** on it. These are fundamentally different activities, and the identity requirements for each are different.
-
-**What requires NO badge (fully anonymous, like any blockchain):**
-- Receiving tokens from someone else
-- Sending tokens to any address
-- Interacting with existing contracts (swapping on a DEX, staking, voting in a DAO, minting an NFT you created)
-- Holding tokens in a wallet
-- Reading on-chain data (blocks, transactions, state)
-- Running a read-only node
-- Deploying data to an existing contract (e.g., submitting a record to Binary Journal)
-- Participating in governance as a reader or observer
-
-If you are a regular user, WayChain works exactly like Ethereum, Bitcoin, or PulseChain. You create a wallet, you receive tokens, you interact with the ecosystem. Nothing changes for you. No identity check. No verification. No surveillance.
-
-**What requires a badge (building on the chain):**
-- Deploying a new contract to the chain (Class A requires Level 1, Class B requires Level 2, Class C requires Level 3)
-- Running a validator (requires Level 2+)
-- Submitting oracle attestations (requires Level 2+)
-- Proposing governance changes (requires Level 3)
-- Operating emergency pause or dispute resolution (requires Level 3)
-- Issuing identity badges (requires Level 3)
-
-The principle is simple: **using the chain is a right. Building on the chain is a privilege that requires accountability.**
-
-### 2.7 Why This Design Is Correct
-
-If using the chain required identity verification, WayChain would fail. No normal person will scan their passport to send $50 to a friend. No grandmother will create a wallet just to see if someone sent her a token. Identity at the "point of use" level destroys adoption.
-
-But requiring identity to deploy a contract is not unreasonable. Deploying a contract is a **one-time act of creation** that affects everyone who interacts with it. If that contract holds $50 million in user funds, the deployer should be accountable.
-
-This distinction mirrors every real-world system:
-
-| Activity | Identity Required? | Why |
-|----------|-------------------|-----|
-| Walking into a store | No | You are a visitor |
-| Buying a product with cash | No | The transaction is final |
-| Opening a bank account | Yes | You are creating a relationship that holds your money |
-| Getting a driver's license | Yes | You are operating something that can harm others |
-| Practicing medicine | Yes | You are trusted with people's health |
-| Building a house | Yes | It must be safe for everyone inside |
-| Renting an apartment | No | You are using an existing structure |
-
-The pattern is always the same: **the more your actions affect others, the more accountability is required.** Sending tokens only affects the recipient. Deploying a contract that holds millions affects thousands of users.
-
-### 2.8 The Economic Argument: Why Builders Self-Select Into Accountability
-
-A builder who deploys a legitimate DeFi protocol, NFT marketplace, or oracle service **wants** accountability. Here is why:
-
-1. **Trust:** Users will not deposit funds into a contract deployed by an anonymous address. A builder with a verified badge signals: "I am a real person, I have skin in the game, and you can hold me accountable if something goes wrong."
-
-2. **Investor confidence:** A venture capitalist investing $5M in a protocol wants to know the deployer is identifiable. Badge-holder builders attract capital; anonymous builders do not.
-
-3. **Legal protection:** A verified builder who operates honestly is protected from false accusations because their identity is known and their on-chain history is auditable.
-
-4. **Bond economics:** Builders who stake bonds and behave honestly earn a reputation that increases the value of their deployed contracts. Users preferentially interact with verified builders.
-
-The result is a self-selecting market: **serious builders choose to verify, and anonymous builders deploy Class A contracts (low-risk data contracts) that don't need trust.**
-
-### 2.9 The "Ramp to Accountability" Model
-
-WayChain does not force a builder to jump directly to Level 2. There is a natural progression:
-
-```
-Anonymous user → buys tokens, tries the ecosystem
-    ↓
-Curious about building → deploys simple Class A contract (no badge needed)
-    ↓
-Wants to do more → applies for Level 1 (basic verification, still private)
-    ↓
-Wants to deploy DeFi → applies for Level 2 (bond + endorsement)
-    ↓
-Wants to govern → applies for Level 3 (elected by community)
-```
-
-Each step is voluntary. Each step unlocks new capabilities. Each step adds accountability. A builder who deploys a simple data contract at Class A has done nothing wrong. If they want to hold user funds three steps later, they verify.
-
-This is how the real world works. You can drive a bicycle anonymously. You need a license to drive a car. You need commercial certification to drive a truck. The activity determines the accountability threshold.
-
-### 2.10 The Spectrum in Full
-
-| User Type | Can They...? | Accountability |
-|-----------|-------------|----------------|
-| **Anonymous** | Receive, send, hold tokens ✅ | None |
-| **Anonymous** | Interact with any existing contract ✅ | None |
-| **Anonymous** | Read all on-chain data ✅ | None |
-| **Anonymous** | Deploy a new contract ❌ (Class A requires L1) | N/A |
-| **Anonymous** | Run a validator ❌ | N/A |
-| **Level 1** | Deploy Class A (simple data contracts) ✅ | Traceable if needed |
-| **Level 1** | Deploy Class B/C ❌ | N/A |
-| **Level 2** | Deploy Class A & B (DeFi, NFTs) ✅ | Bond + endorsement |
-| **Level 2** | Run a validator ✅ | Bond + endorsement |
-| **Level 3** | Deploy everything ✅ | Full accountability |
-| **Level 3** | Govern the system ✅ | Elected + bond + public role |
-
-**The answer is absolute:** Yes, anyone can use WayChain without a badge. 100%. The deploy gate does not touch the "using" path. It only touches
-
-... [OUTPUT TRUNCATED - 8229 chars omitted out of 58229 total] ...
-
------------------------|
-| 1 | 0 – 10,000 WAY | 15% | 15% |
-| 2 | 10,001 – 100,000 WAY | 8% | ~8.7% blended |
-| 3 | 100,001 – 1,000,000 WAY | 4% | ~5.2% blended |
-| 4 | 1,000,001 – 10,000,000 WAY | 2% | ~3.7% blended |
-| 5 | 10,000,000+ WAY | 1% | ~2.1% blended |
-
-**Key design properties:**
-
-1. **Marginal, not average:** Each tier applies only to the amount *within* that bracket, not retroactively. A staker with 110,000 WAY earns 15% on the first 10,000, 8% on the next 90,000, and 4% on the remaining 10,000. This prevents gaming by splitting stakes into many small accounts (each staker is a unique Dox_Dev-verified human).
-
-2. **Anti-whale cap:** The 1% floor on whales (10M+ staked) means protocol security is not purchased by the wealthy. A whale providing 50M WAY in security earns the same effective yield as a small staker — but the *small staker's capital* earns higher marginal returns, encouraging distribution.
-
-3. **Consensus-enforced:** The APY brackets are implemented in `progressive_staking.go` at the consensus layer, not in a smart contract. This means they cannot be bypassed, modified by governance capture, or exploited through contract loopholes.
-
-4. **Verified live:** All 5 tiers tested in consensus simulation.
-
-### 11.9 Oracle VRF + Time Execution — Implementation Details
-
-The Oracle VRF + Time Execution system is implemented across two files:
-
-- **`oracle_scheduler.go`** — Contains the `OracleScheduler` precompile (address `0x0D`) which manages recurring oracle task storage. Contracts can register a `ScheduleEntry` specifying a target contract, calldata, value, and execution interval. The scheduler maintains an on-chain task queue and emits `ScheduledRecurring` events.
-
-- **`interpreter.go`** — Implements the `RANDOM` opcode (`0xC4`) in the EVM interpreter. When executed, this opcode produces a deterministic random value derived from the previous block hash, the current block timestamp, and a per-block counter. This value is verifiable (any node can reproduce it) but unpredictable before block production.
-
-**Architecture:**
-```
-Contract calls OracleScheduler.schedule():
-    → Stores ScheduleEntry{ target, calldata, value, interval, nextExecution }
-    → Emits RecurringTaskScheduled event
-
-At each block, anyone can call OracleScheduler.tick():
-    → Iterates over task queue
-    → Executes entries where block.timestamp >= nextExecution
-    → Updates nextExecution += interval
-
-Contract calls RANDOM (0xC4):
-    → Returns keccak256(prevBlockHash || timestamp || counter)
-    → Counter increments per-block to prevent replay
-```
-
-**13 tests pass**, covering: schedule creation, recurring execution, cancellation, RANDOM opcode determinism, and edge cases.
-
----
-
-
-        </div>
-      </div>
-    </div>
-    <div class="chapter" id="protocol">
-      <div class="chapter-header" onclick="toggleChapter(this)">
-        <div>
-          <h2>2. Protocol Layer</h2>
-          <div class="subtitle">Oracle consensus, cross-chain attestation, governance 2.0.</div>
-        </div>
-        <span class="arrow">▼</span>
-      </div>
-      <div class="chapter-content">
-        <div class="content">
-          ## 12. Cross-Chain Native
-
-### 12.1 WayChain Oracles Witness Events on Other Chains
+ains
 
 WayChain's attesters don't just serve their own chain. They witness events on external chains and re-anchor them on WayChain, making WayChain's attested data available to any consumer.
 
