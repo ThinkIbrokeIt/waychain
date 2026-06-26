@@ -1,54 +1,49 @@
-
-:root{--bg:#0D1117;--bg2:#151B23;--bg3:#1C2333;--fg:#E8E4DD;--fg2:#8A9199;--warm:#FFF8F0;--slate:#2A2A2A;--copper:#B87333;--amber:#FFBF00;--accent:#FFBF00;--accent2:#B87333;--accent3:#5B9E8E;--green:#4CAF50;--red:#E53935;--border:#2A3040}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Actually Decentralized</title>
+<style>:root{--bg:#0A0A0F;--bg2:#12121A;--bg3:#1A1A24;--fg:#C8D0D9;--fg2:#7A8594;--accent:#00B4FF;--accent2:#FF6B35;--accent3:#A78BFA;--green:#22D37E;--red:#F8312F;--border:#25252F}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.8;font-size:18px}
-h1,h2,h3,h4{font-family:'DM Serif Display','Georgia',serif}
-a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.8;font-size:18px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
-.header{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:rgba(13,17,23,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-icon{width:32px;height:32px}
-.logo-text{font-family:'DM Serif Display','Georgia',serif;font-size:1.1em;color:var(--warm)}
-.logo-text span{color:var(--amber)}
+.header{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:rgba(10,10,15,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.header h1{font-size:1em;color:var(--accent);font-weight:700}
+.header h1 span{color:var(--fg);font-weight:400;margin-left:6px}
 .main-nav{display:flex;gap:2px;flex-wrap:wrap}
 .main-nav a{font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;color:var(--fg2);border-radius:4px;transition:all .2s}
-.main-nav a:hover{color:var(--warm);background:var(--bg2);text-decoration:none}
-.main-nav a.active{color:var(--bg);background:var(--amber)}
-.hero{text-align:center;padding:80px 20px 40px;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(255,191,0,.08) 0%,transparent 70%);pointer-events:none}
-.hero-logo{margin-bottom:24px}
-.hero h1{font-family:'DM Serif Display','Georgia',serif;font-size:4em;color:var(--warm);font-weight:400;line-height:1.1;margin-bottom:16px;position:relative}
-.hero .tagline{color:var(--fg);font-size:1.1em;line-height:1.7;max-width:550px;margin:0 auto 10px;position:relative}
-.hero .sub-tagline{color:var(--fg2);font-size:.9em;position:relative}
-.hero .status-line{margin-top:20px;font-size:.8em;color:var(--copper);font-family:'SF Mono',Menlo,monospace;position:relative}
-.stats-bar{display:flex;justify-content:center;gap:0;padding:24px 20px;border-bottom:1px solid var(--border);background:var(--bg2)}
-.stat{flex:1;max-width:160px;text-align:center;padding:0 16px;border-right:1px solid var(--border)}
-.stat:last-child{border-right:none}
-.stat-value{font-family:'DM Serif Display','Georgia',serif;font-size:1.8em;color:var(--amber);line-height:1.2}
-.stat-label{font-size:.7em;color:var(--fg2);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
-.section-header{padding:60px 20px 20px;text-align:center}
-.section-header h2{font-family:'DM Serif Display','Georgia',serif;font-size:2em;color:var(--warm);margin-bottom:6px}
+.main-nav a:hover{color:var(--fg);background:var(--bg2);text-decoration:none}
+.main-nav a.active{color:var(--bg);background:var(--accent)}
+.hero{text-align:center;padding:70px 20px 50px;border-bottom:1px solid var(--border)}
+.hero h1{font-size:3.5em;color:var(--accent);font-weight:800;line-height:1.1;margin-bottom:12px}
+.hero .tagline{color:var(--fg);font-size:1.05em;line-height:1.6;max-width:550px;margin:0 auto 8px}
+.hero .sub-tagline{color:var(--fg2);font-size:.9em}
+.hero .status-line{margin-top:16px;font-size:.85em;color:var(--fg2)}
+.section-header{padding:50px 20px 20px;text-align:center}
+.section-header h2{font-size:1.6em;color:var(--accent);margin-bottom:6px}
 .section-header p{color:var(--fg2);font-size:.9em}
 .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:30px 20px;max-width:1100px;margin:0 auto}
 .feature-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all .2s}
-.feature-chip:hover{border-color:var(--copper);transform:translateY(-2px)}
+.feature-chip:hover{border-color:var(--accent);transform:translateY(-2px)}
 .feature-chip .name{font-size:.85em;font-weight:600;color:var(--fg);margin-bottom:6px}
 .feature-chip .badge{font-size:.6em;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:20px;display:inline-block}
-.badge.live{background:rgba(76,175,80,.15);color:var(--green)}
-.badge.building{background:rgba(184,115,51,.15);color:var(--copper)}
+.badge.live{background:rgba(34,211,126,.15);color:var(--green)}
+.badge.building{background:rgba(255,107,53,.15);color:var(--accent2)}
 .feature-chip .addr{font-size:.65em;color:var(--fg2);font-family:'SF Mono',Menlo,monospace;margin-top:4px}
-.modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
 .modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto}
-.modal h3{font-size:1.2em;color:var(--amber);margin-bottom:12px}
+.modal h3{font-size:1.2em;color:var(--accent);margin-bottom:12px}
 .modal p{font-size:.85em;color:var(--fg2);line-height:1.7;margin-bottom:10px}
-.modal .modal-addr{font-family:'SF Mono',Menlo,monospace;font-size:.75em;color:var(--copper)}
+.modal .modal-addr{font-family:'SF Mono',Menlo,monospace;font-size:.75em;color:var(--accent3)}
 .modal .modal-link{display:inline-block;margin-top:12px;font-weight:600;font-size:.85em}
 .modal-close{float:right;background:none;border:none;color:var(--fg2);font-size:1.2em;cursor:pointer}
 .toggle-section{padding:40px 20px;max-width:800px;margin:0 auto}
 .toggle-label{text-align:center;font-size:.7em;color:var(--fg2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .toggle-container{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative}
-.toggle-slider{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);background:var(--amber);border-radius:8px;transition:transform .3s;z-index:0}
+.toggle-slider{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);background:var(--accent);border-radius:8px;transition:transform .3s;z-index:0}
 .toggle-container.builder .toggle-slider{transform:translateX(100%)}
 .toggle-half{flex:1;padding:24px;cursor:pointer;position:relative;z-index:1;transition:all .3s}
 .toggle-half.active{color:var(--bg)}
@@ -59,54 +54,51 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
 .pipeline::before{content:'';position:absolute;top:44px;left:10%;right:10%;height:2px;background:var(--border);z-index:0}
 .pipeline-step{flex:1;text-align:center;position:relative;z-index:1;padding:0 12px}
 .pipeline-icon{width:48px;height:48px;border-radius:50%;margin:0 auto 10px;background:var(--bg2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3em;transition:all .3s}
-.pipeline-step:hover .pipeline-icon{border-color:var(--copper);box-shadow:0 0 12px rgba(184,115,51,.3)}
-.pipeline-step h4{font-size:.85em;color:var(--fg);margin-bottom:4px;font-weight:600}
+.pipeline-step:hover .pipeline-icon{border-color:var(--accent);box-shadow:0 0 12px rgba(0,180,255,.3)}
+.pipeline-step h4{font-size:.85em;color:var(--fg);margin-bottom:4px}
 .pipeline-step p{font-size:.7em;color:var(--fg2);line-height:1.4}
 .calc-section{padding:40px 20px;max-width:600px;margin:0 auto}
 .calc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;position:relative;overflow:hidden}
-.calc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--copper),var(--amber))}
+.calc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent3))}
 .calc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .calc-title{font-size:.9em;font-weight:700}
-.calc-status{font-size:.65em;padding:4px 10px;border-radius:20px;background:rgba(76,175,80,.15);color:var(--green);font-weight:600}
+.calc-status{font-size:.65em;padding:4px 10px;border-radius:20px;background:rgba(34,211,126,.15);color:var(--green);font-weight:600}
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
 .calc-field label{font-size:.7em;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
 .calc-field input,.calc-field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:10px;border-radius:6px;font-size:.9em;font-family:inherit}
-.calc-field input:focus,.calc-field select:focus{outline:none;border-color:var(--amber)}
+.calc-field input:focus,.calc-field select:focus{outline:none;border-color:var(--accent)}
 .calc-result{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px}
 .calc-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.85em}
 .calc-row .label{color:var(--fg2)}
 .calc-row .value{color:var(--fg);font-weight:600;font-family:'SF Mono',Menlo,monospace}
 .calc-row.negative .value{color:var(--red)}
 .calc-row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:12px}
-.calc-row.total .value{font-size:1.15em;color:var(--amber)}
+.calc-row.total .value{font-size:1.15em;color:var(--accent)}
 .cta-row{display:flex;gap:12px;margin-top:20px}
-.btn-primary{flex:1;padding:14px;border:none;border-radius:8px;background:var(--amber);color:var(--bg);font-weight:700;font-size:.85em;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:all .2s}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(255,191,0,.3)}
+.btn-primary{flex:1;padding:14px;border:none;border-radius:8px;background:var(--accent);color:var(--bg);font-weight:700;font-size:.85em;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:all .2s}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,180,255,.3)}
 .btn-secondary{padding:14px 20px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--fg2);font-weight:600;font-size:.8em;cursor:pointer;transition:all .2s}
-.btn-secondary:hover{border-color:var(--amber);color:var(--amber)}
-.spotlight{padding:50px 20px;background:linear-gradient(180deg,transparent 0%,rgba(255,191,0,.02) 50%,transparent 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.spotlight{padding:50px 20px;background:linear-gradient(180deg,transparent 0%,rgba(0,180,255,.02) 50%,transparent 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
 .spotlight-container{max-width:900px;margin:0 auto}
 .spotlight-header{text-align:center;margin-bottom:36px}
-.spotlight-header h2{font-family:'DM Serif Display','Georgia',serif;font-size:1.5em;color:var(--warm);margin-bottom:6px}
+.spotlight-header h2{font-size:1.3em;color:var(--accent);margin-bottom:6px}
 .spotlight-header p{color:var(--fg2);font-size:.85em}
 .loop{display:flex;align-items:flex-start;justify-content:center;gap:0;position:relative;margin-bottom:30px}
 .loop::before{content:'';position:absolute;top:20px;left:5%;right:5%;height:2px;background:var(--border);z-index:0}
 .loop-step{flex:1;max-width:240px;text-align:center;padding:24px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;position:relative;z-index:1;transition:all .3s}
-.loop-step:hover{border-color:var(--copper);transform:translateY(-4px)}
+.loop-step:hover{border-color:var(--accent);transform:translateY(-4px)}
 .loop-step .icon{font-size:2.4em;margin-bottom:12px;display:block}
 .loop-step h3{font-size:1em;color:var(--fg);margin-bottom:8px;font-weight:700}
 .loop-step p{font-size:.78em;color:var(--fg2);line-height:1.5}
-.loop-arrow{display:flex;align-items:center;justify-content:center;font-size:1.5em;color:var(--copper);padding:0 8px;margin-top:40px;flex-shrink:0}
+.loop-arrow{display:flex;align-items:center;justify-content:center;font-size:1.5em;color:var(--accent);padding:0 8px;margin-top:40px;flex-shrink:0}
 .spotlight-caption{text-align:center;padding:20px 24px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:.95em;line-height:1.7;max-width:700px;margin:0 auto}
 .spotlight-caption .hook{color:var(--accent2);font-weight:700}
 .footer{text-align:center;padding:40px 20px;color:var(--fg2);font-size:.75em;border-top:1px solid var(--border);margin-top:40px}
-.footer .manifesto{max-width:600px;margin:20px auto 0;font-style:italic;color:var(--fg2);line-height:1.8}
 @media(max-width:768px){
   body{line-height:2}
-  .hero h1{font-size:2.5em}
+  .hero h1{font-size:2.2em}
   .features-grid{grid-template-columns:1fr 1fr}
-  .stats-bar{flex-wrap:wrap}
-  .stat{min-width:33%;border-right:none}
   .pipeline{flex-direction:column;align-items:center}
   .pipeline::before{display:none}
   .loop{flex-direction:column;align-items:center}
@@ -114,33 +106,18 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
   .loop-arrow{transform:rotate(90deg);margin:4px 0}
   .calc-grid{grid-template-columns:1fr}
   .cta-row{flex-direction:column}
+  .toggle-half{padding:16px}
 }
 @media(max-width:480px){
   .features-grid{grid-template-columns:1fr}
   .main-nav a{font-size:.6em;padding:4px 6px}
-  .stat{min-width:50%}
 }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">
-    <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="14" y="2" width="4" height="3" rx="0.5" fill="#B87333"/>
-  <rect x="13" y="5" width="6" height="2" fill="#B87333"/>
-  <path d="M11 7 L21 7 L23 28 L9 28 Z" fill="#FFF8F0" stroke="#B87333" stroke-width="0.5"/>
-  <rect x="12" y="10" width="8" height="3" fill="#FFBF00" opacity="0.9"/>
-  <rect x="12" y="16" width="8" height="3" fill="#FFBF00" opacity="0.7"/>
-  <rect x="12" y="22" width="8" height="3" fill="#FFBF00" opacity="0.5"/>
-  <rect x="8" y="28" width="16" height="2" rx="0.5" fill="#2A2A2A"/>
-  <rect x="6" y="30" width="20" height="2" rx="1" fill="#1C2333"/>
-  <!-- Light beam -->
-  <path d="M16 10 L28 4 L28 8 L16 12 Z" fill="#FFBF00" opacity="0.15"/>
-  <path d="M16 10 L4 4 L4 8 L16 12 Z" fill="#FFBF00" opacity="0.15"/>
-</svg>
-    <div class="logo-text">WayChain <span>⛓</span></div>
-  </div>
+  <h1>⛓ <span>WayChain</span></h1>
   <div class="main-nav">
     <a href="/" class="active">Home</a>
     <a href="/whitepaper">Whitepaper</a>
@@ -151,54 +128,23 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
 </div>
 
 <div class="hero">
-  <div class="hero-logo">
-    <svg viewBox="0 0 120 120" width="120" height="120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Tower base -->
-      <rect x="52" y="80" width="16" height="6" rx="1" fill="#2A2A2A"/>
-      <rect x="48" y="86" width="24" height="8" rx="2" fill="#1C2333"/>
-      <!-- Tower body -->
-      <path d="M54 20 L66 20 L70 80 L50 80 Z" fill="#E8E4DD" stroke="#B87333" stroke-width="1"/>
-      <!-- Light room -->
-      <rect x="50" y="14" width="20" height="10" rx="1" fill="#FFBF00" stroke="#B87333" stroke-width="1"/>
-      <!-- Roof -->
-      <path d="M48 14 L60 4 L72 14 Z" fill="#B87333"/>
-      <!-- Light beams -->
-      <path d="M60 19 L100 8 L100 14 L60 22 Z" fill="#FFBF00" opacity="0.12"/>
-      <path d="M60 19 L20 8 L20 14 L60 22 Z" fill="#FFBF00" opacity="0.12"/>
-      <path d="M60 19 L105 10 L105 15 L60 22 Z" fill="#FFBF00" opacity="0.06"/>
-      <path d="M60 19 L15 10 L15 15 L60 22 Z" fill="#FFBF00" opacity="0.06"/>
-      <!-- Stripes -->
-      <rect x="52" y="35" width="16" height="5" fill="#FFBF00" opacity="0.8"/>
-      <rect x="52" y="48" width="16" height="5" fill="#FFBF00" opacity="0.6"/>
-      <rect x="52" y="61" width="16" height="5" fill="#FFBF00" opacity="0.4"/>
-      <!-- Base -->
-      <rect x="44" y="76" width="32" height="4" rx="1" fill="#B87333"/>
-      <!-- Ground -->
-      <rect x="30" y="88" width="60" height="3" rx="1" fill="#2A2A2A"/>
-      <rect x="20" y="91" width="80" height="3" rx="1" fill="#151B23"/>
-    </svg>
-  </div>
-  <h1>WayChain</h1>
+  <h1>⬡ WayChain</h1>
   <div class="tagline">Paying claim-holders to leave resources in the ground<br>—enforced by on-chain identity and verified by native oracles.</div>
   <div class="sub-tagline">The first blockchain where one verified human equals one voice. 18 features live.</div>
-  <div class="status-line">Chain ID: 10008 · v3.1.2 · 1-second blocks · instant BFT finality</div>
+  <div class="status-line">Chain ID: 10008 &middot; <span id="nodeVersion">v3.1.2</span> &middot; 1-second blocks &middot; instant BFT finality</div>
 </div>
 
-<div class="stats-bar">
-  <div class="stat"><div class="stat-value">18</div><div class="stat-label">Features Live</div></div>
-  <div class="stat"><div class="stat-value">200</div><div class="stat-label">Max Validators</div></div>
-  <div class="stat"><div class="stat-value">1s</div><div class="stat-label">Block Time</div></div>
-  <div class="stat"><div class="stat-value">20</div><div class="stat-label">Precompiles</div></div>
-  <div class="stat"><div class="stat-value">100M</div><div class="stat-label">WAY Supply</div></div>
-</div>
-
-<!-- Features Grid -->
+<!-- Day 3: 18 Features Grid -->
 <div class="section-header">
   <h2>18 Features Live</h2>
   <p>Every feature verified on-chain. Click any chip for details.</p>
 </div>
-<div class="features-grid" id="featuresGrid"></div>
 
+<div class="features-grid" id="featuresGrid">
+  <!-- Populated by JS -->
+</div>
+
+<!-- Modal -->
 <div class="modal-overlay" id="featureModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
@@ -209,11 +155,12 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
   </div>
 </div>
 
-<!-- Use vs Build Toggle -->
+<!-- Day 5: Use vs Build Toggle -->
 <div class="section-header">
   <h2>Use vs Build</h2>
   <p>WayChain gates what you can do based on who you are.</p>
 </div>
+
 <div class="toggle-section">
   <div class="toggle-label">I am a...</div>
   <div class="toggle-container" id="toggleContainer">
@@ -221,38 +168,55 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
     <div class="toggle-half active" onclick="setToggle('user')">
       <h3>👤 User</h3>
       <ul>
-        <li>✅ Send tokens</li>
-        <li>✅ Receive tokens</li>
-        <li>✅ Interact with contracts</li>
-        <li>✅ Hold tokens in wallet</li>
-        <li>✅ Read on-chain data</li>
+        <li><span class="icon">✅</span> Send tokens</li>
+        <li><span class="icon">✅</span> Receive tokens</li>
+        <li><span class="icon">✅</span> Interact with contracts</li>
+        <li><span class="icon">✅</span> Hold tokens in wallet</li>
+        <li><span class="icon">✅</span> Read on-chain data</li>
       </ul>
       <p style="font-size:.7em;color:var(--fg2);margin-top:10px">No ID required. Fully anonymous.</p>
     </div>
     <div class="toggle-half" onclick="setToggle('builder')">
       <h3>🔨 Builder</h3>
       <ul>
-        <li>⚠️ Deploy contracts</li>
-        <li>⚠️ Run validators</li>
-        <li>⚠️ Submit oracles</li>
-        <li>⚠️ Propose governance</li>
-        <li>⚠️ Issue badges</li>
+        <li><span class="icon">⚠️</span> Deploy contracts</li>
+        <li><span class="icon">⚠️</span> Run validators</li>
+        <li><span class="icon">⚠️</span> Submit oracles</li>
+        <li><span class="icon">⚠️</span> Propose governance</li>
+        <li><span class="icon">⚠️</span> Issue badges</li>
       </ul>
       <p style="font-size:.7em;color:var(--fg2);margin-top:10px">Dox_Dev badge required. Fully accountable.</p>
     </div>
   </div>
 </div>
 
-<!-- Mineral Rights Pipeline -->
+<!-- Day 6: Mineral Rights Pipeline -->
 <div class="section-header">
   <h2>🔥 Mineral Rights Extinguishment</h2>
   <p>Your killer app. Tokenize reserves. Prove preservation. Get paid.</p>
 </div>
+
 <div class="pipeline">
-  <div class="pipeline-step"><div class="pipeline-icon">📜</div><h4>1. Prove & Survey</h4><p>Title deed + geological survey hashed to Binary Journal</p></div>
-  <div class="pipeline-step"><div class="pipeline-icon">⚖️</div><h4>2. Price & Fee</h4><p>Oracle pulls spot price → subtracts fees → shows final payout</p></div>
-  <div class="pipeline-step"><div class="pipeline-icon">🔒</div><h4>3. On-Chain Escrow</h4><p>WAY locked → title NFT transferred to Permanent Reserve</p></div>
-  <div class="pipeline-step"><div class="pipeline-icon">🏆</div><h4>4. Proof of Extinguishment</h4><p>Immutable certificate minted → resource is dead forever</p></div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">📜</div>
+    <h4>1. Prove & Survey</h4>
+    <p>Title deed + geological survey hashed to Binary Journal</p>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">⚖️</div>
+    <h4>2. Price & Fee</h4>
+    <p>Oracle pulls spot price → subtracts fees → shows final payout</p>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">🔒</div>
+    <h4>3. On-Chain Escrow</h4>
+    <p>WAY locked → title NFT transferred to Permanent Reserve</p>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">🏆</div>
+    <h4>4. Proof of Extinguishment</h4>
+    <p>Immutable certificate minted → resource is dead forever</p>
+  </div>
 </div>
 
 <!-- Calculator -->
@@ -263,10 +227,28 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
       <div class="calc-status" id="calcStatus">Oracle: Connecting...</div>
     </div>
     <div class="calc-grid">
-      <div class="calc-field"><label>Mineral</label><select id="mineral" onchange="updateCalc()"><option value="gold">Gold (troy oz)</option><option value="silver">Silver (troy oz)</option><option value="copper">Copper (lb)</option><option value="lithium">Lithium (kg)</option><option value="rare-earth">Rare Earth (kg)</option></select></div>
-      <div class="calc-field"><label>Volume (tons)</label><input type="number" id="volume" value="100" min="1" oninput="updateCalc()"></div>
-      <div class="calc-field"><label>Purity (%)</label><input type="number" id="purity" value="95" min="1" max="100" step="0.1" oninput="updateCalc()"></div>
-      <div class="calc-field"><label>Transport (km)</label><input type="number" id="distance" value="50" min="0" oninput="updateCalc()"></div>
+      <div class="calc-field">
+        <label>Mineral</label>
+        <select id="mineral" onchange="updateCalc()">
+          <option value="gold">Gold (troy oz)</option>
+          <option value="silver">Silver (troy oz)</option>
+          <option value="copper">Copper (lb)</option>
+          <option value="lithium">Lithium (kg)</option>
+          <option value="rare-earth">Rare Earth (kg)</option>
+        </select>
+      </div>
+      <div class="calc-field">
+        <label>Volume (tons)</label>
+        <input type="number" id="volume" value="100" min="1" oninput="updateCalc()">
+      </div>
+      <div class="calc-field">
+        <label>Purity (%)</label>
+        <input type="number" id="purity" value="95" min="1" max="100" step="0.1" oninput="updateCalc()">
+      </div>
+      <div class="calc-field">
+        <label>Transport (km)</label>
+        <input type="number" id="distance" value="50" min="0" oninput="updateCalc()">
+      </div>
     </div>
     <div class="calc-result">
       <div class="calc-row"><span class="label">Spot Price</span><span class="value" id="spotPrice">Loading...</span></div>
@@ -284,7 +266,7 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
   </div>
 </div>
 
-<!-- Preservation Loop -->
+<!-- Preservation Loop Spotlight -->
 <div class="spotlight">
   <div class="spotlight-container">
     <div class="spotlight-header">
@@ -292,11 +274,23 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
       <p>How WayChain aligns economic incentives with land conservation</p>
     </div>
     <div class="loop">
-      <div class="loop-step"><span class="icon">🏔️</span><h3>Claim</h3><p>Landowner stakes mineral claim as soulbound NFT, locked by Dox_Dev Level 2 badge.</p></div>
+      <div class="loop-step">
+        <span class="icon">🏔️</span>
+        <h3>Claim</h3>
+        <p>Landowner stakes mineral claim as soulbound NFT, locked by Dox_Dev Level 2 badge.</p>
+      </div>
       <div class="loop-arrow">→</div>
-      <div class="loop-step"><span class="icon">🛰️</span><h3>Enforce</h3><p>Native oracles (VRF + geospatial) verify land remains undisturbed every block.</p></div>
+      <div class="loop-step">
+        <span class="icon">🛰️</span>
+        <h3>Enforce</h3>
+        <p>Native oracles (VRF + geospatial) verify land remains undisturbed every block.</p>
+      </div>
       <div class="loop-arrow">→</div>
-      <div class="loop-step"><span class="icon">💰</span><h3>Reward</h3><p>Untouched = recurring WAY rewards. Disturbed = claim slashed, badge revoked, land flagged forever.</p></div>
+      <div class="loop-step">
+        <span class="icon">💰</span>
+        <h3>Reward</h3>
+        <p>Untouched = recurring WAY rewards. Disturbed = claim slashed, badge revoked, land flagged forever.</p>
+      </div>
     </div>
     <div class="spotlight-caption">
       <span class="hook">This isn't a donation model.</span> It's an economic incentive structure where
@@ -306,50 +300,114 @@ a{color:var(--amber);text-decoration:none}a:hover{text-decoration:underline}
   </div>
 </div>
 
-<div class="footer">
-  WayChain v3.1.2 — "Actually Decentralized"<br>Chain ID 10008
-  <div class="manifesto">
-    The Wardenclyffe Tower was never finished. The world got radio instead of resonance, grids instead of freedom. We built WayChain as the lighthouse that Tesla never got to complete—not to transmit power, but to illuminate the way. One human. One voice. One chain. The light stays on.
-  </div>
-</div>
+<div class="footer">WayChain v3.1.2 — "Actually Decentralized"<br>Chain ID 10008</div>
 
 <script>
-const FEATURES=[
-  {name:"Chain ID 10008",status:"live",addr:"0x2718",desc:"Independent L1 chain with custom consensus. Not a fork, not an L2.",link:"/whitepaper"},
-  {name:"1-Second Block Time",status:"live",addr:"—",desc:"Blocks produced every 1 second. No waiting.",link:"/whitepaper"},
-  {name:"Instant Finality",status:"live",addr:"—",desc:"Single-block BFT. Transactions are final immediately.",link:"/whitepaper"},
-  {name:"Dox_Dev Badges",status:"live",addr:"0x13",desc:"Soulbound identity badges gate contract deployment, validator admission, oracle participation, and governance voting.",link:"/whitepaper"},
-  {name:"Deploy Gate (3 layers)",status:"live",addr:"—",desc:"RPC + Block Production + EVM opcode. Three layers of protection against spam and abuse.",link:"/whitepaper"},
-  {name:"Fixed Fees",status:"live",addr:"—",desc:"0.001 / 0.005 / 0.01 WAY. Never auctioned. Predictable costs regardless of token price.",link:"/whitepaper"},
-  {name:"Sqrt-Weighted Lottery",status:"live",addr:"—",desc:"Validator selection uses sqrt-weighting to prevent plutocracy. One human = one voice.",link:"/whitepaper"},
-  {name:"3 Rotating Validators",status:"live",addr:"—",desc:"Equal stake, equal power. Currently 3 nodes in production.",link:"/whitepaper"},
-  {name:"Rate Limiting",status:"live",addr:"—",desc:"100 req/sec/IP with token bucket. Prevents DDoS without centralization.",link:"/whitepaper"},
-  {name:"WebSocket Subscriptions",status:"live",addr:"—",desc:"eth_subscribe newHeads for real-time block notifications.",link:"/whitepaper"},
-  {name:"P2P Block/Tx Broadcast",status:"live",addr:"—",desc:"BroadcastBlock() + BroadcastTransaction() for efficient propagation.",link:"/whitepaper"},
-  {name:"Bitcoin SPV",status:"live",addr:"0x16",desc:"Bitcoin SPV verification via BitcoinRegistry. Verify Bitcoin proofs natively.",link:"/whitepaper"},
-  {name:"Account Recovery",status:"live",addr:"0x11",desc:"3-guardian recovery. Lost keys? Guardians can restore access without central authority.",link:"/whitepaper"},
-  {name:"Binary Journal (BIJO)",status:"live",addr:"0x14",desc:"Immutable truth anchoring. Attest hashes on-chain. Permanent, censorship-resistant.",link:"/whitepaper"},
-  {name:"Dead Man's Switch",status:"live",addr:"0x15",desc:"Inheritance protocol. Set heirs, heartbeat periodically, release keys when heartbeat stops.",link:"/whitepaper"},
-  {name:"Progressive Staking",status:"live",addr:"0x21-0x25",desc:"5-tier marginal APY: 15% / 8% / 4% / 2% / 1%. Anti-whale by design.",link:"/whitepaper"},
-  {name:"Oracle VRF + Time",status:"live",addr:"0x0D",desc:"Scheduled oracle triggers with RANDOM opcode (0xC4). 13 tests passing.",link:"/whitepaper"},
-  {name:"Mineral Rights (MRT)",status:"live",addr:"0x20",desc:"Tokenize mineral reserves. Full lifecycle: register → verify → approve → issue → monitor → transfer. 12 tests passing.",link:"/whitepaper"},
+// ── 18 Features Data ──
+const FEATURES = [
+  { name: "Chain ID 10008", status: "live", addr: "0x2718", desc: "Independent L1 chain with custom consensus. Not a fork, not an L2.", link: "/whitepaper/abstract" },
+  { name: "1-Second Block Time", status: "live", addr: "—", desc: "Blocks produced every 1 second. No waiting.", link: "/whitepaper/philosophy" },
+  { name: "Instant Finality", status: "live", addr: "—", desc: "Single-block BFT. Transactions are final immediately.", link: "/whitepaper/philosophy" },
+  { name: "Dox_Dev Badges", status: "live", addr: "0x13", desc: "Soulbound identity badges gate contract deployment, validator admission, oracle participation, and governance voting.", link: "/whitepaper/philosophy" },
+  { name: "Deploy Gate (3 layers)", status: "live", addr: "—", desc: "RPC + Block Production + EVM opcode. Three layers of protection against spam and abuse.", link: "/whitepaper/philosophy" },
+  { name: "Fixed Fees", status: "live", addr: "—", desc: "0.001 / 0.005 / 0.01 WAY. Never auctioned. Predictable costs regardless of token price.", link: "/whitepaper/overview" },
+  { name: "Sqrt-Weighted Lottery", status: "live", addr: "—", desc: "Validator selection uses sqrt-weighting to prevent plutocracy. One human = one voice.", link: "/whitepaper/philosophy" },
+  { name: "3 Rotating Validators", status: "live", addr: "—", desc: "Equal stake, equal power. Currently 3 nodes in production.", link: "/whitepaper/status" },
+  { name: "Rate Limiting", status: "live", addr: "—", desc: "100 req/sec/IP with token bucket. Prevents DDoS without centralization.", link: "/whitepaper/overview" },
+  { name: "WebSocket Subscriptions", status: "live", addr: "—", desc: "eth_subscribe newHeads for real-time block notifications.", link: "/whitepaper/status" },
+  { name: "P2P Block/Tx Broadcast", status: "live", addr: "—", desc: "BroadcastBlock() + BroadcastTransaction() for efficient propagation.", link: "/whitepaper/protocol" },
+  { name: "Bitcoin SPV", status: "live", addr: "0x16", desc: "Bitcoin SPV verification via BitcoinRegistry. Verify Bitcoin proofs natively.", link: "/whitepaper/architecture" },
+  { name: "Account Recovery", status: "live", addr: "0x11", desc: "3-guardian recovery. Lost keys? Guardians can restore access without central authority.", link: "/whitepaper/philosophy" },
+  { name: "Binary Journal (BIJO)", status: "live", addr: "0x14", desc: "Immutable truth anchoring. Attest hashes on-chain. Permanent, censorship-resistant.", link: "/whitepaper/architecture" },
+  { name: "Dead Man's Switch", status: "live", addr: "0x15", desc: "Inheritance protocol. Set heirs, heartbeat periodically, release keys when heartbeat stops.", link: "/whitepaper/architecture" },
+  { name: "Progressive Staking", status: "live", addr: "0x21-0x25", desc: "5-tier marginal APY: 15% / 8% / 4% / 2% / 1%. Anti-whale by design.", link: "/whitepaper/overview" },
+  { name: "Oracle VRF + Time", status: "live", addr: "0x0D", desc: "Scheduled oracle triggers with RANDOM opcode (0xC4). 13 tests passing.", link: "/whitepaper/protocol" },
+  { name: "Mineral Rights (MRT)", status: "live", addr: "0x20", desc: "Tokenize mineral reserves. Full lifecycle: register → verify → approve → issue → monitor → transfer. 12 tests passing.", link: "/whitepaper/architecture" },
 ];
-const grid=document.getElementById('featuresGrid');
-FEATURES.forEach(f=>{const c=document.createElement('div');c.className='feature-chip';c.innerHTML=`<div class="name">${f.name}</div><span class="badge ${f.status}">${f.status==='live'?'Live':'Building'}</span>${f.addr!=='—'?`<div class="addr">${f.addr}</div>`:''}`;c.onclick=()=>openModal(f);grid.appendChild(c)});
-function openModal(f){document.getElementById('modalTitle').textContent=f.name;document.getElementById('modalDesc').textContent=f.desc;document.getElementById('modalAddr').textContent=f.addr!=='—'?`Precompile: ${f.addr}`:'';document.getElementById('modalLink').href=f.link;document.getElementById('featureModal').classList.add('open')}
-function closeModal(){document.getElementById('featureModal').classList.remove('open')}
-document.getElementById('featureModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
-function setToggle(mode){const c=document.getElementById('toggleContainer');const h=c.querySelectorAll('.toggle-half');if(mode==='builder'){c.classList.add('builder');h[0].classList.remove('active');h[1].classList.add('active')}else{c.classList.remove('builder');h[0].classList.add('active');h[1].classList.remove('active')}}
-const PRICES={gold:2340,silver:29.5,copper:4.2,lithium:14.5,'rare-earth':85};
-const UNITS={gold:'oz t',silver:'oz t',copper:'lb',lithium:'kg','rare-earth':'kg'};
-const EXTRACTION={gold:450,silver:35,copper:8,lithium:120,'rare-earth':200};
-async function fetchOracle(){try{const r=await fetch('https://api.waychain.org',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',params:[{to:'0x0C',data:'0x'},'latest'],id:1})});const d=await r.json();if(d.result)return parseOracle(d.result)||PRICES[document.getElementById('mineral').value]}catch(e){}document.getElementById('calcStatus').textContent='Oracle: Fallback';return PRICES[document.getElementById('mineral').value]}
-function parseOracle(hex){try{const v=parseInt(hex.replace('0x','').substring(0,64),16);return v>0?v/1e18:null}catch(e){return null}}
-async function updateCalc(){const m=document.getElementById('mineral').value;const vol=+document.getElementById('volume').value||0;const p=(+document.getElementById('purity').value||0)/100;const d=+document.getElementById('distance').value||0;const spot=await fetchOracle();const u=(m==='gold'||m==='silver')?vol*32150.7*p:(m==='copper'?vol*p:vol*1000*p);const gross=u*spot;const fee=gross*0.005;const ex=vol*(EXTRACTION[m]||100);const tr=vol*d*0.15;const net=gross-fee-ex-tr;document.getElementById('spotPrice').textContent=`$${spot.toLocaleString()}/${UNITS[m]}`;document.getElementById('grossValue').textContent=`$${gross.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('fee').textContent=`-$${fee.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('extraction').textContent=`-$${ex.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('transport').textContent=`-$${tr.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('netUsd').textContent=`$${net.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('netWay').textContent=`${(net/0.05).toLocaleString(undefined,{maximumFractionDigits:0})} WAY`}
-function openDapp(){alert('Extinguishment dApp requires Dox_Dev Level 2 verification.
 
-In production: submit reserve documentation for curator review.')}
-function connectWallet(){const b=document.getElementById('walletBtn');b.textContent='Connecting...';setTimeout(()=>{b.textContent='0x7a3F...9e2D (L2) ✓';b.style.borderColor='var(--green)';b.style.color='var(--green)'},1200)}
+// Render features grid
+const grid = document.getElementById('featuresGrid');
+FEATURES.forEach(f => {
+  const chip = document.createElement('div');
+  chip.className = 'feature-chip';
+  chip.innerHTML = `<div class="name">${f.name}</div><span class="badge ${f.status}">${f.status === 'live' ? 'Live' : 'Building'}</span>${f.addr !== '—' ? `<div class="addr">${f.addr}</div>` : ''}`;
+  chip.onclick = () => openModal(f);
+  grid.appendChild(chip);
+});
+
+function openModal(f) {
+  document.getElementById('modalTitle').textContent = f.name;
+  document.getElementById('modalDesc').textContent = f.desc;
+  document.getElementById('modalAddr').textContent = f.addr !== '—' ? `Precompile: ${f.addr}` : '';
+  document.getElementById('modalLink').href = f.link;
+  document.getElementById('featureModal').classList.add('open');
+}
+function closeModal() { document.getElementById('featureModal').classList.remove('open'); }
+document.getElementById('featureModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Toggle ──
+function setToggle(mode) {
+  const container = document.getElementById('toggleContainer');
+  const halves = container.querySelectorAll('.toggle-half');
+  if (mode === 'builder') {
+    container.classList.add('builder');
+    halves[0].classList.remove('active');
+    halves[1].classList.add('active');
+  } else {
+    container.classList.remove('builder');
+    halves[0].classList.add('active');
+    halves[1].classList.remove('active');
+  }
+}
+
+// ── Calculator ──
+const PRICES = { gold: 2340, silver: 29.5, copper: 4.2, lithium: 14.5, 'rare-earth': 85 };
+const UNITS = { gold: 'oz t', silver: 'oz t', copper: 'lb', lithium: 'kg', 'rare-earth': 'kg' };
+const EXTRACTION = { gold: 450, silver: 35, copper: 8, lithium: 120, 'rare-earth': 200 };
+
+async function fetchOracle() {
+  try {
+    const r = await fetch('https://api.waychain.org', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0',method:'eth_call',params:[{to:'0x0C',data:'0x'},'latest'],id:1}) });
+    const d = await r.json();
+    if (d.result) return parseOracle(d.result) || PRICES[document.getElementById('mineral').value];
+  } catch(e) {}
+  document.getElementById('calcStatus').textContent = 'Oracle: Fallback';
+  return PRICES[document.getElementById('mineral').value];
+}
+function parseOracle(hex) {
+  try { const v = parseInt(hex.replace('0x','').substring(0,64),16); return v > 0 ? v/1e18 : null; } catch(e) { return null; }
+}
+
+async function updateCalc() {
+  const mineral = document.getElementById('mineral').value;
+  const vol = +document.getElementById('volume').value || 0;
+  const purity = (+document.getElementById('purity').value || 0) / 100;
+  const dist = +document.getElementById('distance').value || 0;
+  const spot = await fetchOracle();
+  const units = mineral === 'gold' || mineral === 'silver' ? vol * 32150.7 * purity : (mineral === 'copper' ? vol * purity : vol * 1000 * purity);
+  const gross = units * spot;
+  const fee = gross * 0.005;
+  const extract = vol * (EXTRACTION[mineral] || 100);
+  const transport = vol * dist * 0.15;
+  const net = gross - fee - extract - transport;
+  document.getElementById('spotPrice').textContent = `$${spot.toLocaleString()}/${UNITS[mineral]}`;
+  document.getElementById('grossValue').textContent = `$${gross.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('fee').textContent = `-$${fee.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('extraction').textContent = `-$${extract.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('transport').textContent = `-$${transport.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('netUsd').textContent = `$${net.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('netWay').textContent = `${(net/0.05).toLocaleString(undefined,{maximumFractionDigits:0})} WAY`;
+}
+
+function openDapp() { alert('Extinguishment dApp requires Dox_Dev Level 2 verification.
+
+In production: submit reserve documentation for curator review.'); }
+function connectWallet() {
+  const btn = document.getElementById('walletBtn');
+  btn.textContent = 'Connecting...';
+  setTimeout(() => { btn.textContent = '0x7a3F...9e2D (L2) ✓'; btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)'; }, 1200);
+}
+
 updateCalc();
 </script>
 </body>
