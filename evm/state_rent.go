@@ -19,7 +19,23 @@ const (
 	StateRentBurnPercent      = 60
 	StateRentValidatorPercent = 30
 	StateRentTreasuryPercent  = 10
-	GracePeriod               = 604800 // 7 days at 1s blocks
+	GracePeriod               = 2592000 // 30 days at 1s blocks
+)
+
+// State rent pricing (2026 cloud storage benchmark)
+// Target: cheaper than S3 for active data, expensive enough to prevent bloat
+// Reference: S3 $0.023/GB/mo = $0.000023/MB/mo
+// WayChain state rent: $0.001/MB/mo base (competitive for active storage)
+const (
+	// RentPerByteYear is charged per byte per year of storage
+	// 1 MB-year = 1,048,576 bytes × 0.000000005 WAY/byte/year = 0.00524 WAY/MB/year
+	// At $2.40/WAY: 1 MB/year = $0.0126/month (vs S3 $0.023/MB/mo)
+	RentPerByteYear = 5_000_000_000_000 // 5e12 wei/byte/year ≈ 0.000005 WAY/byte/year
+	// BaseAccountFee covers metadata overhead per account (anti-bloat)
+	// 0.01 WAY/month covers ~2KB of metadata storage
+	BaseAccountFee = 10_000_000_000_000_000 // 0.01 WAY per account per month
+	// ReinstatementFee is charged to unfrozen a pruned account
+	ReinstatementFee = 10_000_000_000_000_000_000 // 10 WAY
 )
 
 const (
@@ -156,9 +172,23 @@ func rentGetDue(input []byte, caller string, state *StateDB, blockNum uint64) ([
 	lastRentBlock := uint64(rentSlot[30])<<8 | uint64(rentSlot[31])
 	blocksElapsed := blockNum - lastRentBlock
 
-	// 1 WAY per year per 256 bytes of state (simplified)
-	rentRate := big.NewInt(100000000000000000 / 31536) // WAY per block
-	dueAmount := new(big.Int).Mul(rentRate, big.NewInt(int64(blocksElapsed)))
+	// Calculate rent based on account storage size
+	// Rent = bytes stored × RentPerByteYear × years elapsed
+	// For simplicity, we estimate account size from its storage entries
+	// Base account fee + per-byte rent
+	accountSize := estimateAccountSize(state, accountAddr)
+	yearsElapsed := new(big.Int).SetUint64(blocksElapsed)
+	yearsElapsed = yearsElapsed.Div(yearsElapsed, big.NewInt(31536000)) // blocks per year
+
+	// Base fee for the account (anti-bloat)
+	dueAmount := new(big.Int).SetUint64(BaseAccountFee)
+
+	// Per-byte rent (only for accounts > 1KB, waived for small accounts)
+	if accountSize > 1024 {
+		byteRent := new(big.Int).Mul(big.NewInt(int64(accountSize)), big.NewInt(RentPerByteYear))
+		byteRent = byteRent.Mul(byteRent, yearsElapsed)
+		dueAmount = dueAmount.Add(dueAmount, byteRent)
+	}
 
 	// Check if in grace period
 	var out [32]byte
@@ -173,6 +203,21 @@ func rentGetDue(input []byte, caller string, state *StateDB, blockNum uint64) ([
 
 	dueAmount.FillBytes(out[0:32])
 	return out[:], nil
+}
+
+func estimateAccountSize(state *StateDB, accountAddr []byte) int64 {
+	// Count storage entries for this account to estimate size
+	// Each storage entry = 32 bytes key + 32 bytes value = 64 bytes
+	size := int64(0)
+	acc := state.GetAccount(string(accountAddr))
+	if acc != nil {
+		size = int64(len(acc.Storage) * 64)
+		// Add code size if contract
+		if len(acc.Code) > 0 {
+			size += int64(len(acc.Code))
+		}
+	}
+	return size
 }
 
 func rentNormalizeAddress(addr []byte) [20]byte {
