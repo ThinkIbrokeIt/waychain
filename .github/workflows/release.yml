@@ -29,10 +29,12 @@ jobs:
 
       - name: Build
         run: |
+          mkdir -p /tmp/waychain-release
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
             -ldflags="-s -w" \
-            -o waychain-linux-amd64 \
-            ./...
+            -o /tmp/waychain-release/waychain \
+            .
+          cd /tmp/waychain-release && sha256sum waychain > checksums.txt
 
       - name: Run tests
         run: go test -count=1 ./...
@@ -40,7 +42,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: waychain-linux-amd64
+          files: /tmp/waychain-release/*
           generate_release_notes: true
           fail_on_unmatched_files: false
         env:
