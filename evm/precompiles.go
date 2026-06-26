@@ -133,11 +133,17 @@ var PrecompilesTable = map[byte]*Precompile{
 		Gas:     5000,
 		Fn:      crossChainAttestationPrecompile,
 	},
+	0x20: {
+		Address: 0x20,
+		Name:    "MineralRightsRegistry",
+		Gas:     8000,
+		Fn:      mineralRightsPrecompile,
+	},
 }
 
 // IsPrecompile returns true if the address is a precompile
 func IsPrecompile(addr byte) bool {
-	return addr >= 0x0C && addr <= 0x1F
+	return addr >= 0x0C && addr <= 0x20
 }
 
 // ExecutePrecompile runs a precompile and returns the result

@@ -168,13 +168,13 @@ func TestPrecompileNames(t *testing.T) {
 	}
 	// Check all 12 are listed
 	count := 0
-	for addr := byte(0x0C); addr <= 0x1F; addr++ {
+	for addr := byte(0x0C); addr <= 0x20; addr++ {
 		if _, ok := PrecompilesTable[addr]; ok {
 			count++
 		}
 	}
-	if count != 19 {
-		t.Fatalf("expected 19 precompiles, got %d", count)
+	if count != 20 {
+		t.Fatalf("expected 20 precompiles, got %d", count)
 	}
-	t.Logf("✅ All 19 precompiles registered:\n%s", names)
+	t.Logf("✅ All 20 precompiles registered:\n%s", names)
 }
