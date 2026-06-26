@@ -1,0 +1,13 @@
+{
+  "version": "3.0.0",
+  "chain_id": 10008,
+  "chain_id_hex": "0x2718",
+  "name": "WayChain",
+  "tagline": "Actually Decentralized",
+  "deployed_at": "2026-06-24",
+  "whitepaper_sections": 19,
+  "live_features": 15,
+  "spec_features": 9,
+  "blueprint_files": 29,
+  "blueprint_lines": 11947
+}
