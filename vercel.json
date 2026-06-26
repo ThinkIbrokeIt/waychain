@@ -8,12 +8,16 @@
   "rewrites": [
     { "source": "/version.json", "destination": "/version.json" },
     { "source": "/whitepaper", "destination": "/whitepaper/index.html" },
+    { "source": "/whitepaper/", "destination": "/whitepaper/index.html" },
+    { "source": "/whitepaper/abstract", "destination": "/whitepaper/pages/abstract.html" },
+    { "source": "/whitepaper/status", "destination": "/whitepaper/pages/status.html" },
+    { "source": "/whitepaper/philosophy", "destination": "/whitepaper/pages/philosophy.html" },
+    { "source": "/whitepaper/protocol", "destination": "/whitepaper/pages/protocol.html" },
+    { "source": "/whitepaper/architecture", "destination": "/whitepaper/pages/architecture.html" },
+    { "source": "/whitepaper/overview", "destination": "/whitepaper/pages/overview.html" },
     { "source": "/whitepaper/:path*", "destination": "/whitepaper/index.html" },
     { "source": "/explorer", "destination": "/explorer/index.html" },
-    { "source": "/explorer/:path*", "destination": "/explorer/index.html" },
     { "source": "/badge", "destination": "/badge/index.html" },
-    { "source": "/badge/:path*", "destination": "/badge/index.html" },
-    { "source": "/plan", "destination": "/plan/index.html" },
-    { "source": "/plan/:path*", "destination": "/plan/index.html" }
+    { "source": "/plan", "destination": "/plan/index.html" }
   ]
 }

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Status & Roadmap — WayChain</title>
+<style>
+:root {
+  --bg: #0a0a1a; --bg2: #12122a; --bg3: #1a1a3a;
+  --fg: #e0e0f0; --fg2: #8888bb;
+  --accent: #00d4ff; --accent2: #ff6b35; --accent3: #7b2ff7;
+  --green: #00ff88; --red: #ff3355;
+  --border: #2a2a5a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--fg); line-height: 1.6; }
+.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
+}
+.header h1 { font-size: 1.2em; color: var(--accent); }
+.nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.nav a { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; color: var(--fg2); border: 1px solid transparent; border-radius: 3px; }
+.nav a:hover { color: var(--accent); border-color: var(--border); text-decoration: none; }
+.nav a.active { color: var(--accent); border-color: var(--accent); }
+.content { padding: 30px 0; }
+.content h1 { font-size: 1.8em; color: var(--accent); margin-bottom: 10px; }
+.content h2 { font-size: 1.3em; color: var(--accent); margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+.content h3 { font-size: 1.1em; color: var(--accent2); margin-top: 20px; margin-bottom: 8px; }
+.content h4 { font-size: 1em; color: var(--accent3); margin-top: 15px; margin-bottom: 6px; }
+.content p { margin-bottom: 12px; font-size: 0.9em; }
+.content ul, .content ol { margin: 10px 0 10px 20px; font-size: 0.85em; }
+.content li { margin-bottom: 5px; }
+.content table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.8em; }
+.content th, .content td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+.content th { background: var(--bg2); color: var(--accent); }
+.content code { background: var(--bg2); padding: 2px 6px; border-radius: 3px; font-size: 0.85em; }
+.content pre { background: var(--bg2); padding: 15px; border-radius: 6px; overflow-x: auto; margin: 15px 0; }
+.content blockquote { border-left: 3px solid var(--accent); padding-left: 15px; margin: 15px 0; color: var(--fg2); }
+.content hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
+.footer { text-align: center; padding: 30px 20px; color: var(--fg2); font-size: 0.7em; border-top: 1px solid var(--border); margin-top: 40px; }
+@media (max-width: 600px) {
+  .header { flex-direction: column; }
+  .content h1 { font-size: 1.4em; }
+  .content h2 { font-size: 1.1em; }
+  .nav a { font-size: 0.6em; padding: 3px 5px; }
+}
+</style>
+</head>
+<body>
+<div class="header container">
+  <h1>⛓ WayChain</h1>
+  <div class="nav">
+      <a href="/">Home</a>
+      <a href="/whitepaper/abstract">Abstract</a>
+      <a href="/whitepaper/status">Status</a>
+      <a href="/whitepaper/philosophy">Philosophy</a>
+      <a href="/whitepaper/protocol">Protocol</a>
+      <a href="/whitepaper/architecture">Architecture</a>
+      <a class="active" href="/whitepaper/overview">Overview</a>
+      <a href="/explorer">Explorer</a>
+      <a href="/badge">Badge</a>
+      <a href="/plan">Plan</a>
+  </div>
+</div>
+
+<div class="content container">
+## 18. Network Status (Live)
+
+### 18.1 Deployment
+
+| Component | Status | URL |
+|-----------|--------|-----|
+| Dashboard | Live | https://waychain.org |
+| Explorer | Live | https://waychain.org/explorer |
+| Badge | Live | https://waychain.org/badge |
+| RPC (HTTP) | Live | https://api.waychain.org/rpc |
+| RPC (WebSocket) | Live | wss://api.waychain.org |
+| Daemon | Running | systemd, auto-restart |
+| Tunnel | Running | cloudflared, auto-restart |
+
+### 18.2 Chain Statistics
+
+| Metric | Value |
+|--------|-------|
+| Chain ID | 10008 |
+| Block time | 1 second |
+| Finality | Instant |
+| Validators | 3 (expandable to 200) |
+| Total blocks | 80,000+ |
+| Block gas limit | 30,000,000 |
+| Accounts | 11+ |
+| Precompiles | 20 (0x0C-0x20) |
+
+### 18.3 Security
+
+| Feature | Status |
+|---------|--------|
+| Deploy gate (3 layers) | Active |
+| Rate limiting (100/sec/IP) | Active |
+| Structured logging (slog) | Active |
+| Graceful shutdown | Active |
+| WebSocket subscriptions | Active |
+| P2P block/tx gossip | Active |
+
+---
+
+## 19. Risks & Honest Assessment
+
+### 19.1 Technical Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| Oracle manipulation | Low | Critical | 7-oracle median, 2% deviation cap, TLS proofs |
+| Flash loan manipulation | Low | High | TWAP for collateral valuation |
+| Smart contract bug | Low | Critical | 2 audits + formal verification |
+| Cross-chain bridge exploit | Low | High | Rate limits, daily caps, challenge window |
+| Privacy proof failure | Low | Critical | Multiple ZK implementations, fallback paths |
+
+### 19.2 Economic Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| 2WAY depeg below $0.95 | Medium | High | Stability fee + Stability Pool |
+| Collateral death spiral | Low-Med | Critical | Global caps, insurance fund |
+| Insufficient liquidity | Medium | Medium | Protocol-owned liquidity (POL) |
+| State rent evasion | Medium | Low | Pruning + reactivation costs |
+
+### 19.3 What Could Go Wrong
+
+If BTC/ETH drops 50%+ in a single day:
+1. Mass liquidations trigger → collateral dumped → further price drops
+2. Stability Pool absorbs first losses (target: 5-15% of TVL)
+3. Insurance fund covers next layer
+4. If both exhausted → recovery tokens issued (dilutive but survivable)
+5. 2WAY may trade at $0.80-0.90 temporarily until collateral recovers
+
+**This is the same risk profile as MakerDAO, Liquity, and Synthetix. WayChain's advantage: 1s finality means faster liquidation processing.**
+
+---
+
+## 20. Roadmap
+
+### Phase 0-5: Foundation (COMPLETE)
+- Persistent state, tx lifecycle, multi-process node, CLI
+- Deploy gate, Dox_Dev infrastructure, template registry
+- waychain.org, public RPC, token infrastructure
+- Explorer, dashboard, badge UI
+- WebSocket RPC, real-time push
+- Multi-validator, rate limiting, structured logging
+
+### Phase 6: 2WAY + Account Model + Privacy + Governance (CURRENT)
+- 2WAY Vault precompile (0x18) implementation
+- Stability Pool contract
+- Oracle integration for 6+ collateral types
+- 3-stage account model (Onboarding → Standard → Self-Custody)
+- Guardian recovery protocol
+- Session keys and gas abstraction
+- ZK selective disclosure implementation
+- Governance 2.0 (Direct, Quadratic, Futarchy votes)
+- Curator Council election and operations
+- Human-readable transaction decoding
+- **Progressive Staking** — ✅ Live (`progressive_staking.go`, 5-tier APY)
+- **Oracle VRF + Time Execution** — ✅ Live (`oracle_scheduler.go`, RANDOM opcode 0xC4, 13 tests)
+- **Mineral Rights Tokenization** — ✅ Live (`mineral_rights.go`, Precompile 0x20, 12 tests)
+
+### Phase 7: Multi-Node + Cross-Chain
+- Deploy 200+ validators on separate machines
+- Full consensus rounds with real round timeouts
+- P2P block/tx propagation in production
+- Cross-chain attestation layer (Ethereum, PulseChain, Solana)
+- Oracle attestation serving external chains
+- State rent implementation and pruning
+
+### Phase 8: Ecosystem + Binary Journal
+- Template Registry deployment
+- WayChainFactory/Pair DEX
+- Developer onboarding (Foundry, viem, ethers.js)
+- Hackathon / grants program
+- Binary Journal full deployment (Attestation, DeadMansSwitch, StorageEndowment)
+- Sanctuary app (Energy Tide) public release
+- Agora commons layer
+
+---
+
+## 21. Conclusion
+
+WayChain is the first blockchain where identity — not capital — determines power. The system is live, processing transactions, and open to anyone through waychain.org.
+
+The combination of Dox_Dev identity, sqrt-weighted consensus, instant finality, multi-collateral stablecoins, privacy by default, native oracles, cross-chain attestations, and the Binary Journal self-sovereignty stack creates a platform that is:
+
+- **Actually decentralized** (not just in marketing)
+- **Accountable** (validators are real humans with consequences)
+- **Cheap** (fixed fees, not market-auctioned)
+- **Private** (ZK selective disclosure by default)
+- **Connected** (native oracles + cross-chain attestations)
+- **Open** (anyone can verify, anyone can build)
+- **Sustainable** (state rent, progressive staking, no pre-mine)
+
+2WAY extends this vision by opening WayChain to assets from every other blockchain. Mineral Rights Tokenization proves that WayChain can serve real-world use cases that no other chain can. Binary Journal demonstrates that individuals can achieve true self-sovereignty over their knowledge, identity, and legacy.
+
+**One human. One voice. One chain.**
+
+---
+
+*Version 3.1.2 — June 2026*
+*Launch Plan: All phases complete*
+*Specifications: 1WAY, 2WAY, Bitcoin Integration, Tokenomics, Consensus, UX, Privacy, Account Model, Oracle, Cross-Chain, Governance, Binary Journal, State Rent, Mineral Rights*
+*Code: 5,470+ lines Go, 11+ Solidity contracts, 60+ tests*
+*v3.1.2: HTML restored from v3.1.0 base + all v3.1.1 fixes applied; BIJO supply corrected to 369M*
+</div>
+
+<div class="footer">WayChain v3.1.2 — "Actually Decentralized"<br><a href="https://waychain.org">waychain.org</a> &middot; Chain ID 10008</div>
+</body>
+</html>
