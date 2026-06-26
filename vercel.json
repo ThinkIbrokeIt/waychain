@@ -2,5 +2,11 @@
   "name": "waychain-site",
   "framework": null,
   "public": true,
-  "version": 2
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "installCommand": "",
+  "rewrites": [
+    { "source": "/version.json", "destination": "/version.json" }
+  ]
 }
