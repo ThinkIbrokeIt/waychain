@@ -305,64 +305,88 @@ This is how the real world works. You can drive a bicycle anonymously. You need 
 
 **The answer is absolute:** Yes, anyone can use WayChain without a badge. 100%. The deploy gate does not touch the "using" path. It only touches the "building" path. If you are not deployi
 
-... [OUTPUT TRUNCATED - 69 chars omitted out of 50069 total] ...
+... [OUTPUT TRUNCATED - 68 chars omitted out of 50068 total] ...
 
-ian recovery
-  - Must pass advanced security quiz
-  - Must connect hardware wallet or confirm via existing key
-  - IRREVERSIBLE
-```
+## 10. Security Infrastructure
 
-**Stage downgrade via recovery:** If a Stage 1 account uses guardian recovery (lost seed phrase), the account resets to Stage 0. This prevents "I lost my seed phrase but kept my limits" abuse.
+### 10.1 CORS: Restricting Cross-Origin Threats
 
-### 9.4 Key Rotation at Protocol Level
-
-Key rotation is always possible with the current key:
+WayChain's RPC server sets strict CORS headers:
 
 ```
-rotateKey(newKey, signature):
-    1. Verify signature from CURRENT key
-    2. Set account.key = newKey
-    3. Emit KeyRotated event
+Access-Control-Allow-Origin: https://waychain.org
+Access-Control-Allow-Methods: POST, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Max-Age: 86400
 ```
 
-If the current key is lost, use guardian recovery. Stage-specific behavior:
-- Stage 0: rotation updates the Onboarding Ledger's encrypted backup
-- Stage 1: rotation standalone (user manages their own seed phrase)
-- Stage 2: rotation + confirmation via hardware wallet
+This prevents **Cross-Site Request Forgery (CSRF)** attacks where a malicious website could trick a user's browser into making RPC calls to WayChain. With CORS restricted to `https://waychain.org`, browsers block such cross-origin requests.
 
-### 9.5 Dead Man's Switch
+### 10.2 Rate Limiting: Token Bucket with Per-IP Tracking
 
-Built into the account model, not a smart contract:
+WayChain uses a token bucket algorithm:
+- **Rate:** 100 requests/second/IP
+- **Burst:** Up to 100 requests in a single instant
+- **Over-limit:** HTTP 429 with JSON-RPC error code -32005
 
+The rate limiter tracks IP addresses using `X-Forwarded-For` (proxied) or `RemoteAddr` (direct). This prevents DoS, brute force, and scraping.
+
+### 10.3 Information Disclosure Minimization
+
+| What Other Chains Expose | WayChain's Approach |
+|--------------------------|---------------------|
+| `admin_nodeInfo` with IP | Method not available |
+| `personal_unlockAccount` | Method not available |
+| Full stack traces on errors | Structured errors without stack traces |
+| Health endpoint full details | Only `{"blocks":N,"status":"ok"}` |
+
+### 10.4 Method Filtering
+
+WayChain's RPC server does not register dangerous methods. If a caller requests `personal_unlockAccount`, the response is `{"error":{"code":-32601,"message":"Method not found"}}`. This prevents information leakage about what the node supports and blocks attacks that rely on probing for admin methods.
+
+### 10.5 Automated Security Scanning
+
+WayChain runs automated security scans via `security_scan.sh` which checks:
+
+1. **CORS headers** — Verifies origin restriction
+2. **Rate limiting** — Sends 200 parallel requests, expects 429s
+3. **Chain ID** — Verifies correct chain ID (0x2718 = 10008)
+4. **WebSocket security** — Checks upgrade handling
+5. **Method enumeration** — Verifies dangerous methods are not exposed
+6. **Information disclosure** — Checks health and error responses
+
+Additionally, WayChain is designed to run OWASP ZAP (Zed Attack Proxy) baseline scans when Docker is available:
+
+```bash
+docker run --rm ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+  -t http://api.waychain.org \
+  -r zap_report.html
 ```
-setDeadman(heir, timeout, interval):
-    deadmanBlock = block.number + timeout
-    deadmanHeir = heir
 
-checkin():  // Called automatically on any transaction
-    deadmanBlock = block.number + currentTimeout
+This scans for OWASP Top 10 vulnerabilities including:
+- SQL injection (via JSON-RPC parameters)
+- Cross-site scripting (XSS)
+- Broken authentication
+- Sensitive data exposure
+- Security misconfiguration
+- Cross-site request forgery (CSRF)
 
-trigger():  // Called by anyone after timeout
-    require(block.number > deadmanBlock)
-    transfer all funds to heir
-```
+### 10.6 Security Philosophy Summary
 
-### 9.6 Integration with Dox_Dev Badges
-
-| Account Stage | Dox_Dev Level | Badge Function |
-|--------------|---------------|----------------|
-| Stage 0 | Level 1 (auto-assigned) | Basic identity, limited permissions |
-| Stage 1 | Level 1 → Level 2 (upgradeable) | Verified identity, full deployment |
-| Stage 2 | Level 2 → Level 3 (upgradeable) | Trusted identity, governance access |
-
-Badge revocation immediately freezes the account. This creates real-world accountability: lose your badge, lose access to everything.
+| Threat | Mitigation | Status |
+|--------|-----------|--------|
+| CSRF attacks | CORS locked to waychain.org | ✅ Live |
+| DoS / flooding | Token bucket rate limiting (100/s/IP) | ✅ Live |
+| Method probing | Dangerous methods unavailable | ✅ Live |
+| Info disclosure | Minimal error responses | ✅ Live |
+| Chain ID spoofing | Hardcoded 10008 | ✅ Live |
+| Full OWASP Top 10 scan | OWASP ZAP (requires Docker image) | 🔧 Image downloading |
 
 ---
 
-## 10. Native Oracle Consensus
+## 11. Native Oracle Consensus
 
-### 10.1 Attesters as Separate Role from Validators
+### 11.1 Attesters as Separate Role from Validators
 
 **Key architectural decision:** Oracles (attesters) and validators are separate sets. Different stake, different hardware, different slashing. Defense in depth: an attacker must compromise BOTH to corrupt the chain and its data simultaneously.
 
@@ -374,7 +398,7 @@ Badge revocation immediately freezes the account. This creates real-world accoun
 
 **Critical rule:** A validator CAN also be an attester by posting an additional oracle bond. But the oracle bond is separate from the validator stake. If an attester is slashed for bad data, only their oracle bond is affected — their validator stake is untouched.
 
-### 10.2 TLS Proof Verification
+### 11.2 TLS Proof Verification
 
 WayChain verifies that attesters actually queried the claimed data source through TLSNotary (TLSN) proofs:
 
@@ -386,7 +410,7 @@ WayChain verifies that attesters actually queried the claimed data source throug
 
 For Tier 3+, DECO proofs extend this to authenticated APIs without revealing API keys.
 
-### 10.3 Oracle Precompiles
+### 11.3 Oracle Precompiles
 
 Seven native precompile contracts power the oracle system:
 
@@ -400,7 +424,7 @@ Seven native precompile contracts power the oracle system:
 | 0x19 | OracleFeed | Read finalized oracle values for a feed |
 | 0x1A | OracleRequest | Create new oracle request from a contract |
 
-### 10.4 The Challenge Game
+### 11.4 The Challenge Game
 
 Any staked participant can dispute a false attestation:
 
@@ -417,7 +441,7 @@ Any staked participant can dispute a false attestation:
 
 **Frivolous dispute prevention:** Challenge bond costs more than it's worth. Failed challengers banned from that feed for 10,000 blocks. Repeat offenders (3+) lose challenge privilege for 100,000 blocks.
 
-### 10.5 Graduated Trust Model
+### 11.5 Graduated Trust Model
 
 Not all data requires the same security. WayChain uses four trust tiers:
 
@@ -430,7 +454,7 @@ Not all data requires the same security. WayChain uses four trust tiers:
 
 **Design rule:** The cost to corrupt a feed must exceed any possible profit from manipulation.
 
-### 10.6 VRF at Protocol Level
+### 11.6 VRF at Protocol Level
 
 WayChain implements Verifiable Randomness Functions at the protocol level for:
 - Attester selection for each feed round
@@ -440,7 +464,7 @@ WayChain implements Verifiable Randomness Functions at the protocol level for:
 
 VRF output is verifiable by anyone but predictable by no one before generation.
 
-### 10.7 Time-Based Execution
+### 11.7 Time-Based Execution
 
 Contracts can schedule execution at future timestamps:
 
@@ -456,9 +480,9 @@ This enables time-locked payments, vesting schedules, and automated governance e
 
 ---
 
-## 11. Cross-Chain Native
+## 12. Cross-Chain Native
 
-### 11.1 WayChain Oracles Witness Events on Other Chains
+### 12.1 WayChain Oracles Witness Events on Other Chains
 
 WayChain's attesters don't just serve their own chain. They witness events on external chains and re-anchor them on WayChain, making WayChain's attested data available to any consumer.
 
@@ -477,7 +501,7 @@ Source Chain (Ethereum, PulseChain, Solana):
   → Confidence = 3 of N attesters
 ```
 
-### 11.2 Cross-Chain Confidence Levels
+### 12.2 Cross-Chain Confidence Levels
 
 | Attesters | Confidence Level | Use Case |
 |-----------|-----------------|----------|
@@ -488,7 +512,7 @@ Source Chain (Ethereum, PulseChain, Solana):
 
 The consumer decides what confidence threshold to accept. A bridge may require 5+ attesters. A price feed may accept 3. An archivist may accept 1.
 
-### 11.3 The Challenge Window
+### 12.3 The Challenge Window
 
 Cross-chain attestations have a 100-block challenge window (~100 seconds):
 
@@ -498,7 +522,7 @@ Cross-chain attestations have a 100-block challenge window (~100 seconds):
 4. If unchallenged → attestation finalizes after window
 5. Finalized attestations are immutable and usable by any consumer
 
-### 11.4 Source Chain Order
+### 12.4 Source Chain Order
 
 | Priority | Chain | Rationale |
 |----------|-------|-----------|
@@ -508,7 +532,7 @@ Cross-chain attestations have a 100-block challenge window (~100 seconds):
 | 4 | **Solana** | Different architecture. Cross-ecosystem proof. |
 | 5 | **EVM L2s** | Optimism, Arbitrum, Base — lower fees, higher volume. |
 
-### 11.5 WayChain Attestations as a Service
+### 12.5 WayChain Attestations as a Service
 
 WayChain's oracle network can serve other chains. A contract on any chain with a WayChain bridge can verify attestations:
 
@@ -533,9 +557,9 @@ interface IWayChainOracle {
 
 ---
 
-## 12. Governance 2.0
+## 13. Governance 2.0
 
-### 12.1 Three Voting Mechanisms
+### 13.1 Three Voting Mechanisms
 
 WayChain uses three voting mechanisms, each suited to different decision types:
 
@@ -576,7 +600,7 @@ WayChain uses three voting mechanisms, each suited to different decision types:
 
 **The market is information, not governance.** If the market strongly predicts "price will drop," voters can still pass the proposal — but they must explain why they know better than the market. The market outcome is recorded on-chain alongside the vote result for audit.
 
-### 12.2 Amendment Process — Changing the Immutable
+### 13.2 Amendment Process — Changing the Immutable
 
 If there is ever a need to change something in the immutable core:
 
@@ -593,7 +617,7 @@ If there is ever a need to change something in the immutable core:
 
 **This process exists so the protocol can evolve if need arises, but the friction is intentionally high.** An amendment should feel like changing a country's constitution, not updating software.
 
-### 12.3 Curator Council
+### 13.3 Curator Council
 
 A small council of 5 Dox_Dev Level 3 badge holders handles administrative functions:
 
@@ -610,7 +634,7 @@ A small council of 5 Dox_Dev Level 3 badge holders handles administrative functi
 - **Compensation:** 500 WAY per member per term
 - **Limitation:** Cannot change parameters. Can only flag, freeze, or moderate.
 
-### 12.4 Anti-Fraud at Consensus Level
+### 13.4 Anti-Fraud at Consensus Level
 
 WayChain provides community-driven safety mechanisms:
 
@@ -635,7 +659,7 @@ WayChain provides community-driven safety mechanisms:
 
 ---
 
-## 13. Precompile Architecture
+## 14. Precompile Architecture
 
 WayChain's precompile architecture is being deployed across phases.
 
@@ -664,9 +688,9 @@ WayChain's precompile architecture is being deployed across phases.
 
 Precompiles are executed natively in Go — no EVM gas costs. The 5 live precompiles process transactions today. The remaining 8 are being built in Phase 6.
 
-## 14. Binary Journal — The Self-Sovereignty Stack
+## 15. Binary Journal — The Self-Sovereignty Stack
 
-### 14.1 Two Truths
+### 15.1 Two Truths
 
 Binary Journal has two faces, one soul:
 
@@ -680,7 +704,7 @@ Binary Journal has two faces, one soul:
 - **Dark Truth** — Private, sacred. Passed only to chosen heirs. Encrypted. Sealed until heartbeat stops.
 - **Light Truth** — Public witness. Released to the world, becoming part of the shared historical record.
 
-### 14.2 The 3·6·9 Architecture
+### 15.2 The 3·6·9 Architecture
 
 Tesla wasn't doing numerology. He was encoding a dead man's switch:
 
@@ -692,7 +716,7 @@ Tesla wasn't doing numerology. He was encoding a dead man's switch:
 
 **After the final burn:** all ownership renounced. The protocol becomes immutable natural law. No DAO. No founder control. No kill switch. Just mathematics and truth.
 
-### 14.3 Sanctuary App
+### 15.3 Sanctuary App
 
 Energy Tide is a local-first mobile app with decoy identity:
 
@@ -702,7 +726,7 @@ Energy Tide is a local-first mobile app with decoy identity:
 - **Decoy identity:** If forced to unlock, a secondary "normal" journal appears
 - **Local-first:** No server. No cloud. Data lives only on device (with encrypted backup)
 
-### 14.4 Immutable Ledger
+### 15.4 Immutable Ledger
 
 Four smart contracts form the on-chain layer:
 
@@ -713,7 +737,7 @@ Four smart contracts form the on-chain layer:
 | StorageEndowment.sol | Pay operators for eternal storage | C (Dox_Dev L3) |
 | BIJO.sol | The fuel token | ERC-20 on WayChain |
 
-### 14.5 The Economic Flywheel
+### 15.5 The Economic Flywheel
 
 ```
 Attest → Earn → Store → Inherit
@@ -726,7 +750,7 @@ Attest → Earn → Store → Inherit
 3. **Store:** StorageEndowment pays operators for eternal encrypted storage
 4. **Inherit:** DeadMansSwitch releases keys to heirs when heartbeat stops
 
-### 14.6 Verification Period → Retroactive Airdrop → Philanthropic Liquidity → Ownership Burn
+### 15.6 Verification Period → Retroactive Airdrop → Philanthropic Liquidity → Ownership Burn
 
 The launch sequence:
 
@@ -737,15 +761,15 @@ The launch sequence:
 
 ---
 
-## 15. State Rent & Long-Term Sustainability
+## 16. State Rent & Long-Term Sustainability
 
-### 15.1 State Doesn't Grow Forever
+### 16.1 State Doesn't Grow Forever
 
 On most blockchains, state grows indefinitely. Every contract deployment, every storage write, every new account adds to the permanent state that validators must store forever. This is unsustainable — Ethereum's state bloat already causes validator centralization.
 
 WayChain solves this through protocol-level state rent.
 
-### 15.2 Inactive State Pruned After 30 Days
+### 16.2 Inactive State Pruned After 30 Days
 
 | State Type | Inactivity Threshold | Action |
 |-----------|---------------------|--------|
@@ -756,7 +780,7 @@ WayChain solves this through protocol-level state rent.
 
 Pruning retains a hash of the original state, so accounts can be restored — but the storage burden on validators is eliminated.
 
-### 15.3 Users Pay to Maintain Data
+### 16.3 Users Pay to Maintain Data
 
 State rent is not a one-time fee. Users pay continuously to maintain their data on-chain:
 
@@ -768,7 +792,7 @@ State rent is not a one-time fee. Users pay continuously to maintain their data 
 
 At $0.0001/KB/block, storing 1MB of data costs ~$31.50/year. This is affordable for most use cases but prevents infinite state bloat.
 
-### 15.4 Rent Distribution
+### 16.4 Rent Distribution
 
 | Allocation | Percentage | Purpose |
 |-----------|-----------|---------|
@@ -776,7 +800,7 @@ At $0.0001/KB/block, storing 1MB of data costs ~$31.50/year. This is affordable 
 | Validators | 30% | Compensation for storage costs |
 | Treasury | 10% | Protocol development and reserves |
 
-### 15.5 Impact on Supply
+### 16.5 Impact on Supply
 
 If WayChain reaches 1GB of active state (1,048,576 KB):
 - Annual rent collected: 1,048,576 × $0.0001 × 31,536,000 blocks/year = ~$3.3B
@@ -785,13 +809,13 @@ If WayChain reaches 1GB of active state (1,048,576 KB):
 
 ---
 
-## 16. Mineral Rights Tokenization
+## 17. Mineral Rights Tokenization
 
-### 16.1 Real-World Assets on Chain
+### 17.1 Real-World Assets on Chain
 
 WayChain is the first blockchain capable of tokenizing mineral rights — real-world assets that represent verified in-ground mineral reserves. This is not a synthetic token or a wrapped asset. It is a legal instrument bridging physical property rights to on-chain ownership.
 
-### 16.2 The Problem Mining Creates
+### 17.2 The Problem Mining Creates
 
 | Impact | Per Gold Mine (avg) |
 |--------|---------------------|
@@ -803,7 +827,7 @@ WayChain is the first blockchain capable of tokenizing mineral rights — real-w
 
 A miner with a claim has two choices: spend $10M+ to develop a mine (90% chance of failure) or sell the claim for pennies. **WayChain offers a third choice:** prove the gold exists, transfer the rights, get paid — no mining required.
 
-### 16.3 How It Works
+### 17.3 How It Works
 
 **Phase 1: Claim Ownership Verification**
 - Legal title deed (government-registered mining claim)
@@ -829,7 +853,7 @@ A miner with a claim has two choices: spend $10M+ to develop a mine (90% chance 
 - 1 token = proportional share of verified in-ground reserves
 - Trades freely on WayChain DEX
 
-### 16.4 Reserve Classification
+### 17.4 Reserve Classification
 
 | Reserve Class | Confidence | Attesters Required | Tokenization Rate |
 |--------------|-----------|-------------------|-------------------|
@@ -843,7 +867,7 @@ A miner with a claim has two choices: spend $10M+ to develop a mine (90% chance 
 - Protocol valuation: $160M
 - Token supply: 80,000 tokens (each = 1 oz equivalent at 80%)
 
-### 16.5 Why This Only Works on WayChain
+### 17.5 Why This Only Works on WayChain
 
 | Requirement | Every Other L1 | WayChain |
 |-------------|---------------|----------|
@@ -856,7 +880,7 @@ A miner with a claim has two choices: spend $10M+ to develop a mine (90% chance 
 
 **The key insight:** This doesn't work with anonymous oracles because the verifications are legal. A lawyer who falsely attests to a title deed can be disbarred in real life AND lose their Dox_Dev badge. The identity layer bridges on-chain and off-chain consequences.
 
-### 16.6 Environmental Preservation Through Tokenization
+### 17.6 Environmental Preservation Through Tokenization
 
 Every MRT represents gold that will never be mined. The environmental benefit is the product:
 
@@ -877,9 +901,9 @@ Every MRT represents gold that will never be mined. The environmental benefit is
 
 ---
 
-## 17. Network Status (Live)
+## 18. Network Status (Live)
 
-### 17.1 Deployment
+### 18.1 Deployment
 
 | Component | Status | URL |
 |-----------|--------|-----|
@@ -891,7 +915,7 @@ Every MRT represents gold that will never be mined. The environmental benefit is
 | Daemon | Running | systemd, auto-restart |
 | Tunnel | Running | cloudflared, auto-restart |
 
-### 17.2 Chain Statistics
+### 18.2 Chain Statistics
 
 | Metric | Value |
 |--------|-------|
@@ -904,7 +928,7 @@ Every MRT represents gold that will never be mined. The environmental benefit is
 | Accounts | 11+ |
 | Precompiles | 17 |
 
-### 17.3 Security
+### 18.3 Security
 
 | Feature | Status |
 |---------|--------|
@@ -917,9 +941,9 @@ Every MRT represents gold that will never be mined. The environmental benefit is
 
 ---
 
-## 18. Risks & Honest Assessment
+## 19. Risks & Honest Assessment
 
-### 18.1 Technical Risks
+### 19.1 Technical Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
@@ -929,7 +953,7 @@ Every MRT represents gold that will never be mined. The environmental benefit is
 | Cross-chain bridge exploit | Low | High | Rate limits, daily caps, challenge window |
 | Privacy proof failure | Low | Critical | Multiple ZK implementations, fallback paths |
 
-### 18.2 Economic Risks
+### 19.2 Economic Risks
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
@@ -938,7 +962,7 @@ Every MRT represents gold that will never be mined. The environmental benefit is
 | Insufficient liquidity | Medium | Medium | Protocol-owned liquidity (POL) |
 | State rent evasion | Medium | Low | Pruning + reactivation costs |
 
-### 18.3 What Could Go Wrong
+### 19.3 What Could Go Wrong
 
 If BTC/ETH drops 50%+ in a single day:
 1. Mass liquidations trigger → collateral dumped → further price drops
@@ -951,7 +975,7 @@ If BTC/ETH drops 50%+ in a single day:
 
 ---
 
-## 19. Roadmap
+## 20. Roadmap
 
 ### Phase 0-5: Foundation (COMPLETE)
 - Persistent state, tx lifecycle, multi-process node, CLI
@@ -993,7 +1017,7 @@ If BTC/ETH drops 50%+ in a single day:
 
 ---
 
-## 20. Conclusion
+## 21. Conclusion
 
 WayChain is the first blockchain where identity — not capital — determines power. The system is live, processing transactions, and open to anyone through waychain.org.
 

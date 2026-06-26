@@ -1,7 +1,7 @@
-# 2WAY — WayChain Multi-Collateral Stablecoin
+# 2WAY — WayChain Multi-Stablecoin Protocol
 
-**Version:** 1.0
-**Status:** Design Specification
+**Version:** 2.0
+**Status:** Design Specification — Phase 6 Implementation
 **Chain:** WayChain (Chain ID 10008)
 **Precompile Address:** 0x18 (2WAY Vault)
 
@@ -9,451 +9,327 @@
 
 ## 1. Overview
 
-2WAY is WayChain's second stablecoin — a multi-collateral, crypto-backed
-synthetic asset that accepts cross-chain assets (BTC, ETH, SOL, MATIC, etc.)
-as collateral. It opens pathways for users from other ecosystems to transact
-on WayChain without selling their native assets.
+2WAY is WayChain's stablecoin protocol. But 2WAY is not just one stablecoin — it's a **synthetic USD** backed by a basket of real stablecoins from other chains.
 
-**Key Properties:**
-- Peg: 1 2WAY = 1 USD (soft-pegged, maintained by arbitrage)
-- Collateral: Multi-asset (BTC, ETH, SOL, MATIC, stETH, and more)
-- Over-collateralized: Minimum 150% C-Ratio, 175% target
-- Liquidation: Stability Pool + auction fallback (soft liquidation)
-- Revenue: Stability fees + liquidation penalties → protocol treasury + BIJO stakers
-- Cross-chain: 2WAY is an omnichain token (LayerZero OFT or native bridge)
+### The Problem with Single-Collateral Stablecoins
+
+Existing stablecoins force users to choose:
+- **USDC/USDT:** Stable, liquid, but custodial (you trust Circle/Tether)
+- **DAI/LUSD:** Trustless, but locked to ETH/ETH-only collateral
+- **FRAX/crvUSD:** Complex mechanisms, governance-dependent
+
+WayChain users come from Bitcoin, Ethereum, Solana, Polygon, and other ecosystems. They already hold stablecoins on those chains. They don't want to sell their ETH for DAI, then deposit DAI to mint yet another token.
+
+### The 2WAY Solution
+
+2WAY accepts **real stablecoins from each network** as collateral:
+
+| Network | Stablecoin | Type | Why Accept It |
+|---------|-----------|------|---------------|
+| Bitcoin | 1WAY (BTC-backed) | Over-collateralized | Bitcoin is the largest crypto asset |
+| Ethereum | LUSD | Over-collateralized, trustless | Most trustless stablecoin — pure ETH backing, no admin keys |
+| Ethereum | DAI/USDS | Over-collateralized, battle-tested | Largest decentralized stablecoin, $5B+ TVL |
+| Ethereum | crvUSD | Over-collateralized, LLAMMA liquidations | Innovative, robust oracle system |
+| Ethereum | GHO | Over-collateralized, Aave-governed | Native to largest lending protocol |
+| Solana | USDS (Sky) | Over-collateralized | Native Solana deployment of DAI fork |
+| Polygon | crvUSD | Over-collateralized | Native Polygon deployment |
+| Arbitrum/Optimism/Base | LUSD | Over-collateralized | Native L2 deployments |
+| Any chain | USDC/USDT | Custodial (wrapped) | Most liquid, most widely used — accepted with higher collateral ratio |
+
+### How It Works
+
+```
+User on Ethereum holds LUSD
+  → Bridges LUSD to WayChain (via cross-chain attestation)
+  → Deposits LUSD into 2WAY Vault
+  → Mints 2WAY at 150% collateral ratio
+  → Uses 2WAY on WayChain (transacting, providing liquidity, etc.)
+  → To redeem: burn 2WAY → withdraw LUSD → bridge back to Ethereum
+```
+
+The key insight: **2WAY is backed by real, yield-bearing, trustless stablecoins** — not volatile crypto. This gives it fundamentally different stability properties than existing CDP stablecoins.
 
 ---
 
-## 2. Architecture
+## 2. Stability Architecture
 
-### 2.1 Collateral Vault Model (CDP)
+### 2.1 Three-Layer Stability Defense
 
-Each user opens a Vault and deposits collateral. They can mint 2WAY up
-to their collateral ratio limit.
+**Layer 1: Primary Redemption (Hard Floor)**
+2WAY can always be redeemed for $1 of underlying stablecoin collateral. If 2WAY trades at $0.98, arbitrageurs buy 2WAY and redeem it for $1 of LUSD, pushing the price back to $1. This creates a **hard floor** at $1.
 
-```
-User → deposit BTC/ETH/SOL → Vault → mint 2WAY → use 2WAY on WayChain
-```
+**Layer 2: Stability Pool (Soft Absorption)**
+A pool of 2WAY/USDC liquidity absorbs small depegs. If 2WAY drops to $0.99, the pool arbitrages it back to $1. The Stability Pool is funded by:
+- Protocol revenue (stability fees + liquidation penalties)
+- External LPs earning yield
 
-**Vault State:**
-```
-Vault {
-  owner: address
-  collaterals: { asset: amount }    // Multi-asset
-  debt: uint256                      // 2WAY minted
-  updatedBlock: uint64
+**Layer 3: Collateral Ratio Adjustment (Monetary Policy)**
+If demand for 2WAY increases, the protocol can lower the minimum C-Ratio (e.g., from 150% to 140%) to expand supply. If demand decreases, raise the C-Ratio to contract supply.
+
+### 2.2 Why This Is More Stable Than Single-Collateral CDPs
+
+| Property | Traditional CDP (DAI, LUSD) | 2WAY |
+|----------|---------------------------|------|
+| Collateral type | Single volatile asset (ETH) | Basket of stablecoins |
+| Collateral volatility | High (ETH ±30% swings) | Low (stablecoins ±1-2%) |
+| Liquidation cascade risk | High (ETH crash → mass liquidations) | Low (stablecoins don't crash together) |
+| Oracle dependency | ETH/USD price | Stablecoin/USD price (simpler) |
+| Depeg recovery | Depends on collateral recovery | Depends on any ONE stablecoin maintaining peg |
+
+The critical advantage: **stablecoins are less volatile than ETH.** When ETH drops 30%, DAI and LUSD maintain their peg. 2WAY's collateral doesn't evaporate during market downturns.
+
+### 2.3 Collateral Risk Matrix
+
+| Collateral | Custodial Risk | Depeg Risk | Liquidity | On-Chain Verifiability | C-Ratio |
+|-----------|---------------|------------|-----------|------------------------|---------|
+| LUSD | None | Low | Medium | Full | 130% |
+| DAI/USDS | None | Low | High | Full | 130% |
+| crvUSD | None | Low | Medium | Full | 130% |
+| GHO | None (Aave governance) | Low | Medium | Full | 130% |
+| USDC | Circle | Low | Very High | Attested only | 150% |
+| USDT | Tether | Medium | Very High | Attested only | 175% |
+| 1WAY (BTC) | None | Low | Low | Full | 150% |
+
+**Custodial stablecoins (USDC/USDT) require higher collateral ratios** because you must trust the issuer. **Trustless stablecoins (LUSD/DAI/crvUSD/GHO) require lower ratios** because the backing is verifiable on-chain.
+
+---
+
+## 3. Vault Architecture
+
+### 3.1 Vault State
+
+```go
+type Vault struct {
+    Owner           string            // Vault owner address
+    Collaterals     map[string]uint256 // stablecoin → amount
+    Debt            uint256            // 2WAY minted (in wei)
+    UpdatedBlock    uint64            // Last interaction block
+    CollateralRatio uint16            // Current ratio (basis points, e.g., 15000 = 150%)
 }
 ```
 
-### 2.2 Collateral Types
+### 3.2 Core Operations
 
-| Asset | Min C-Ratio | Liquidation Ratio | Stability Fee | Max Debt |
-|-------|-------------|-------------------|---------------|----------|
-| BTC   | 150%        | 140%              | 1.5% APR      | 30% cap  |
-| ETH   | 150%        | 140%              | 1.5% APR      | 30% cap  |
-| stETH | 150%        | 140%              | 1.5% APR      | 20% cap  |
-| SOL   | 175%        | 160%              | 2.5% APR      | 15% cap  |
-| MATIC | 175%        | 160%              | 2.5% APR      | 10% cap  |
-| WAY   | 200%        | 180%              | 3.0% APR      | 10% cap  |
-
-**Rationale:** More volatile assets require higher collateral ratios. BTC/ETH
-are deepest and most trusted → lowest ratios. WAY is the native token →
-highest ratio to prevent reflexive depeg.
-
-### 2.3 Collateral Ratio Calculation
-
+**Deposit:**
 ```
-C-Ratio = (Sum of Collateral Value in USD) / (Debt in 2WAY)
+deposit(vaultId, stablecoin, amount):
+    → Transfer stablecoin from user to vault
+    → Update vault.Collaterals[stablecoin] += amount
+    → Recalculate collateral ratio
+    → Emit Deposited event
 ```
 
-Example: Deposit $1,500 worth of ETH, mint 800 2WAY.
-C-Ratio = 1500 / 800 = 187.5% (safe)
+**Mint:**
+```
+mint(vaultId, amount):
+    → Require vault.CollateralRatio >= MinC-Ratio after minting
+    → Mint 2WAY tokens to user
+    → vault.Debt += amount
+    → Emit Minted event
+```
 
-### 2.4 Global Collateral Cap
+**Withdraw:**
+```
+withdraw(vaultId, stablecoin, amount):
+    → vault.Collaterals[stablecoin] -= amount
+    → Require vault.CollateralRatio >= MinC-Ratio after withdrawal
+    → Transfer stablecoin back to user
+    → Emit Withdrawn event
+```
 
-Each collateral type has a **debt ceiling** (max % of total system debt).
-This prevents any single asset from dominating risk.
+**Burn:**
+```
+burn(vaultId, amount):
+    → Burn 2WAY tokens from user
+    → vault.Debt -= amount
+    → Emit Burned event
+```
+
+### 3.3 Liquidation Flow
 
 ```
-Total Debt = Sum of all 2WAY minted across all vaults
-BTC Debt Ceiling = 30% of Total Debt
-ETH Debt Ceiling = 30% of Total Debt
-All Others = 10-20% each
+liquidate(vaultId):
+    → Require vault.CollateralRatio < LiquidationRatio
+    → Stability Pool absorbs debt first (if sufficient 2WAY available)
+    → If Stability Pool insufficient → Auction begins
+    → Liquidators bid 2WAY to buy discounted collateral
+    → Liquidation penalty (10%) goes to protocol treasury
+    → Emit Liquidated event
 ```
 
 ---
 
-## 3. Peg Stability Mechanism
+## 4. Price Oracle Integration
 
-### 3.1 Internal Redemption (Primary)
+### 4.1 Stablecoin Price Feeds
 
-1 2WAY can always be redeemed for $1 worth of collateral at any time.
-This creates a hard floor: if 2WAY trades below $1, arbitrageurs buy
-and redeem for profit.
+2WAY needs to know the USD price of each accepted stablecoin. Since these are stablecoins, the answer should be $1. But during depegs, the price diverges.
 
-```
-2WAY price < $1.00 → Arbitrageurs buy 2WAY → redeem for $1 collateral → price rises
-2WAY price > $1.00 → Arbitrageurs deposit collateral → mint 2WAY → sell → price falls
-```
+**Oracle Sources (via existing 7 oracle precompiles):**
 
-### 3.2 Stability Pool (Secondary)
+| Feed | Source | Trust Model |
+|------|--------|-------------|
+| LUSD/USD | Chainlink LUSD/USD | Decentralized |
+| DAI/USD | Chainlink DAI/USD | Decentralized |
+| USDC/USD | Chainlink USDC/USD | Decentralized |
+| USDT/USD | Chainlink USDT/USD | Decentralized |
+| crvUSD/USD | Curve internal oracle | Curve governance |
+| GHO/USD | Aave oracle | Aave governance |
 
-A pool of 2WAY + USDC (or 1WAY) that absorbs small depegs:
-- Depositors earn yield from liquidation penalties
-- Pool automatically buys 2WAY when price < $0.99
-- Acts as first line of defense before liquidations trigger
+**Safety mechanism:** If any stablecoin deviates more than 2% from $1, the protocol:
+1. Pauses new minting for that collateral type
+2. Allows existing vaults to add collateral or repay
+3. Prevents liquidations from being unfairly triggered
 
-### 3.3 Stability Fee (Tertiary)
+### 4.2 Collateral Value Calculation
 
-Variable interest rate on outstanding debt. When 2WAY is below peg:
-- Governance raises stability fee → borrowing becomes expensive →
-  less minting → debt shrinks → price recovers
+```go
+func (v *Vault) TotalCollateralValueUSD() uint256 {
+    total := uint256(0)
+    for stablecoin, amount := range v.Collaterals {
+        price := oracle.GetPrice(stablecoin)  // 8 decimals
+        value := (amount * price) / 1e8
+        total += value
+    }
+    return total
+}
 
-When 2WAY is above peg:
-- Governance lowers stability fee → borrowing becomes cheaper →
-  more minting → supply expands → price falls back to peg
-
----
-
-## 4. Liquidation Mechanism
-
-### 4.1 Liquidation Trigger
-
-A vault becomes liquidatable when:
-```
-C-Ratio < Liquidation Ratio (e.g., 140% for BTC)
-```
-
-### 4.2 Liquidation Flow
-
-```
-1. Vault falls below Liquidation Ratio
-2. Stability Pool absorbs the debt first (if sufficient 2WAY available)
-3. If Stability Pool insufficient → Auction begins
-4. Collateral auction: Liquidators bid 2WAY to buy discounted collateral
-5. Remaining collateral returned to vault owner
-6. Liquidation penalty (10%) goes to protocol treasury
-```
-
-### 4.3 Soft Liquidation (Phase 2)
-
-For assets with deep AMM liquidity (ETH, BTC), implement LLAMMA-style
-soft liquidation:
-- As C-Ratio drops, collateral is gradually swapped to 2WAY
-- Avoids sudden, large sell-offs that crash collateral prices
-- Uses WayChain's built-in DEX liquidity (WayChainFactory/Pair contracts)
-
-### 4.4 Stability Pool
-
-```
-Stability Pool {
-  deposits: { user: 2WAY_amount }
-  totalDeposits: uint256
-  liquidationRevenue: uint256  // Accumulated from liquidations
+func (v *Vault) CollateralRatio() uint16 {
+    if v.Debt == 0 {
+        return type(uint16).max  // No debt = infinite ratio
+    }
+    collateralUSD := v.TotalCollateralValueUSD()
+    return (collateralUSD * 10000) / v.Debt  // basis points
 }
 ```
 
-- Depositors earn pro-rata share of liquidation penalties (target 5-15% APY)
-- Depositors can withdraw anytime (FIFO during active liquidations)
-- Acts as automatic buyer of last resort for underwater vaults
+---
+
+## 5. Stability Pool
+
+### 5.1 Design
+
+The Stability Pool holds 2WAY and USDC in a balanced ratio. It absorbs debt from liquidated vaults before they enter auction.
+
+```
+Liquidation occurs:
+  1. Stability Pool checks: do we have enough 2WAY to cover this vault's debt?
+  2. If YES: Pool absorbs debt, receives collateral at 10% discount
+  3. If NO: Vault enters auction, liquidators bid 2WAY for collateral
+```
+
+### 5.2 Stability Pool Rewards
+
+LPs who deposit into the Stability Pool earn:
+- **Stability fees** from vaults (proportional to their share)
+- **Liquidation penalties** (10% of liquidated vault value)
+- **2WAY governance rewards** (future)
 
 ---
 
-## 5. Oracle Design
+## 6. Cross-Chain Stablecoin Bridge
 
-### 5.1 Price Feeds
+### 6.1 How Stablecoins Arrive on WayChain
 
-2WAY uses WayChain's existing oracle precompiles (0x0C-0x12):
+Each accepted stablecoin exists natively on its home chain. To use it on WayChain:
 
-| Precompile | Function | Assets Covered |
-|------------|----------|----------------|
-| 0x0C       | OracleAggregator | BTC/USD, ETH/USD |
-| 0x0D       | OracleScheduler | SOL/USD, MATIC/USD |
-| 0x0E       | OracleVerifier | stETH/ETH ratio |
-| 0x0F       | TLSVerifier | Cross-chain verification |
-| 0x10       | BLSVerify | Oracle signature aggregation |
-| 0x11       | AccountRecovery | Emergency price freeze |
-| 0x12       | StateRent | On-chain data indexing |
+**Option A: Cross-Chain Attestation (Trustless)**
+For trustless stablecoins (LUSD, DAI, crvUSD, GHO):
+1. User locks stablecoin on source chain (e.g., Ethereum)
+2. WayChain oracles attest to the lock event
+3. Equivalent amount is minted on WayChain as a "wrapped" version
+4. To redeem: burn wrapped version → oracles attest → unlock on source chain
 
-### 5.2 Price Validation Rules
+**Option B: Native Bridge (for chains with official bridges)**
+For USDC (Circle CCTP), USDT:
+1. User burns USDC on source chain via CCTP
+2. USDC is minted natively on WayChain
+3. No wrapped token — it's the real thing
 
-- Minimum 3 oracle confirmations required
-- Max 2% deviation from last price (circuit breaker)
-- Staleness check: price must be < 1 hour old
-- Emergency freeze: If >50% of oracles report >10% deviation, halt new mints
+### 6.2 Wrapped Token Naming Convention
 
-### 5.3 Cross-Chain Price Verification
-
-For non-native assets (ETH, SOL, MATIC):
-- Oracle network attests to source chain state
-- Price = median of 7 oracle responses
-- Outlier rejection: discard responses >5% from median
+| Source Chain | Original | On WayChain |
+|-------------|----------|-------------|
+| Ethereum | LUSD | wLUSD (or just LUSD if bridged natively) |
+| Ethereum | DAI | wDAI |
+| Ethereum | crvUSD | wcrvUSD |
+| Ethereum | GHO | wGHO |
+| Solana | USDS | wUSDS |
+| Any | USDC | USDC (native via CCTP) |
+| Any | USDT | USDT (native) |
 
 ---
 
-## 6. Tokenomics
+## 7. Revenue Model
 
-### 6.1 2WAY Supply Model
-
-```
-No hard cap — supply expands/contracts based on demand and collateral
-Target initial supply: 10M 2WAY (from liquidity bootstrap)
-Max supply growth: 20% per year (governance-controlled)
-```
-
-### 6.2 Revenue Model
+### 7.1 Revenue Sources
 
 | Source | Rate | Allocation |
 |--------|------|------------|
-| Stability Fee | 1.5-3% APR | 80% Treasury, 20% BIJO stakers |
-| Liquidation Penalty | 10% of liquidated debt | 70% Stability Pool, 30% Treasury |
+| Stability Fee | 1.5-3% APR | 80% Treasury, 20% Stability Pool LPs |
+| Liquidation Penalty | 10% of liquidated value | 70% Stability Pool, 30% Treasury |
 | Redemption Fee | 0.5% | 100% Treasury |
-| Protocol-Owned Liquidity Yield | Variable | 100% Treasury |
+| Flash Mint Fee | 0.05% | 100% Treasury |
 
-### 6.3 Protocol Treasury
+### 7.2 Revenue Projections (with stablecoin collateral)
 
-```
-Treasury {
-  assets: { asset: amount }    // Accumulated fees
-  insuranceFund: uint256       // Backstop for bad debt
-  maxInsuranceRatio: 10%      // 10% of total debt
-}
-```
+With stablecoin collateral, 2WAY can achieve much higher TVL than volatile-asset CDPs because:
+- Users don't fear collateral crashes
+- Institutional users can hold stablecoin-backed positions
+- Yield from underlying stablecoins (crvUSD LP rewards, GHO staking) can offset stability fees
 
-### 6.4 Insurance Fund
-
-If liquidations don't cover all debt (black swan event):
-- Insurance fund covers shortfall
-- If insurance insufficient → protocol issues recovery tokens (dilute BIJO)
-- Recovery tokens vest over 1 year to prevent dump
+| TVL | 2WAY Supply | Annual Revenue |
+|-----|-------------|---------------|
+| $50M | $33M | ~$1.5M |
+| $500M | $333M | ~$15M |
+| $5B | $3.3B | ~$150M |
 
 ---
 
-## 7. Cross-Chain 2WAY
+## 8. Implementation Checklist
 
-### 7.1 Omnichain Design
+### Phase 6A: Core Vault
+- [ ] Precompile 0x18: Vault struct, deposit/mint/withdraw/burn
+- [ ] Collateral type registry (add/remove accepted stablecoins)
+- [ ] Collateral ratio enforcement
+- [ ] Oracle price integration (via existing 0x0C-0x10)
 
-2WAY is an omnichain fungible token using LayerZero OFT standard:
+### Phase 6B: Liquidation + Stability Pool
+- [ ] Liquidation trigger (check C-Ratio < threshold)
+- [ ] Stability Pool contract (deposit/withdraw/liquidate)
+- [ ] Auction mechanism (fallback when pool insufficient)
+- [ ] Liquidation penalty distribution
 
-```
-Ethereum ←→ WayChain ←→ Solana ←→ Polygon
-     ↕                        ↕
-  Arbitrum                 Avalanche
-```
+### Phase 6C: Cross-Chain Integration
+- [ ] Cross-chain attestation for LUSD/DAI/crvUSD/GHO
+- [ ] CCTP integration for USDC
+- [ ] Wrapped token contracts (wLUSD, wDAI, wcrvUSD, wGHO)
+- [ ] Redemption flow (burn → unlock → source chain)
 
-### 7.2 Bridge Mechanism
-
-- **Lock-and-Mint:** 2WAY locked on source chain, minted on destination
-- **Native burn:** 2WAY burned on destination, released on source
-- **Gas:** <$0.10 per cross-chain transfer (WayChain advantage)
-- **Finality:** <5 minutes (WayChain 1s finality + source chain confirmation)
-
-### 7.3 Cross-Chain Collateral
-
-Users can deposit collateral on any supported chain:
-- Deposit BTC on Ethereum → oracle verifies → mint 2WAY on WayChain
-- Deposit SOL on Solana → oracle verifies → mint 2WAY on WayChain
-- Cross-chain deposit takes 2-5 minutes (source chain finality + oracle)
-
----
-
-## 8. Governance Parameters
-
-### 8.1 Adjustable Parameters
-
-| Parameter | Initial | Range | Governance |
-|-----------|---------|-------|------------|
-| Min C-Ratio (BTC/ETH) | 150% | 130-200% | DAO vote |
-| Min C-Ratio (SOL/MATIC) | 175% | 150-250% | DAO vote |
-| Min C-Ratio (WAY) | 200% | 150-300% | DAO vote |
-| Stability Fee | 1.5-3% | 0-10% | DAO vote |
-| Liquidation Penalty | 10% | 5-20% | DAO vote |
-| Debt Ceiling per asset | 10-30% | 0-50% | DAO vote |
-| Stability Pool Reward | 5-15% APY | 3-25% | DAO vote |
-| Emergency Pause | Active | On/Off | Multi-sig (3/5) |
-
-### 8.2 Emergency Controls
-
-- **Circuit Breaker:** Pause all mints if 2WAY depegs >5% for >1 hour
-- **Oracle Freeze:** Halt if >3 oracles report stale/corrupt data
-- **Global Settlement:** In extreme scenarios, redeem all 2WAY at current collateral value
-- **Admin Key:** 3-of-5 multi-sig (curators + dev team) for emergency pause
+### Phase 6D: Governance + Parameters
+- [ ] Governance-controlled parameter updates (C-Ratios, fees, debt caps)
+- [ ] Emergency pause functionality
+- [ ] Treasury management (fee distribution)
 
 ---
 
-## 9. Security Model
-
-### 9.1 Attack Vectors & Mitigations
-
-| Attack | Mitigation |
-|--------|------------|
-| Oracle manipulation | 7-oracle median, 2% deviation cap, staleness check |
-| Flash loan price manipulation | TWAP (time-weighted average price) for collateral valuation |
-| Collateral depeg death spiral | Global collateral caps, insurance fund, emergency pause |
-| Governance attack | 90-day timelock, 2/3 supermajority for critical params |
-| Smart contract bug | Formal verification, audit, bug bounty |
-| Cross-chain bridge exploit | Rate limiting, daily caps, multi-sig confirmation |
-
-### 9.2 Collateral Risk Tiers
-
-| Tier | Assets | Max Debt Ceiling | Oracle Requirement |
-|------|--------|------------------|-------------------|
-| 1 (Safest) | BTC, ETH | 30% each | 7/7 oracles |
-| 2 (Safe) | stETH, WBTC | 20% each | 5/7 oracles |
-| 3 (Moderate) | SOL, MATIC | 15% each | 5/7 oracles |
-| 4 (Risky) | WAY, alt-L1s | 10% each | 7/7 oracles + TWAP |
-
----
-
-## 10. Initial Deployment Plan
-
-### Phase 1: Single-Collateral (Week 1-2)
-- 2WAY vaults accept BTC only (via BitcoinRegistry precompile)
-- Stability Pool with 2WAY/USDC
-- 7 oracle price feeds for BTC/USD
-- Initial supply cap: 1M 2WAY
-
-### Phase 2: Multi-Collateral (Week 3-4)
-- Add ETH, stETH collateral
-- Add SOL, MATIC via cross-chain oracle attestation
-- Enable cross-chain 2WAY (Ethereum ↔ WayChain)
-- Supply cap: 10M 2WAY
-
-### Phase 3: Scale (Month 2+)
-- Add remaining collateral types
-- Enable soft liquidation (AMM-based)
-- Cross-chain 2WAY to Solana, Polygon, Avalanche
-- Remove supply cap (governance-controlled growth)
-
----
-
-## 11. Precompile Integration
-
-### 11.1 2WAY Vault Precompile (0x18)
-
-Extends the existing 12 precompiles with a 13th:
-
-```
-Precompile 0x18 — TwoWayVault
-  - deposit(asset, amount, vaultID)
-  - mint(vaultID, amount)
-  - withdraw(asset, amount, vaultID)
-  - repay(vaultID, amount)
-  - liquidate(vaultID)
-  - getVault(vaultID) → (collaterals, debt, ratio)
-  - getPrice(asset) → (price, timestamp, confidence)
-```
-
-### 11.2 Integration with Existing Precompiles
-
-| Precompile | 2WAY Usage |
-|------------|-----------|
-| 0x0C-0x12 (Oracles) | Price feeds for all collateral assets |
-| 0x13 (DoxDevBadge) | Curator role for emergency controls |
-| 0x14 (BIJO) | Revenue distribution to BIJO stakers |
-| 0x15 (DeadMansSwitch) | Inheritance for vault positions |
-| 0x16 (BitcoinRegistry) | BTC collateral verification |
-| 0x17 (StorageEndowment) | Protocol-owned liquidity yield |
-
----
-
-## 12. Economic Projections
-
-### 12.1 Scenario: $10M TVL (Year 1)
-
-```
-Collateral deposited: $10,000,000
-Average C-Ratio: 180%
-2WAY minted: $5,555,555
-Stability fee (2% APR): $111,111/year revenue
-Liquidation penalties (est. 2% of TVL/yr): $200,000/year
-Total protocol revenue: ~$311,000/year
-```
-
-### 12.2 Scenario: $100M TVL (Year 3)
-
-```
-Collateral deposited: $100,000,000
-Average C-Ratio: 175%
-2WAY minted: $57,142,857
-Stability fee (2% APR): $1,142,857/year
-Liquidation penalties: $2,000,000/year
-Cross-chain fees: $500,000/year
-Total protocol revenue: ~$3,642,857/year
-```
-
-### 12.3 2WAY Demand Drivers
-
-1. **Arbitrage:** When 1WAY (native stablecoin) and 2WAY both trade at $1,
-   arbitrageurs use 2WAY as collateral to mint 1WAY (leveraged yield)
-2. **Cross-chain onboarding:** Users bridge BTC/ETH to WayChain → deposit →
-   mint 2WAY → participate in WayChain DeFi
-3. **Leveraged long:** Deposit ETH → mint 2WAY → buy more ETH → repeat
-4. **Working capital:** Hold BTC, borrow 2WAY against it, spend 2WAY
-
----
-
-## 13. Risks & Honest Assessment
-
-### 13.1 Technical Risks
+## 9. Risk Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| Oracle failure | Low | Critical | 7-oracle median, circuit breaker |
-| Collateral 10+% drop in 1 hour | Medium | High | Liquidation + insurance fund |
+| Major stablecoin depeg (e.g., USDC) | Low | High | Pause minting, higher C-Ratio for custodial assets |
+| Oracle manipulation | Low | Critical | 7-oracle median, 2% deviation cap |
 | Smart contract bug | Low | Critical | 2 audits + formal verification |
-| Cross-chain bridge exploit | Low | High | Rate limits, daily caps |
-
-### 13.2 Economic Risks
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| 2WAY depeg below $0.95 | Medium | High | Stability fee increase, Stability Pool |
-| Collateral death spiral (ETH 50% drop) | Low-Med | Critical | Global collateral caps, emergency pause |
-| Insufficient liquidity for redemptions | Medium | Medium | Protocol-owned liquidity, POL strategy |
-| Regulatory (security classification) | Unknown | Unknown | Decentralized governance, no issuer |
-
-### 13.3 What Could Go Wrong
-
-If BTC/ETH drops 50%+ in a single day:
-1. Mass liquidations trigger → collateral dumped → further price drops
-2. Stability Pool absorbs first losses (target: 5-15% of TVL)
-3. Insurance fund covers next layer
-4. If both exhausted → recovery tokens issued (dilutive but survivable)
-5. 2WAY may trade at $0.80-0.90 temporarily until collateral recovers
-
-**This is the same risk profile as MakerDAO, Liquity, and Synthetix.
-WayChain's advantage: 1s finality means faster liquidation processing.**
+| Governance attack | Low | High | Timelock + Dox_Dev-weighted voting |
+| Cross-chain bridge exploit | Low | High | Rate limits, daily caps, gradual rollout |
+| Stablecoin reserve audit failure | Medium | Medium | Prefer trustless collateral (LUSD/DAI) |
 
 ---
 
-## 14. Implementation Checklist
+## 10. Why This Matters
 
-- [ ] 2WAY Vault precompile (0x18) — deposit/mint/withdraw/liquidate
-- [ ] Stability Pool contract — deposit/withdraw/liquidation absorption
-- [ ] Oracle integration — 7 feeds for BTC/ETH/stETH/SOL/MATIC/WAY
-- [ ] Liquidation engine — Stability Pool first, auction fallback
-- [ ] Cross-chain bridge — LayerZero OFT for 2WAY omnichain
-- [ ] Governance module — parameter adjustment, emergency controls
-- [ ] Insurance fund — automatic allocation from protocol revenue
-- [ ] UI — vault management, 2WAY mint/burn, cross-chain interface
-- [ ] Audit — 2 independent firms before mainnet
-- [ ] Bug bounty — $50K+ program
+**For users:** 2WAY lets you use your existing stablecoins on WayChain without selling them. If you hold LUSD on Ethereum, you can bridge it to WayChain and mint 2WAY to transact — while still earning LUSD's ETH backing security.
 
----
+**For WayChain:** 2WAY brings liquidity from every ecosystem. USDC from Ethereum, USDS from Solana, crvUSD from Arbitrum — all flow into WayChain. This is how WayChain becomes the settlement layer for cross-chain stablecoin activity.
 
-## 15. Summary
-
-2WAY transforms WayChain from a single-collateral chain into a multi-asset
-settlement layer. By accepting BTC, ETH, SOL, MATIC and others as collateral:
-
-1. **Users from other chains** can bring their assets to WayChain
-2. **2WAY becomes the unit of account** for multi-chain DeFi on WayChain
-3. **Protocol revenue** flows to BIJO stakers and the treasury
-4. **Network effects** compound as more assets → more users → more liquidity
-
-The math works at every scale. $10M TVL generates $300K/year revenue.
-$100M TVL generates $3.6M/year. $1B TVL generates $36M/year — enough
-to fund protocol development indefinitely.
-
-**2WAY is the gateway drug for cross-chain liquidity on WayChain.**
+**For stability:** Unlike volatile-collateral CDPs, 2WAY's backing assets are already stable. The protocol doesn't need to liquidate during market crashes because the collateral doesn't crash. This is fundamentally more stable than any single-collateral CDP.
