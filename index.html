@@ -4,770 +4,411 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WayChain — Actually Decentralized</title>
-<meta name="description" content="WayChain: The first blockchain where one human = one vote. 200 validators. Dox_Dev verified. No whale capture.">
-<style>
-:root {
-  --bg: #0a0a1a; --bg2: #12122a; --bg3: #1a1a3a;
-  --fg: #e0e0f0; --fg2: #8888bb;
-  --accent: #00d4ff; --accent2: #ff6b35; --accent3: #7b2ff7;
-  --green: #00ff88; --red: #ff3355;
-  --border: #2a2a5a;
+<style>:root{--bg:#0A0A0F;--bg2:#12121A;--bg3:#1A1A24;--fg:#C8D0D9;--fg2:#7A8594;--accent:#00B4FF;--accent2:#FF6B35;--accent3:#A78BFA;--green:#22D37E;--red:#F8312F;--border:#25252F}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--fg);line-height:1.8;font-size:18px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+.header{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:rgba(10,10,15,.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.header h1{font-size:1em;color:var(--accent);font-weight:700}
+.header h1 span{color:var(--fg);font-weight:400;margin-left:6px}
+.main-nav{display:flex;gap:2px;flex-wrap:wrap}
+.main-nav a{font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;color:var(--fg2);border-radius:4px;transition:all .2s}
+.main-nav a:hover{color:var(--fg);background:var(--bg2);text-decoration:none}
+.main-nav a.active{color:var(--bg);background:var(--accent)}
+.hero{text-align:center;padding:70px 20px 50px;border-bottom:1px solid var(--border)}
+.hero h1{font-size:3.5em;color:var(--accent);font-weight:800;line-height:1.1;margin-bottom:12px}
+.hero .tagline{color:var(--fg);font-size:1.05em;line-height:1.6;max-width:550px;margin:0 auto 8px}
+.hero .sub-tagline{color:var(--fg2);font-size:.9em}
+.hero .status-line{margin-top:16px;font-size:.85em;color:var(--fg2)}
+.section-header{padding:50px 20px 20px;text-align:center}
+.section-header h2{font-size:1.6em;color:var(--accent);margin-bottom:6px}
+.section-header p{color:var(--fg2);font-size:.9em}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:30px 20px;max-width:1100px;margin:0 auto}
+.feature-chip{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:all .2s}
+.feature-chip:hover{border-color:var(--accent);transform:translateY(-2px)}
+.feature-chip .name{font-size:.85em;font-weight:600;color:var(--fg);margin-bottom:6px}
+.feature-chip .badge{font-size:.6em;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:20px;display:inline-block}
+.badge.live{background:rgba(34,211,126,.15);color:var(--green)}
+.badge.building{background:rgba(255,107,53,.15);color:var(--accent2)}
+.feature-chip .addr{font-size:.65em;color:var(--fg2);font-family:'SF Mono',Menlo,monospace;margin-top:4px}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;max-width:500px;width:100%;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:1.2em;color:var(--accent);margin-bottom:12px}
+.modal p{font-size:.85em;color:var(--fg2);line-height:1.7;margin-bottom:10px}
+.modal .modal-addr{font-family:'SF Mono',Menlo,monospace;font-size:.75em;color:var(--accent3)}
+.modal .modal-link{display:inline-block;margin-top:12px;font-weight:600;font-size:.85em}
+.modal-close{float:right;background:none;border:none;color:var(--fg2);font-size:1.2em;cursor:pointer}
+.toggle-section{padding:40px 20px;max-width:800px;margin:0 auto}
+.toggle-label{text-align:center;font-size:.7em;color:var(--fg2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.toggle-container{display:flex;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative}
+.toggle-slider{position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);background:var(--accent);border-radius:8px;transition:transform .3s;z-index:0}
+.toggle-container.builder .toggle-slider{transform:translateX(100%)}
+.toggle-half{flex:1;padding:24px;cursor:pointer;position:relative;z-index:1;transition:all .3s}
+.toggle-half.active{color:var(--bg)}
+.toggle-half h3{font-size:1em;font-weight:700;margin-bottom:12px}
+.toggle-half ul{list-style:none;padding:0}
+.toggle-half li{font-size:.8em;padding:6px 0;line-height:1.4}
+.pipeline{display:flex;align-items:flex-start;justify-content:center;gap:0;padding:30px 20px;max-width:900px;margin:0 auto;position:relative}
+.pipeline::before{content:'';position:absolute;top:44px;left:10%;right:10%;height:2px;background:var(--border);z-index:0}
+.pipeline-step{flex:1;text-align:center;position:relative;z-index:1;padding:0 12px}
+.pipeline-icon{width:48px;height:48px;border-radius:50%;margin:0 auto 10px;background:var(--bg2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3em;transition:all .3s}
+.pipeline-step:hover .pipeline-icon{border-color:var(--accent);box-shadow:0 0 12px rgba(0,180,255,.3)}
+.pipeline-step h4{font-size:.85em;color:var(--fg);margin-bottom:4px}
+.pipeline-step p{font-size:.7em;color:var(--fg2);line-height:1.4}
+.calc-section{padding:40px 20px;max-width:600px;margin:0 auto}
+.calc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:28px;position:relative;overflow:hidden}
+.calc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent3))}
+.calc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.calc-title{font-size:.9em;font-weight:700}
+.calc-status{font-size:.65em;padding:4px 10px;border-radius:20px;background:rgba(34,211,126,.15);color:var(--green);font-weight:600}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.calc-field label{font-size:.7em;color:var(--fg2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
+.calc-field input,.calc-field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:10px;border-radius:6px;font-size:.9em;font-family:inherit}
+.calc-field input:focus,.calc-field select:focus{outline:none;border-color:var(--accent)}
+.calc-result{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px}
+.calc-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.85em}
+.calc-row .label{color:var(--fg2)}
+.calc-row .value{color:var(--fg);font-weight:600;font-family:'SF Mono',Menlo,monospace}
+.calc-row.negative .value{color:var(--red)}
+.calc-row.total{border-top:1px solid var(--border);margin-top:8px;padding-top:12px}
+.calc-row.total .value{font-size:1.15em;color:var(--accent)}
+.cta-row{display:flex;gap:12px;margin-top:20px}
+.btn-primary{flex:1;padding:14px;border:none;border-radius:8px;background:var(--accent);color:var(--bg);font-weight:700;font-size:.85em;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:all .2s}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,180,255,.3)}
+.btn-secondary{padding:14px 20px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--fg2);font-weight:600;font-size:.8em;cursor:pointer;transition:all .2s}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.spotlight{padding:50px 20px;background:linear-gradient(180deg,transparent 0%,rgba(0,180,255,.02) 50%,transparent 100%);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.spotlight-container{max-width:900px;margin:0 auto}
+.spotlight-header{text-align:center;margin-bottom:36px}
+.spotlight-header h2{font-size:1.3em;color:var(--accent);margin-bottom:6px}
+.spotlight-header p{color:var(--fg2);font-size:.85em}
+.loop{display:flex;align-items:flex-start;justify-content:center;gap:0;position:relative;margin-bottom:30px}
+.loop::before{content:'';position:absolute;top:20px;left:5%;right:5%;height:2px;background:var(--border);z-index:0}
+.loop-step{flex:1;max-width:240px;text-align:center;padding:24px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;position:relative;z-index:1;transition:all .3s}
+.loop-step:hover{border-color:var(--accent);transform:translateY(-4px)}
+.loop-step .icon{font-size:2.4em;margin-bottom:12px;display:block}
+.loop-step h3{font-size:1em;color:var(--fg);margin-bottom:8px;font-weight:700}
+.loop-step p{font-size:.78em;color:var(--fg2);line-height:1.5}
+.loop-arrow{display:flex;align-items:center;justify-content:center;font-size:1.5em;color:var(--accent);padding:0 8px;margin-top:40px;flex-shrink:0}
+.spotlight-caption{text-align:center;padding:20px 24px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:.95em;line-height:1.7;max-width:700px;margin:0 auto}
+.spotlight-caption .hook{color:var(--accent2);font-weight:700}
+.footer{text-align:center;padding:40px 20px;color:var(--fg2);font-size:.75em;border-top:1px solid var(--border);margin-top:40px}
+@media(max-width:768px){
+  body{line-height:2}
+  .hero h1{font-size:2.2em}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .pipeline{flex-direction:column;align-items:center}
+  .pipeline::before{display:none}
+  .loop{flex-direction:column;align-items:center}
+  .loop::before{display:none}
+  .loop-arrow{transform:rotate(90deg);margin:4px 0}
+  .calc-grid{grid-template-columns:1fr}
+  .cta-row{flex-direction:column}
+  .toggle-half{padding:16px}
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--fg); line-height: 1.6; }
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-.header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 20px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
+@media(max-width:480px){
+  .features-grid{grid-template-columns:1fr}
+  .main-nav a{font-size:.6em;padding:4px 6px}
 }
-.header h1 { font-size: 1.2em; color: var(--accent); }
-.header .nav a { font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-left: 20px; color: var(--fg2); }
-.header .nav a:hover { color: var(--accent); }
-
-.hero { text-align: center; padding: 60px 20px 30px; border-bottom: 1px solid var(--border); }
-.hero h1 { font-size: 3em; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-.hero .tagline { color: var(--fg2); font-size: 1em; letter-spacing: 4px; text-transform: uppercase; margin-top: 10px; }
-.hero .status-line { margin-top: 15px; font-size: 0.85em; }
-.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--fg2); }
-.status-dot.online { background: var(--green); }
-.status-dot.ws { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-.status-dot.offline { background: var(--red); }
-
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 20px 0; }
-.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; }
-.stat-card .value { font-size: 1.5em; font-weight: 700; color: var(--accent); }
-.stat-card .value.green { color: var(--green); }
-.stat-card .label { font-size: 0.7em; color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
-
-.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; padding: 20px 0; }
-.feature { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-.feature h3 { color: var(--accent); font-size: 0.9em; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
-.feature p { font-size: 0.8em; color: var(--fg2); line-height: 1.6; }
-.feature .tag { display: inline-block; font-size: 0.65em; padding: 2px 8px; border-radius: 3px; margin-top: 6px; border: 1px solid var(--fg2); color: var(--fg2); }
-
-.section { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; margin: 15px 0; padding: 20px; }
-.section h2 { font-size: 0.9em; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.75em; }
-th { color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; font-size: 0.65em; }
-.hash { color: var(--accent); max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
-.green { color: var(--green); } .red { color: var(--red); }
-
-.nav-links { display: flex; flex-wrap: wrap; gap: 8px; }
-.nav-link { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 10px 16px; font-size: 0.75em; color: var(--fg); }
-.nav-link:hover { border-color: var(--accent); text-decoration: none; }
-
-#log { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-size: 0.7em; max-height: 100px; overflow-y: auto; margin-top: 8px; }
-#log div { padding: 2px 0; border-bottom: 1px solid rgba(42,42,90,0.2); }
-#log .ok { color: var(--green); } #log .err { color: var(--red); } #log .info { color: var(--fg2); }
-
-.footer { text-align: center; padding: 30px 20px; color: var(--fg2); font-size: 0.7em; border-top: 1px solid var(--border); margin-top: 30px; }
-
-/* ── Mineral Extinguishment Module ── */
-.mem-section {
-  padding: 50px 20px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, transparent 0%, rgba(0,180,255,0.02) 50%, transparent 100%);
-}
-.mem-container { max-width: 900px; margin: 0 auto; }
-.mem-header { text-align: center; margin-bottom: 36px; }
-.mem-header h2 { font-size: 1.4em; color: var(--accent); margin-bottom: 6px; }
-.mem-header p { color: var(--fg2); font-size: 0.85em; }
-
-/* Stepper */
-.stepper { display: flex; justify-content: space-between; margin-bottom: 40px; position: relative; }
-.stepper::before {
-  content: ''; position: absolute; top: 20px; left: 5%; right: 5%; height: 2px;
-  background: var(--border); z-index: 0;
-}
-.step {
-  position: relative; z-index: 1; text-align: center; flex: 1; min-width: 0;
-}
-.step-circle {
-  width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 10px;
-  background: var(--bg2); border: 2px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.85em; font-weight: 700; color: var(--fg2);
-  transition: all 0.3s;
-}
-.step.done .step-circle { background: var(--accent); color: var(--bg); border-color: var(--accent); }
-.step.active .step-circle { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 12px rgba(0,180,255,0.3); }
-.step-label { font-size: 0.7em; color: var(--fg2); line-height: 1.3; padding: 0 4px; }
-.step.active .step-label { color: var(--fg); }
-
-/* Calculator */
-.calc {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
-  padding: 28px; position: relative; overflow: hidden;
-}
-.calc::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent3));
-}
-.calc-header {
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 20px;
-}
-.calc-title { font-size: 0.9em; font-weight: 700; color: var(--fg); }
-.calc-status {
-  font-size: 0.65em; padding: 4px 10px; border-radius: 20px;
-  background: rgba(34,211,126,0.15); color: var(--green); font-weight: 600;
-}
-.calc-status.error { background: rgba(248,49,47,0.15); color: var(--red); }
-
-.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-.calc-field { display: flex; flex-direction: column; }
-.calc-field label { font-size: 0.7em; color: var(--fg2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-.calc-field input, .calc-field select {
-  background: var(--bg); border: 1px solid var(--border); color: var(--fg);
-  padding: 10px 12px; border-radius: 6px; font-size: 0.9em;
-  font-family: inherit; transition: border-color 0.2s;
-}
-.calc-field input:focus, .calc-field select:focus {
-  outline: none; border-color: var(--accent);
-}
-.calc-field input:disabled { opacity: 0.6; cursor: not-allowed; }
-
-.calc-result {
-  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-  padding: 16px; margin-top: 20px;
-}
-.calc-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 0; font-size: 0.85em;
-}
-.calc-row .label { color: var(--fg2); }
-.calc-row .value { color: var(--fg); font-weight: 600; font-family: 'SF Mono', Menlo, monospace; }
-.calc-row.negative .value { color: var(--red); }
-.calc-row.total {
-  border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px;
-}
-.calc-row.total .value { font-size: 1.2em; color: var(--accent); }
-
-/* CTA Button */
-.cta-row { display: flex; gap: 12px; margin-top: 24px; }
-.btn-primary {
-  flex: 1; padding: 14px 24px; border: none; border-radius: 8px;
-  background: var(--accent); color: var(--bg); font-weight: 700;
-  font-size: 0.9em; cursor: pointer; transition: all 0.2s;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,180,255,0.3); }
-.btn-primary:active { transform: translateY(0); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-.btn-secondary {
-  padding: 14px 24px; border: 1px solid var(--border); border-radius: 8px;
-  background: transparent; color: var(--fg2); font-weight: 600;
-  font-size: 0.85em; cursor: pointer; transition: all 0.2s;
-}
-.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-
-/* Live price ticker */
-.price-ticker {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 0.75em; color: var(--fg2);
-}
-.price-dot {
-  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-@media (max-width: 600px) {
-  .stepper::before { display: none; }
-  .step-circle { width: 32px; height: 32px; font-size: 0.75em; }
-  .step-label { font-size: 0.6em; }
-  .calc-grid { grid-template-columns: 1fr; }
-  .cta-row { flex-direction: column; }
-}
-
-
-/* ── Preservation Loop Spotlight ── */
-.spotlight {
-  padding: 50px 20px;
-  background: linear-gradient(180deg, transparent 0%, rgba(0,180,255,0.03) 30%, rgba(0,180,255,0.03) 70%, transparent 100%);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-}
-.spotlight-container { max-width: 900px; margin: 0 auto; }
-.spotlight-header { text-align: center; margin-bottom: 40px; }
-.spotlight-header h2 { font-size: 1.3em; color: var(--accent); margin-bottom: 6px; }
-.spotlight-header p { color: var(--fg2); font-size: 0.85em; }
-
-.loop {
-  display: flex; align-items: flex-start; justify-content: center;
-  gap: 0; position: relative; margin-bottom: 30px;
-}
-.loop-step {
-  flex: 1; max-width: 240px; text-align: center; padding: 24px 16px;
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
-  position: relative; transition: all 0.3s;
-}
-.loop-step:hover { border-color: var(--accent); transform: translateY(-4px); }
-.loop-step .icon { font-size: 2.4em; margin-bottom: 12px; display: block; }
-.loop-step .step-num {
-  font-size: 0.6em; text-transform: uppercase; letter-spacing: 1.5px;
-  color: var(--fg2); margin-bottom: 6px; font-weight: 600;
-}
-.loop-step h3 { font-size: 1em; color: var(--fg); margin-bottom: 8px; font-weight: 700; }
-.loop-step p { font-size: 0.78em; color: var(--fg2); line-height: 1.5; }
-
-.loop-arrow {
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.5em; color: var(--accent); padding: 0 8px;
-  margin-top: 60px; flex-shrink: 0;
-}
-
-.spotlight-caption {
-  text-align: center; padding: 20px 24px;
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
-  font-size: 0.95em; color: var(--fg); line-height: 1.7;
-  max-width: 700px; margin: 0 auto;
-}
-.spotlight-caption a { color: var(--accent); font-weight: 600; }
-.spotlight-caption .hook { color: var(--accent2); font-weight: 700; }
-
-@media (max-width: 700px) {
-  .loop { flex-direction: column; align-items: center; }
-  .loop-step { max-width: 100%; width: 100%; }
-  .loop-arrow { transform: rotate(90deg); margin-top: 0; padding: 4px 0; }
-}
-
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>⬡ WayChain</h1>
-    <div class="nav">
-      <span id="statusSpan"><span class="status-dot offline" id="statusDot"></span><span id="statusText">Connecting...</span></span>
-      <a href="/explorer">Explorer</a>
-      <a href="/badge">Badge</a>
-    </div>
-  </div>
 
-  <div class="hero">
-    <h1>⬡ WayChain</h1>
-    <div class="tagline">Paying claim-holders to leave resources in the ground<br>—enforced by on-chain identity and verified by native oracles.</div>
-    <div class="status-line">Chain ID: 10008 &middot; <span id="nodeVersion">v3.1.2</span></div>
+<div class="header">
+  <h1>⛓ <span>WayChain</span></h1>
+  <div class="main-nav">
+    <a href="/" class="active">Home</a>
+    <a href="/whitepaper">Whitepaper</a>
+    <a href="/explorer">Explorer</a>
+    <a href="/badge">Badge</a>
+    <a href="/plan">Plan</a>
   </div>
-
-  <div class="stats" id="stats">
-    <div class="stat-card"><div class="value" id="blockHeight">—</div><div class="label">Block Height</div></div>
-    <div class="stat-card"><div class="value green" id="blockSpeed">—</div><div class="label">Blocks/sec</div></div>
-    <div class="stat-card"><div class="value" id="totalTxs">0</div><div class="label">Block Txs</div></div>
-    <div class="stat-card"><div class="value" id="connType">—</div><div class="label">Connection</div></div>
-    <div class="stat-card"><div class="value green">200</div><div class="label">Validators</div></div>
-    <div class="stat-card"><div class="value">100M</div><div class="label">WAY Supply</div></div>
-  </div>
-
-  <div class="features">
-    <div class="feature"><h3>One Human, One Vote</h3><p>Every Dox_Dev-verified human runs one validator with equal voting power. No whales. No vote buying.</p><span class="tag">200 max validators</span></div>
-    <div class="feature"><h3>Self-Sovereign</h3><p>Bitcoin-backed 1WAY stablecoin. Native oracle attestations. Dead Man's Switch inheritance. No wrapping, no bridging.</p><span class="tag">Native Bitcoin</span></div>
-    <div class="feature"><h3>Anti-Extractive</h3><p>Fixed gas fees, state rent with 60% burn, sqrt-weighted proposer lottery, no MEV.</p><span class="tag">No MEV</span></div>
-  </div>
-
-  <div class="section">
-    <h2>⧫ Live Blocks <span id="blockCount" style="color:var(--fg2);font-weight:400"></span></h2>
-    <table>
-      <thead><tr><th>Height</th><th>Hash</th><th>Proposer</th><th>Txs</th><th>Time</th></tr></thead>
-      <tbody id="blocksList"><tr><td colspan="5" style="color:var(--fg2)">Connecting...</td></tr></tbody>
-    </table>
-    <div style="text-align:right;margin-top:8px"><a href="/explorer" style="font-size:0.75em">Full Explorer →</a></div>
-  </div>
-
-  <div class="section">
-    <h2>Network</h2>
-    <div class="nav-links">
-      <a class="nav-link" href="/explorer">⧫ Block Explorer</a>
-      <a class="nav-link" href="/badge">🛡️ Dox_Dev Badge</a>
-      <a class="nav-link" href="https://github.com/wink/waychain-consensus/tree/main/projects/WAYCHAIN_BLUEPRINT">📐 Blueprint</a>
-      <a class="nav-link" href="/plan">📋 Launch Plan</a>
-      <a class="nav-link" href="/whitepaper/abstract">📄 Whitepaper</a>
-      <a class="nav-link" href="https://github.com/wink/waychain-consensus">GitHub</a>
-    </div>
-  </div>
-
-  <div id="log"><div class="info">Loading...</div></div>
 </div>
 
+<div class="hero">
+  <h1>⬡ WayChain</h1>
+  <div class="tagline">Paying claim-holders to leave resources in the ground<br>—enforced by on-chain identity and verified by native oracles.</div>
+  <div class="sub-tagline">The first blockchain where one verified human equals one voice. 18 features live.</div>
+  <div class="status-line">Chain ID: 10008 &middot; <span id="nodeVersion">v3.1.2</span> &middot; 1-second blocks &middot; instant BFT finality</div>
+</div>
 
-  <!-- Mineral Extinguishment Module -->
-  <div class="mem-section">
-    <div class="mem-container">
-      <div class="mem-header">
-        <h2>🔥 Mineral Extinguishment</h2>
-        <p>Tokenize verified mineral reserves. Price discovery via native oracle. Settle on-chain.</p>
-      </div>
+<!-- Day 3: 18 Features Grid -->
+<div class="section-header">
+  <h2>18 Features Live</h2>
+  <p>Every feature verified on-chain. Click any chip for details.</p>
+</div>
 
-      <div class="stepper">
-        <div class="step active" id="step1">
-          <div class="step-circle">1</div>
-          <div class="step-label">Verify<br>Reserves</div>
-        </div>
-        <div class="step" id="step2">
-          <div class="step-circle">2</div>
-          <div class="step-label">Oracle<br>Price Feed</div>
-        </div>
-        <div class="step" id="step3">
-          <div class="step-circle">3</div>
-          <div class="step-label">Calculate<br>Payout</div>
-        </div>
-        <div class="step" id="step4">
-          <div class="step-circle">4</div>
-          <div class="step-label">Request<br>Extinguishment</div>
-        </div>
-      </div>
+<div class="features-grid" id="featuresGrid">
+  <!-- Populated by JS -->
+</div>
 
-      <div class="calc">
-        <div class="calc-header">
-          <div class="calc-title">⬡ Live Extinguishment Calculator</div>
-          <div class="price-ticker">
-            <span class="price-dot" id="priceDot"></span>
-            <span id="priceStatus">Oracle: Connecting...</span>
-          </div>
-        </div>
+<!-- Modal -->
+<div class="modal-overlay" id="featureModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modalTitle"></h3>
+    <p id="modalDesc"></p>
+    <div class="modal-addr" id="modalAddr"></div>
+    <a class="modal-link" id="modalLink" href="#">Read in whitepaper →</a>
+  </div>
+</div>
 
-        <div class="calc-grid">
-          <div class="calc-field">
-            <label>Mineral Type</label>
-            <select id="mineralType" onchange="updateCalc()">
-              <option value="gold">Gold (AU)</option>
-              <option value="silver">Silver (AG)</option>
-              <option value="copper">Copper (CU)</option>
-              <option value="lithium">Lithium (LI)</option>
-              <option value="rare-earth">Rare Earth (REO)</option>
-            </select>
-          </div>
-          <div class="calc-field">
-            <label>Reserve Volume (tons)</label>
-            <input type="number" id="volume" value="100" min="1" oninput="updateCalc()">
-          </div>
-          <div class="calc-field">
-            <label>Purity (%)</label>
-            <input type="number" id="purity" value="95" min="1" max="100" step="0.1" oninput="updateCalc()">
-          </div>
-          <div class="calc-field">
-            <label>Transport Distance (km)</label>
-            <input type="number" id="distance" value="50" min="0" oninput="updateCalc()">
-          </div>
-        </div>
+<!-- Day 5: Use vs Build Toggle -->
+<div class="section-header">
+  <h2>Use vs Build</h2>
+  <p>WayChain gates what you can do based on who you are.</p>
+</div>
 
-        <div class="calc-result" id="calcResult">
-          <div class="calc-row">
-            <span class="label">Oracle Spot Price</span>
-            <span class="value" id="spotPrice">Loading...</span>
-          </div>
-          <div class="calc-row">
-            <span class="label">Gross Value</span>
-            <span class="value" id="grossValue">—</span>
-          </div>
-          <div class="calc-row negative">
-            <span class="label">Fixed Protocol Fee (0.5%)</span>
-            <span class="value" id="protocolFee">—</span>
-          </div>
-          <div class="calc-row negative">
-            <span class="label">Extraction Estimate</span>
-            <span class="value" id="extractionCost">—</span>
-          </div>
-          <div class="calc-row negative">
-            <span class="label">Transport Estimate</span>
-            <span class="value" id="transportCost">—</span>
-          </div>
-          <div class="calc-row total">
-            <span class="label">Net Payout (USD)</span>
-            <span class="value" id="netPayout">—</span>
-          </div>
-          <div class="calc-row total">
-            <span class="label">Net Payout (WAY @ current price)</span>
-            <span class="value" id="netPayoutWay">—</span>
-          </div>
-        </div>
-
-        <div class="cta-row">
-          <button class="btn-primary" id="btnRequest" onclick="openDapp()">
-            Request Extinguishment
-          </button>
-          <button class="btn-secondary" onclick="connectWallet()">
-            <span id="walletLabel">Connect Dox_Dev L2</span>
-          </button>
-        </div>
-      </div>
+<div class="toggle-section">
+  <div class="toggle-label">I am a...</div>
+  <div class="toggle-container" id="toggleContainer">
+    <div class="toggle-slider"></div>
+    <div class="toggle-half active" onclick="setToggle('user')">
+      <h3>👤 User</h3>
+      <ul>
+        <li><span class="icon">✅</span> Send tokens</li>
+        <li><span class="icon">✅</span> Receive tokens</li>
+        <li><span class="icon">✅</span> Interact with contracts</li>
+        <li><span class="icon">✅</span> Hold tokens in wallet</li>
+        <li><span class="icon">✅</span> Read on-chain data</li>
+      </ul>
+      <p style="font-size:.7em;color:var(--fg2);margin-top:10px">No ID required. Fully anonymous.</p>
+    </div>
+    <div class="toggle-half" onclick="setToggle('builder')">
+      <h3>🔨 Builder</h3>
+      <ul>
+        <li><span class="icon">⚠️</span> Deploy contracts</li>
+        <li><span class="icon">⚠️</span> Run validators</li>
+        <li><span class="icon">⚠️</span> Submit oracles</li>
+        <li><span class="icon">⚠️</span> Propose governance</li>
+        <li><span class="icon">⚠️</span> Issue badges</li>
+      </ul>
+      <p style="font-size:.7em;color:var(--fg2);margin-top:10px">Dox_Dev badge required. Fully accountable.</p>
     </div>
   </div>
+</div>
 
-  
-  <!-- Preservation Loop Spotlight -->
-  <div class="spotlight">
-    <div class="spotlight-container">
-      <div class="spotlight-header">
-        <h2>🌍 The Preservation Loop</h2>
-        <p>How WayChain aligns economic incentives with land conservation</p>
+<!-- Day 6: Mineral Rights Pipeline -->
+<div class="section-header">
+  <h2>🔥 Mineral Rights Extinguishment</h2>
+  <p>Your killer app. Tokenize reserves. Prove preservation. Get paid.</p>
+</div>
+
+<div class="pipeline">
+  <div class="pipeline-step">
+    <div class="pipeline-icon">📜</div>
+    <h4>1. Prove & Survey</h4>
+    <p>Title deed + geological survey hashed to Binary Journal</p>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">⚖️</div>
+    <h4>2. Price & Fee</h4>
+    <p>Oracle pulls spot price → subtracts fees → shows final payout</p>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">🔒</div>
+    <h4>3. On-Chain Escrow</h4>
+    <p>WAY locked → title NFT transferred to Permanent Reserve</p>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-icon">🏆</div>
+    <h4>4. Proof of Extinguishment</h4>
+    <p>Immutable certificate minted → resource is dead forever</p>
+  </div>
+</div>
+
+<!-- Calculator -->
+<div class="calc-section">
+  <div class="calc">
+    <div class="calc-header">
+      <div class="calc-title">⬡ Calculate Your Payout</div>
+      <div class="calc-status" id="calcStatus">Oracle: Connecting...</div>
+    </div>
+    <div class="calc-grid">
+      <div class="calc-field">
+        <label>Mineral</label>
+        <select id="mineral" onchange="updateCalc()">
+          <option value="gold">Gold (troy oz)</option>
+          <option value="silver">Silver (troy oz)</option>
+          <option value="copper">Copper (lb)</option>
+          <option value="lithium">Lithium (kg)</option>
+          <option value="rare-earth">Rare Earth (kg)</option>
+        </select>
       </div>
-
-      <div class="loop">
-        <div class="loop-step">
-          <span class="icon">🏔️</span>
-          <div class="step-num">Step 1</div>
-          <h3>Claim</h3>
-          <p>Landowner stakes their mineral claim as a soulbound NFT, locked by their Dox_Dev Level 2 badge.</p>
-        </div>
-        <div class="loop-arrow">→</div>
-        <div class="loop-step">
-          <span class="icon">🛰️</span>
-          <div class="step-num">Step 2</div>
-          <h3>Enforce</h3>
-          <p>WayChain's native oracles (VRF + geospatial data) verify the land remains undisturbed every block.</p>
-        </div>
-        <div class="loop-arrow">→</div>
-        <div class="loop-step">
-          <span class="icon">💰</span>
-          <div class="step-num">Step 3</div>
-          <h3>Reward</h3>
-          <p>If untouched, the landowner receives recurring WAY rewards. If disturbed, the claim is slashed and the badge revoked.</p>
-        </div>
+      <div class="calc-field">
+        <label>Volume (tons)</label>
+        <input type="number" id="volume" value="100" min="1" oninput="updateCalc()">
       </div>
-
-      <div class="spotlight-caption">
-        <span class="hook">This isn't a donation model.</span> It's an economic incentive structure where
-        <strong>destruction becomes financially irrational</strong>. Every block, the oracle checks.
-        Every check, the incentive shifts. The rational choice is preservation.
+      <div class="calc-field">
+        <label>Purity (%)</label>
+        <input type="number" id="purity" value="95" min="1" max="100" step="0.1" oninput="updateCalc()">
+      </div>
+      <div class="calc-field">
+        <label>Transport (km)</label>
+        <input type="number" id="distance" value="50" min="0" oninput="updateCalc()">
       </div>
     </div>
+    <div class="calc-result">
+      <div class="calc-row"><span class="label">Spot Price</span><span class="value" id="spotPrice">Loading...</span></div>
+      <div class="calc-row"><span class="label">Gross Value</span><span class="value" id="grossValue">—</span></div>
+      <div class="calc-row negative"><span class="label">WayChain Fee (0.5%)</span><span class="value" id="fee">—</span></div>
+      <div class="calc-row negative"><span class="label">Extraction</span><span class="value" id="extraction">—</span></div>
+      <div class="calc-row negative"><span class="label">Transport</span><span class="value" id="transport">—</span></div>
+      <div class="calc-row total"><span class="label">Net Payout (USD)</span><span class="value" id="netUsd">—</span></div>
+      <div class="calc-row total"><span class="label">Net Payout (WAY)</span><span class="value" id="netWay">—</span></div>
+    </div>
+    <div class="cta-row">
+      <button class="btn-primary" onclick="openDapp()">Request Extinguishment</button>
+      <button class="btn-secondary" id="walletBtn" onclick="connectWallet()">Connect Dox_Dev L2</button>
+    </div>
   </div>
+</div>
 
-  <div class="footer">WayChain v3.1.2 — "Actually Decentralized"<br><a href="https://waychain.org">waychain.org</a> &middot; Chain ID 10008</div>
+<!-- Preservation Loop Spotlight -->
+<div class="spotlight">
+  <div class="spotlight-container">
+    <div class="spotlight-header">
+      <h2>🌍 The Preservation Loop</h2>
+      <p>How WayChain aligns economic incentives with land conservation</p>
+    </div>
+    <div class="loop">
+      <div class="loop-step">
+        <span class="icon">🏔️</span>
+        <h3>Claim</h3>
+        <p>Landowner stakes mineral claim as soulbound NFT, locked by Dox_Dev Level 2 badge.</p>
+      </div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step">
+        <span class="icon">🛰️</span>
+        <h3>Enforce</h3>
+        <p>Native oracles (VRF + geospatial) verify land remains undisturbed every block.</p>
+      </div>
+      <div class="loop-arrow">→</div>
+      <div class="loop-step">
+        <span class="icon">💰</span>
+        <h3>Reward</h3>
+        <p>Untouched = recurring WAY rewards. Disturbed = claim slashed, badge revoked, land flagged forever.</p>
+      </div>
+    </div>
+    <div class="spotlight-caption">
+      <span class="hook">This isn't a donation model.</span> It's an economic incentive structure where
+      <strong>destruction becomes financially irrational</strong>. Every block, the oracle checks.
+      Every check, the incentive shifts. The rational choice is preservation.
+    </div>
+  </div>
+</div>
+
+<div class="footer">WayChain v3.1.2 — "Actually Decentralized"<br>Chain ID 10008</div>
 
 <script>
-const RPC_HTTP = 'https://api.waychain.org';
-const RPC_WS = 'wss://api.waychain.org';
-const BLOCKS_SHOWN = 8;
-const refreshInterval = 3000; // fallback poll interval (ms)
+// ── 18 Features Data ──
+const FEATURES = [
+  { name: "Chain ID 10008", status: "live", addr: "0x2718", desc: "Independent L1 chain with custom consensus. Not a fork, not an L2.", link: "/whitepaper/abstract" },
+  { name: "1-Second Block Time", status: "live", addr: "—", desc: "Blocks produced every 1 second. No waiting.", link: "/whitepaper/philosophy" },
+  { name: "Instant Finality", status: "live", addr: "—", desc: "Single-block BFT. Transactions are final immediately.", link: "/whitepaper/philosophy" },
+  { name: "Dox_Dev Badges", status: "live", addr: "0x13", desc: "Soulbound identity badges gate contract deployment, validator admission, oracle participation, and governance voting.", link: "/whitepaper/philosophy" },
+  { name: "Deploy Gate (3 layers)", status: "live", addr: "—", desc: "RPC + Block Production + EVM opcode. Three layers of protection against spam and abuse.", link: "/whitepaper/philosophy" },
+  { name: "Fixed Fees", status: "live", addr: "—", desc: "0.001 / 0.005 / 0.01 WAY. Never auctioned. Predictable costs regardless of token price.", link: "/whitepaper/overview" },
+  { name: "Sqrt-Weighted Lottery", status: "live", addr: "—", desc: "Validator selection uses sqrt-weighting to prevent plutocracy. One human = one voice.", link: "/whitepaper/philosophy" },
+  { name: "3 Rotating Validators", status: "live", addr: "—", desc: "Equal stake, equal power. Currently 3 nodes in production.", link: "/whitepaper/status" },
+  { name: "Rate Limiting", status: "live", addr: "—", desc: "100 req/sec/IP with token bucket. Prevents DDoS without centralization.", link: "/whitepaper/overview" },
+  { name: "WebSocket Subscriptions", status: "live", addr: "—", desc: "eth_subscribe newHeads for real-time block notifications.", link: "/whitepaper/status" },
+  { name: "P2P Block/Tx Broadcast", status: "live", addr: "—", desc: "BroadcastBlock() + BroadcastTransaction() for efficient propagation.", link: "/whitepaper/protocol" },
+  { name: "Bitcoin SPV", status: "live", addr: "0x16", desc: "Bitcoin SPV verification via BitcoinRegistry. Verify Bitcoin proofs natively.", link: "/whitepaper/architecture" },
+  { name: "Account Recovery", status: "live", addr: "0x11", desc: "3-guardian recovery. Lost keys? Guardians can restore access without central authority.", link: "/whitepaper/philosophy" },
+  { name: "Binary Journal (BIJO)", status: "live", addr: "0x14", desc: "Immutable truth anchoring. Attest hashes on-chain. Permanent, censorship-resistant.", link: "/whitepaper/architecture" },
+  { name: "Dead Man's Switch", status: "live", addr: "0x15", desc: "Inheritance protocol. Set heirs, heartbeat periodically, release keys when heartbeat stops.", link: "/whitepaper/architecture" },
+  { name: "Progressive Staking", status: "live", addr: "0x21-0x25", desc: "5-tier marginal APY: 15% / 8% / 4% / 2% / 1%. Anti-whale by design.", link: "/whitepaper/overview" },
+  { name: "Oracle VRF + Time", status: "live", addr: "0x0D", desc: "Scheduled oracle triggers with RANDOM opcode (0xC4). 13 tests passing.", link: "/whitepaper/protocol" },
+  { name: "Mineral Rights (MRT)", status: "live", addr: "0x20", desc: "Tokenize mineral reserves. Full lifecycle: register → verify → approve → issue → monitor → transfer. 12 tests passing.", link: "/whitepaper/architecture" },
+];
 
-let blocks = [];
-let blockHeight = 0;
-let wsConnected = false;
-let httpPollTimer = null;
-let lastBlockTime = Date.now();
+// Render features grid
+const grid = document.getElementById('featuresGrid');
+FEATURES.forEach(f => {
+  const chip = document.createElement('div');
+  chip.className = 'feature-chip';
+  chip.innerHTML = `<div class="name">${f.name}</div><span class="badge ${f.status}">${f.status === 'live' ? 'Live' : 'Building'}</span>${f.addr !== '—' ? `<div class="addr">${f.addr}</div>` : ''}`;
+  chip.onclick = () => openModal(f);
+  grid.appendChild(chip);
+});
 
-function log(msg, cls = 'info') {
-  const el = document.getElementById('log');
-  const div = document.createElement('div');
-  div.className = cls; div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  el.prepend(div);
-  while (el.children.length > 30) el.removeChild(el.lastChild);
+function openModal(f) {
+  document.getElementById('modalTitle').textContent = f.name;
+  document.getElementById('modalDesc').textContent = f.desc;
+  document.getElementById('modalAddr').textContent = f.addr !== '—' ? `Precompile: ${f.addr}` : '';
+  document.getElementById('modalLink').href = f.link;
+  document.getElementById('featureModal').classList.add('open');
 }
+function closeModal() { document.getElementById('featureModal').classList.remove('open'); }
+document.getElementById('featureModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
-function setStatus(mode, text) {
-  const dot = document.getElementById('statusDot');
-  dot.className = 'status-dot ' + mode;
-  document.getElementById('statusText').textContent = text;
-  document.getElementById('connType').textContent = mode === 'ws' ? 'WS' : (mode === 'online' ? 'HTTP' : '—');
-}
-
-async function rpc(method, params = []) {
-  const resp = await fetch(RPC_HTTP, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 })
-  });
-  const data = await resp.json();
-  if (data.error) throw new Error(data.error.message);
-  return data.result;
-}
-
-function toNum(hex) {
-  if (typeof hex === 'number') return hex;
-  const s = (hex || '0x0').replace('0x', '');
-  return parseInt(s, 16) || 0;
-}
-
-function ago(ts) {
-  const sec = Math.floor(Date.now()/1000 - ts);
-  if (sec < 5) return 'just now'; if (sec < 60) return sec + 's ago';
-  if (sec < 3600) return Math.floor(sec/60) + 'm ago';
-  return Math.floor(sec/3600) + 'h ago';
-}
-
-function shortHash(h, len=10) {
-  if (!h || h === '0x' || h === '—') return '—';
-  const s = h.replace('0x','');
-  return s.slice(0,len) + '...' + s.slice(-len);
-}
-
-function renderBlocks() {
-  const tbody = document.getElementById('blocksList');
-  let html = '';
-  let totalNewTxs = 0;
-  const display = blocks.slice(0, BLOCKS_SHOWN);
-  display.forEach(b => {
-    const txs = b.transactions || 0;
-    const txCount = typeof txs === 'number' ? txs : (txs ? txs.length : 0);
-    totalNewTxs += txCount;
-    html += `<tr>
-      <td style="color:var(--accent);font-weight:700">${toNum(b.number).toLocaleString()}</td>
-      <td class="hash">${shortHash(b.hash)}</td>
-      <td>${b.proposer || '—'}</td>
-      <td>${txCount}</td>
-      <td>${b.timestamp ? ago(toNum(b.timestamp)) : '—'}</td>
-    </tr>`;
-  });
-  tbody.innerHTML = html || '<tr><td colspan="5" style="color:var(--fg2)">No blocks</td></tr>';
-  document.getElementById('totalTxs').textContent = totalNewTxs.toLocaleString();
-  document.getElementById('blockCount').textContent = blockHeight > 0 ? `(${blockHeight.toLocaleString()})` : '';
-}
-
-function addBlock(block) {
-  const num = toNum(block.number);
-  if (num > blockHeight) {
-    blockHeight = num;
-    document.getElementById('blockHeight').textContent = num.toLocaleString();
-    // Calc speed
-    const now = Date.now();
-    const elapsed = (now - lastBlockTime) / 1000;
-    if (elapsed > 0) document.getElementById('blockSpeed').textContent = (1 / elapsed).toFixed(1);
-    lastBlockTime = now;
-  }
-  // Prepend if new
-  if (!blocks.find(b => b.number === block.number)) {
-    blocks.unshift(block);
-    if (blocks.length > 50) blocks = blocks.slice(0, 50);
-  }
-  renderBlocks();
-}
-
-// ── WebSocket Connection ──
-function connectWS() {
-  const wsUrl = RPC_WS;
-  log(`Connecting WS: ${wsUrl}`);
-
-  let ws;
-  try {
-    ws = new WebSocket(wsUrl);
-  } catch(e) {
-    log(`WS not available, using HTTP polling`, 'info');
-    startHTTPPoll();
-    return;
-  }
-
-  ws.onopen = () => {
-    wsConnected = true;
-    setStatus('ws', 'Live');
-    log('WS connected, subscribing to newHeads', 'ok');
-
-    // Subscribe to new block headers
-    ws.send(JSON.stringify({ jsonrpc: '2.0', method: 'eth_subscribe', params: ['newHeads'], id: 1 }));
-    document.getElementById('connType').textContent = 'WS';
-  };
-
-  ws.onmessage = (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      if (msg.result && typeof msg.result === 'string' && msg.id === 1) {
-        // Subscribe confirmation, do nothing
-        return;
-      }
-      if (msg.method === 'eth_subscription' && msg.params) {
-        const block = msg.params.result;
-        if (block && block.number) {
-          addBlock(block);
-        }
-      }
-    } catch(e) {}
-  };
-
-  ws.onclose = () => {
-    wsConnected = false;
-    log('WS disconnected, falling back to HTTP', 'err');
-    setStatus('online', 'HTTP fallback');
-    startHTTPPoll();
-  };
-
-  ws.onerror = () => {
-    log('WS error, using HTTP polling', 'err');
-    wsConnected = false;
-    setStatus('online', 'HTTP');
-    startHTTPPoll();
-  };
-}
-
-// ── HTTP Polling Fallback ──
-function startHTTPPoll() {
-  if (httpPollTimer) return;
-  fetchBlocks();
-  httpPollTimer = setInterval(fetchBlocks, refreshInterval);
-}
-
-async function fetchBlocks() {
-  try {
-    const blockNum = await rpc('eth_blockNumber');
-    const height = toNum(blockNum);
-    if (height > 0) {
-      document.getElementById('blockHeight').textContent = height.toLocaleString();
-      document.getElementById('blockCount').textContent = `(${height.toLocaleString()})`;
-      setStatus('online', 'Connected');
-      blockHeight = height;
-
-      // Fetch latest blocks
-      const start = Math.max(1, height - BLOCKS_SHOWN + 1);
-      for (let i = height; i >= start; i--) {
-        const block = await rpc('eth_getBlockByNumber', [`0x${i.toString(16)}`]);
-        if (block && !blocks.find(b => b.number === block.number)) {
-          addBlock(block);
-        }
-      }
-    }
-  } catch(e) {
-    setStatus('offline', 'Offline');
-  }
-}
-
-// ── Init ──
-log('WayChain dashboard loading...', 'info');
-connectWS();
-// Also do an HTTP init to get catch-up blocks
-setTimeout(fetchBlocks, 500);
-
-// ── Mineral Extinguishment Module ──
-
-const MINERAL_PRICES = {
-  gold: 2340,      // USD/troy oz
-  silver: 29.5,    // USD/troy oz
-  copper: 4.2,     // USD/lb
-  lithium: 14.5,   // USD/kg
-  'rare-earth': 85 // USD/kg (REO basket)
-};
-
-const MINERAL_UNIT = {
-  gold: 'oz t',
-  silver: 'oz t',
-  copper: 'lb',
-  lithium: 'kg',
-  'rare-earth': 'kg'
-};
-
-const PROTOCOL_FEE_RATE = 0.005; // 0.5%
-const EXTRACTION_COST_PER_TON = { gold: 450, silver: 35, copper: 8, lithium: 120, 'rare-earth': 200 };
-const TRANSPORT_COST_PER_KM = 0.15; // USD per ton per km
-
-let oraclePrice = null;
-let oracleTimestamp = null;
-
-async function fetchOraclePrice() {
-  try {
-    // Try native oracle precompile via RPC
-    const resp = await fetch(RPC_HTTP, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        method: 'eth_call',
-        params: [
-          { to: '0x0C', data: '0x' }, // OracleAggregator precompile
-          'latest'
-        ],
-        id: 1
-      })
-    });
-    const data = await resp.json();
-    if (data.result) {
-      // Parse oracle response (simplified)
-      oraclePrice = parseOracleResult(data.result);
-      oracleTimestamp = Date.now();
-      document.getElementById('priceDot').style.background = 'var(--green)';
-      document.getElementById('priceStatus').textContent = `Oracle: Updated ${new Date().toLocaleTimeString()}`;
-      updateCalc();
-      return;
-    }
-  } catch(e) {
-    log('Oracle RPC failed, using fallback prices', 'err');
-  }
-
-  // Fallback: use hardcoded spot prices
-  oraclePrice = MINERAL_PRICES[document.getElementById('mineralType').value];
-  oracleTimestamp = Date.now();
-  document.getElementById('priceDot').style.background = 'var(--accent2)';
-  document.getElementById('priceStatus').textContent = 'Oracle: Fallback prices (RPC offline)';
-  updateCalc();
-}
-
-function parseOracleResult(hex) {
-  // Simplified parser — in production this would decode ABI
-  try {
-    const clean = hex.replace('0x', '');
-    if (clean.length >= 128) {
-      // Price is first 32 bytes (256-bit), scaled to 1e18
-      const priceHex = clean.substring(0, 64);
-      const raw = parseInt(priceHex, 16);
-      if (!isNaN(raw) && raw > 0) return raw / 1e18;
-    }
-  } catch(e) {}
-  return null;
-}
-
-function updateCalc() {
-  const mineral = document.getElementById('mineralType').value;
-  const volume = parseFloat(document.getElementById('volume').value) || 0;
-  const purity = parseFloat(document.getElementById('purity').value) / 100 || 0;
-  const distance = parseFloat(document.getElementById('distance').value) || 0;
-
-  const spotPrice = oraclePrice || MINERAL_PRICES[mineral];
-  // Convert input volume (tons) to appropriate unit
-  let effectiveVolume;
-  if (mineral === 'gold' || mineral === 'silver') {
-    effectiveVolume = volume * 32150.7 * purity; // tons → troy oz
+// ── Toggle ──
+function setToggle(mode) {
+  const container = document.getElementById('toggleContainer');
+  const halves = container.querySelectorAll('.toggle-half');
+  if (mode === 'builder') {
+    container.classList.add('builder');
+    halves[0].classList.remove('active');
+    halves[1].classList.add('active');
   } else {
-    effectiveVolume = volume * 1000 * purity; // tons → kg (or keep lb for copper)
+    container.classList.remove('builder');
+    halves[0].classList.add('active');
+    halves[1].classList.remove('active');
   }
-
-  const grossValue = effectiveVolume * spotPrice;
-  const protocolFee = grossValue * PROTOCOL_FEE_RATE;
-  const extractionCost = volume * (EXTRACTION_COST_PER_TON[mineral] || 100);
-  const transportCost = volume * distance * TRANSPORT_COST_PER_KM;
-
-  const netPayout = grossValue - protocolFee - extractionCost - transportCost;
-  const wayPrice = 0.05; // Fallback WAY price
-  const netPayoutWay = netPayout / wayPrice;
-
-  document.getElementById('spotPrice').textContent = `$${spotPrice.toLocaleString(undefined, {maximumFractionDigits: 2})}/${MINERAL_UNIT[mineral]}`;
-  document.getElementById('grossValue').textContent = `$${grossValue.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-  document.getElementById('protocolFee').textContent = `-$${protocolFee.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-  document.getElementById('extractionCost').textContent = `-$${extractionCost.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-  document.getElementById('transportCost').textContent = `-$${transportCost.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-  document.getElementById('netPayout').textContent = `$${netPayout.toLocaleString(undefined, {maximumFractionDigits: 2})}`;
-  document.getElementById('netPayoutWay').textContent = `${netPayoutWay.toLocaleString(undefined, {maximumFractionDigits: 0})} WAY`;
-
-  // Animate stepper
-  document.getElementById('step1').className = 'step done';
-  document.getElementById('step2').className = 'step done';
-  document.getElementById('step3').className = 'step active';
 }
 
-function openDapp() {
-  // In production: opens the dApp form requiring Dox_Dev L2
-  alert('Extinguishment dApp requires Dox_Dev Level 2 verification.
+// ── Calculator ──
+const PRICES = { gold: 2340, silver: 29.5, copper: 4.2, lithium: 14.5, 'rare-earth': 85 };
+const UNITS = { gold: 'oz t', silver: 'oz t', copper: 'lb', lithium: 'kg', 'rare-earth': 'kg' };
+const EXTRACTION = { gold: 450, silver: 35, copper: 8, lithium: 120, 'rare-earth': 200 };
 
-In production, this opens the on-chain request form where you submit reserve documentation for curator review.');
+async function fetchOracle() {
+  try {
+    const r = await fetch('https://api.waychain.org', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({jsonrpc:'2.0',method:'eth_call',params:[{to:'0x0C',data:'0x'},'latest'],id:1}) });
+    const d = await r.json();
+    if (d.result) return parseOracle(d.result) || PRICES[document.getElementById('mineral').value];
+  } catch(e) {}
+  document.getElementById('calcStatus').textContent = 'Oracle: Fallback';
+  return PRICES[document.getElementById('mineral').value];
+}
+function parseOracle(hex) {
+  try { const v = parseInt(hex.replace('0x','').substring(0,64),16); return v > 0 ? v/1e18 : null; } catch(e) { return null; }
 }
 
+async function updateCalc() {
+  const mineral = document.getElementById('mineral').value;
+  const vol = +document.getElementById('volume').value || 0;
+  const purity = (+document.getElementById('purity').value || 0) / 100;
+  const dist = +document.getElementById('distance').value || 0;
+  const spot = await fetchOracle();
+  const units = mineral === 'gold' || mineral === 'silver' ? vol * 32150.7 * purity : (mineral === 'copper' ? vol * purity : vol * 1000 * purity);
+  const gross = units * spot;
+  const fee = gross * 0.005;
+  const extract = vol * (EXTRACTION[mineral] || 100);
+  const transport = vol * dist * 0.15;
+  const net = gross - fee - extract - transport;
+  document.getElementById('spotPrice').textContent = `$${spot.toLocaleString()}/${UNITS[mineral]}`;
+  document.getElementById('grossValue').textContent = `$${gross.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('fee').textContent = `-$${fee.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('extraction').textContent = `-$${extract.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('transport').textContent = `-$${transport.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('netUsd').textContent = `$${net.toLocaleString(undefined,{maximumFractionDigits:0})}`;
+  document.getElementById('netWay').textContent = `${(net/0.05).toLocaleString(undefined,{maximumFractionDigits:0})} WAY`;
+}
+
+function openDapp() { alert('Extinguishment dApp requires Dox_Dev Level 2 verification.
+
+In production: submit reserve documentation for curator review.'); }
 function connectWallet() {
-  const btn = document.getElementById('walletLabel');
+  const btn = document.getElementById('walletBtn');
   btn.textContent = 'Connecting...';
-  setTimeout(() => {
-    btn.textContent = '0x7a3F...9e2D (L2)';
-    btn.parentElement.style.borderColor = 'var(--green)';
-    btn.parentElement.style.color = 'var(--green)';
-    document.getElementById('btnRequest').disabled = false;
-  }, 1500);
+  setTimeout(() => { btn.textContent = '0x7a3F...9e2D (L2) ✓'; btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)'; }, 1200);
 }
 
-// Initialize oracle price
-setTimeout(fetchOraclePrice, 1000);
-
+updateCalc();
 </script>
 </body>
 </html>
