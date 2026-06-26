@@ -6,64 +6,74 @@
 <title>Architecture: Precompiles & Features — WayChain</title>
 <style>
 :root {
-  --bg: #0a0a1a; --bg2: #12122a; --bg3: #1a1a3a;
-  --fg: #e0e0f0; --fg2: #8888bb;
-  --accent: #00d4ff; --accent2: #ff6b35; --accent3: #7b2ff7;
-  --green: #00ff88; --red: #ff3355;
-  --border: #2a2a5a;
+  --bg: #ffffff;
+  --bg2: #f5f7fa;
+  --bg3: #e8ecf1;
+  --fg: #1a1a2e;
+  --fg2: #4a5568;
+  --accent: #0066cc;
+  --accent2: #e63946;
+  --accent3: #6a4c93;
+  --green: #0d9e5e;
+  --red: #d62828;
+  --border: #d1d9e6;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--fg); line-height: 1.6; }
-.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.7; font-size: 16px; }
+.container { max-width: 840px; margin: 0 auto; padding: 0 20px; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 20px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
+  padding: 16px 0; border-bottom: 2px solid var(--border); flex-wrap: wrap; gap: 10px;
 }
-.header h1 { font-size: 1.2em; color: var(--accent); }
+.header h1 { font-size: 1.1em; color: var(--accent); font-weight: 700; }
 .nav { display: flex; flex-wrap: wrap; gap: 4px; }
-.nav a { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; padding: 4px 8px; color: var(--fg2); border: 1px solid transparent; border-radius: 3px; }
-.nav a:hover { color: var(--accent); border-color: var(--border); text-decoration: none; }
-.nav a.active { color: var(--accent); border-color: var(--accent); }
-.content { padding: 30px 0; }
-.content h1 { font-size: 1.8em; color: var(--accent); margin-bottom: 10px; }
-.content h2 { font-size: 1.3em; color: var(--accent); margin-top: 30px; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
-.content h3 { font-size: 1.1em; color: var(--accent2); margin-top: 20px; margin-bottom: 8px; }
-.content h4 { font-size: 1em; color: var(--accent3); margin-top: 15px; margin-bottom: 6px; }
-.content p { margin-bottom: 12px; font-size: 0.9em; }
-.content ul, .content ol { margin: 10px 0 10px 20px; font-size: 0.85em; }
-.content li { margin-bottom: 5px; }
-.content table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.8em; }
-.content th, .content td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
-.content th { background: var(--bg2); color: var(--accent); }
-.content code { background: var(--bg2); padding: 2px 6px; border-radius: 3px; font-size: 0.85em; }
-.content pre { background: var(--bg2); padding: 15px; border-radius: 6px; overflow-x: auto; margin: 15px 0; }
-.content blockquote { border-left: 3px solid var(--accent); padding-left: 15px; margin: 15px 0; color: var(--fg2); }
-.content hr { border: none; border-top: 1px solid var(--border); margin: 30px 0; }
-.footer { text-align: center; padding: 30px 20px; color: var(--fg2); font-size: 0.7em; border-top: 1px solid var(--border); margin-top: 40px; }
+.nav a { font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px; color: var(--fg2); border: 1px solid transparent; border-radius: 4px; }
+.nav a:hover { color: var(--accent); border-color: var(--border); text-decoration: none; background: var(--bg2); }
+.nav a.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.content { padding: 24px 0; }
+.content h1 { font-size: 1.7em; color: var(--fg); margin-bottom: 12px; font-weight: 800; }
+.content h2 { font-size: 1.35em; color: var(--accent); margin-top: 36px; margin-bottom: 10px; border-bottom: 2px solid var(--border); padding-bottom: 6px; font-weight: 700; }
+.content h3 { font-size: 1.1em; color: var(--accent3); margin-top: 24px; margin-bottom: 8px; font-weight: 600; }
+.content h4 { font-size: 1em; color: var(--fg); margin-top: 18px; margin-bottom: 6px; font-weight: 600; }
+.content p { margin-bottom: 14px; font-size: 1em; }
+.content ul, .content ol { margin: 10px 0 16px 24px; font-size: 1em; }
+.content li { margin-bottom: 6px; }
+.table-wrap { overflow-x: auto; margin: 16px 0; -webkit-overflow-scrolling: touch; }
+.content table { width: 100%; min-width: 500px; border-collapse: collapse; font-size: 0.9em; }
+.content th, .content td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; }
+.content th { background: var(--bg2); color: var(--fg); font-weight: 700; }
+.content tr:nth-child(even) { background: var(--bg2); }
+.content code { background: var(--bg2); padding: 2px 6px; border-radius: 3px; font-size: 0.9em; font-family: 'Fira Code', 'SF Mono', Menlo, monospace; }
+.content pre { background: var(--bg2); padding: 16px; border-radius: 6px; overflow-x: auto; margin: 16px 0; border: 1px solid var(--border); }
+.content blockquote { border-left: 4px solid var(--accent); padding-left: 16px; margin: 16px 0; color: var(--fg2); font-style: italic; }
+.content hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+.footer { text-align: center; padding: 30px 20px; color: var(--fg2); font-size: 0.8em; border-top: 1px solid var(--border); margin-top: 40px; }
 @media (max-width: 600px) {
-  .header { flex-direction: column; }
+  body { font-size: 15px; }
+  .header { flex-direction: column; align-items: flex-start; }
   .content h1 { font-size: 1.4em; }
-  .content h2 { font-size: 1.1em; }
-  .nav a { font-size: 0.6em; padding: 3px 5px; }
+  .content h2 { font-size: 1.15em; }
+  .nav a { font-size: 0.65em; padding: 4px 7px; }
 }
+
 </style>
 </head>
 <body>
 <div class="header container">
   <h1>⛓ WayChain</h1>
   <div class="nav">
-      <a href="/">Home</a>
-      <a href="/whitepaper/abstract">Abstract</a>
-      <a href="/whitepaper/status">Status</a>
-      <a href="/whitepaper/philosophy">Philosophy</a>
-      <a href="/whitepaper/protocol">Protocol</a>
-      <a class="active" href="/whitepaper/architecture">Architecture</a>
-      <a href="/whitepaper/overview">Overview</a>
-      <a href="/explorer">Explorer</a>
-      <a href="/badge">Badge</a>
-      <a href="/plan">Plan</a>
+    <a href="/">Home</a>
+    <a href="/whitepaper/abstract">Abstract</a>
+    <a href="/whitepaper/status">Status</a>
+    <a href="/whitepaper/philosophy">Philosophy</a>
+    <a href="/whitepaper/protocol">Protocol</a>
+    <a class="active" href="/whitepaper/architecture">Architecture</a>
+    <a href="/whitepaper/overview">Overview</a>
+    <a href="/explorer">Explorer</a>
+    <a href="/badge">Badge</a>
+    <a href="/plan">Plan</a>
   </div>
 </div>
 
