@@ -1,5 +1,25 @@
 # Changelog
 
+## v3.1.1 — 2026-06-26
+- Fixed BIJO description: clarified as ecosystem reward token, not fuel token
+- Fixed BIJO supply: 369B → 369M (matches on-chain `BijoSupply` in precompiles.go)
+- Updated state rent pricing to match 2026 cloud storage benchmarks (S3: $0.023/GB/mo)
+- Updated whitepaper HTML (was broken in v3.1.1, restored from v3.1.0 + fixes applied)
+- Fixed version footer: v0.1.0 → v3.1.1
+- Version header bumped: v3.0 → v3.1.1 throughout
+
+## v3.1.0 — 2026-06-26
+- Whitepaper regeneration + 3 new features live (Progressive Staking, Oracle VRF, Mineral Rights)
+
+## v3.0.5 — 2026-06-26
+- Sync vercel config for staging previews
+
+## v3.0.4 — 2026-06-25
+- Security section added, whitepaper section numbering fixed
+
+## v3.0.2 — 2026-06-24
+- Add CHANGELOG, version endpoint live
+
 ## v3.0.1 — 2026-06-24
 - Added git versioning (was deploying blind via `vercel deploy`)
 - Added `version.json` endpoint at https://waychain.org/version.json

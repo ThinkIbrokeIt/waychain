@@ -2,7 +2,7 @@
 
 ## A Layer 1 Blockchain Where Human Identity Replaces Token Plutocracy
 
-**Version 3.0 — June 2026**
+**Version 3.1.2 — June 2026**
 
 ---
 
@@ -787,7 +787,7 @@ Four smart contracts form the on-chain layer:
 | Attestation.sol | Anchor a hash of truth immutably | A (permissionless) |
 | DeadMansSwitch.sol | Inheritance protocol with heartbeat | B (Dox_Dev L2+) |
 | StorageEndowment.sol | Pay operators for eternal storage | C (Dox_Dev L3) |
-| BIJO.sol | Ecosystem reward token | ERC-20 on WayChain (369B supply) |
+| BIJO.sol | Ecosystem reward token | ERC-20 on WayChain (369M supply, 18 decimals) |
 
 ### 15.5 The Economic Flywheel
 
@@ -1124,7 +1124,8 @@ The combination of Dox_Dev identity, sqrt-weighted consensus, instant finality, 
 
 ---
 
-*Version 3.0 — June 2026*
+*Version 3.1.2 — June 2026*
 *Launch Plan: All phases complete*
 *Specifications: 1WAY, 2WAY, Bitcoin Integration, Tokenomics, Consensus, UX, Privacy, Account Model, Oracle, Cross-Chain, Governance, Binary Journal, State Rent, Mineral Rights*
 *Code: 5,470+ lines Go, 11+ Solidity contracts, 60+ tests*
+*v3.1.2: HTML restored from v3.1.0 base + all v3.1.1 fixes applied; BIJO supply corrected to 369M*
