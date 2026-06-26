@@ -68,6 +68,7 @@ const (
 	twoWayLiquidateSelector  uint32 = 0x5C8B7698 // liquidate(bytes32)
 	twoWayGetVaultSelector   uint32 = 0x9EB29EF0 // getVault(bytes32) → (uint256,uint256)
 	twoWayVaultCountSelector uint32 = 0x67A9F0F5 // vaultCount() → uint256
+	selTwoWayGetPrice         uint32 = 0x7A3B4F00 // getStablecoinPrice(bytes32) → uint256
 )
 
 // ── 2WAY Vault Precompile ──
@@ -94,6 +95,8 @@ func twoWayVaultPrecompile(input []byte, caller string, state *StateDB, blockNum
 		return twoWayGetVault(input, caller, state)
 	case twoWayVaultCountSelector:
 		return twoWayVaultCount(input, caller, state)
+	case selTwoWayGetPrice:
+		return twoWayGetStablecoinPrice(input, caller, state)
 	default:
 		return nil, fmt.Errorf("2WAY: unknown selector 0x%08X", sel)
 	}
@@ -421,6 +424,32 @@ func getVaultCollaterals(vaultID []byte, state *StateDB) map[string]*big.Int {
 	return result
 }
 
+// getVaultCollateralValueUSD computes total collateral value using oracle prices
+func getVaultCollateralValueUSD(vaultID []byte, state *StateDB) *big.Int {
+	collaterals := getVaultCollaterals(vaultID, state)
+	totalUSD := big.NewInt(0)
+
+	for collName, amount := range collaterals {
+		if amount.Sign() <= 0 {
+			continue
+		}
+		// Get price from oracle (default $1.00 for stablecoins)
+		priceKey := storageKey([]byte("price:" + collName))
+		twoWayAddr := PrecompileAddrHex(0x18)
+		acc := state.GetOrCreateAccount(twoWayAddr)
+		price := readBigInt(acc.Storage[priceKey])
+		if price.Sign() == 0 {
+			price = new(big.Int).SetUint64(100000000) // $1.00 default
+		}
+		// value = amount * price / 1e8
+		value := new(big.Int).Mul(amount, price)
+		value = value.Div(value, big.NewInt(100000000))
+		totalUSD = totalUSD.Add(totalUSD, value)
+	}
+
+	return totalUSD
+}
+
 func getCollateralParam(stablecoin string, state *StateDB) CollateralParam {
 	addr := PrecompileAddrHex(0x18)
 	acc := state.GetOrCreateAccount(addr)
@@ -483,6 +512,17 @@ func isAboveMinCRatio(collaterals map[string]*big.Int, debt *big.Int, additional
 	return ratio.Cmp(big.NewInt(13000)) >= 0
 }
 
+func isAboveMinCRatioWithVault(vaultID []byte, debt *big.Int, additionalDebt *big.Int, state *StateDB) bool {
+	totalCollateral := getVaultCollateralValueUSD(vaultID, state)
+	totalDebt := new(big.Int).Add(debt, additionalDebt)
+	if totalDebt.Sign() == 0 {
+		return true
+	}
+	ratio := new(big.Int).Mul(totalCollateral, big.NewInt(10000))
+	ratio = ratio.Div(ratio, totalDebt)
+	return ratio.Cmp(big.NewInt(13000)) >= 0
+}
+
 func isAboveLiquidationRatio(collaterals map[string]*big.Int, debt *big.Int, state *StateDB) bool {
 	totalCollateral := big.NewInt(0)
 	for _, v := range collaterals {
@@ -541,4 +581,64 @@ func readUint16(slot [32]byte, defaultVal uint16) uint16 {
 		return defaultVal
 	}
 	return uint16(v)
+}
+
+// ── GetStablecoinPrice: read median price from oracle attestations ──
+// Input: stablecoinId[32]
+// Output: price[32] (8 decimals, e.g., 100000000 = $1.00)
+func twoWayGetStablecoinPrice(input []byte, caller string, state *StateDB) ([]byte, error) {
+	if len(input) < 4+32 {
+		return nil, fmt.Errorf("2WAY: getPrice input too short")
+	}
+
+	stablecoinID := string(trimRightZeros(input[4:36]))
+
+	// Read price from oracle storage
+	priceKey := storageKey([]byte("price:" + stablecoinID))
+	twoWayAddr := PrecompileAddrHex(0x18)
+	acc := state.GetOrCreateAccount(twoWayAddr)
+
+	priceSlot := acc.Storage[priceKey]
+	price := readBigInt(priceSlot)
+
+	// If no price set, default to $1.00 (8 decimals)
+	if price.Sign() == 0 {
+		price = new(big.Int).SetUint64(100000000) // $1.00000000
+	}
+
+	out := make([]byte, 32)
+	price.FillBytes(out)
+	return out, nil
+}
+
+// ── SetStablecoinPrice: oracle submits a price attestation ──
+// Input: stablecoinId[32] + price[32]
+// Only verified oracles (Dox_Dev L2+) can submit
+func twoWaySetStablecoinPrice(input []byte, caller string, state *StateDB) ([]byte, error) {
+	if len(input) < 4+32+32 {
+		return nil, fmt.Errorf("2WAY: setPrice input too short")
+	}
+
+	stablecoinID := string(trimRightZeros(input[4:36]))
+	price := readBigInt(readSlot(input, 36))
+
+	// Only verified oracles can submit prices
+	callerAcc := state.GetAccount(caller)
+	if callerAcc == nil || callerAcc.DoxDevLevel < 2 {
+		return nil, fmt.Errorf("2WAY: caller is not a verified oracle (Dox_Dev L2+ required)")
+	}
+
+	// Store price
+	priceKey := storageKey([]byte("price:" + stablecoinID))
+	twoWayAddr := PrecompileAddrHex(0x18)
+	acc := state.GetOrCreateAccount(twoWayAddr)
+	acc.Storage[priceKey] = writeSlot(price)
+
+	// Emit event
+	state.AddLog(twoWayAddr, [][32]byte{
+		storageKey([]byte("PriceUpdated")),
+		stringToHash([]byte(stablecoinID)),
+	}, price.Bytes(), 0)
+
+	return price.FillBytes(make([]byte, 32)), nil
 }
