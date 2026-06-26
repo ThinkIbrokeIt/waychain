@@ -787,7 +787,7 @@ Four smart contracts form the on-chain layer:
 | Attestation.sol | Anchor a hash of truth immutably | A (permissionless) |
 | DeadMansSwitch.sol | Inheritance protocol with heartbeat | B (Dox_Dev L2+) |
 | StorageEndowment.sol | Pay operators for eternal storage | C (Dox_Dev L3) |
-| BIJO.sol | The fuel token | ERC-20 on WayChain |
+| BIJO.sol | Ecosystem reward token | ERC-20 on WayChain (369B supply) |
 
 ### 15.5 The Economic Flywheel
 
@@ -834,15 +834,15 @@ Pruning retains a hash of the original state, so accounts can be restored — bu
 
 ### 16.3 Users Pay to Maintain Data
 
-State rent is not a one-time fee. Users pay continuously to maintain their data on-chain:
+State rent is not a one-time fee. Users pay continuously to maintain their data on-chain. Pricing is benchmarked against real cloud storage costs (S3: $0.023/GB/mo):
 
-| Data Type | Rent (USD/KB/block) | Annual Cost (1KB) |
-|-----------|--------------------|--------------------|
-| Account state | $0.0001 | ~$3.15 |
-| Contract storage | $0.0001 | ~$3.15 |
-| Binary Journal attestation | $0.00005 | ~$1.58 |
+| Data Type | Monthly Cost (1KB) | Annual Cost (1MB) | vs Cloud |
+|-----------|--------------------|--------------------|----------|
+| Account state (base fee) | $0.00001 | $0.12 | Cheaper than S3 |
+| Contract storage (>1KB) | $0.00001 | $0.12 | Cheaper than S3 |
+| Binary Journal attestation | $0.000005 | $0.06 | 55% cheaper than S3 |
 
-At $0.0001/KB/block, storing 1MB of data costs ~$31.50/year. This is affordable for most use cases but prevents infinite state bloat.
+At this pricing, storing 1MB of data costs ~$0.12/year on WayChain vs $0.28/year on S3 — while gaining immutability, censorship resistance, and permanent availability. The base account fee ($0.01/month) prevents dust account spam. Accounts with <1KB storage are exempt from per-byte rent.
 
 ### 16.4 Rent Distribution
 
@@ -855,9 +855,10 @@ At $0.0001/KB/block, storing 1MB of data costs ~$31.50/year. This is affordable 
 ### 16.5 Impact on Supply
 
 If WayChain reaches 1GB of active state (1,048,576 KB):
-- Annual rent collected: 1,048,576 × $0.0001 × 31,536,000 blocks/year = ~$3.3B
-- Burned (60%): ~$2B worth of WAY removed from supply
-- This creates strong deflationary pressure at scale, counteracting inflation
+- Annual rent collected: 1,048,576 × $0.12/year = ~$125,760
+- Burned (60%): ~$75,456 worth of WAY removed from supply
+- This creates deflationary pressure at scale, counteracting inflation
+- At 10GB state: ~$754,560 burned/year (significant supply reduction)
 
 ---
 

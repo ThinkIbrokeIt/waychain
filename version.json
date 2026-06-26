@@ -9,11 +9,16 @@
   "live_features": 18,
   "spec_features": 6,
   "precompiles": 20,
+  "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
   "blueprint_files": 29,
   "blueprint_lines": 11947,
   "new_features": [
     "Progressive Staking (anti-whale reward brackets)",
     "Oracle VRF + Time Execution (scheduled triggers)",
     "Mineral Rights Tokenization (MRT Registry 0x20)"
+  ],
+  "fixes": [
+    "BIJO clarified as ecosystem reward token (not fuel token)",
+    "State rent pricing updated to match 2026 cloud storage costs"
   ]
 }
