@@ -1,0 +1,14 @@
+# Dependencies
+contracts/node_modules/
+contracts/lib/
+contracts/out/
+contracts/cache/
+
+# Binaries
+consensus/waychain
+consensus/waychain-consensus
+consensus/waychain-test
+
+# Environment
+.env
+.env.*
