@@ -1,34 +1,39 @@
-250 years ago, a group of determined souls declared independence from a king.
+250 years ago, physical independence.
 
-Today, we declare independence from every king.
+Today, digital independence.
 
-No passport. No permission. No state can revoke you.
+We are @WayChain. The first blockchain to declare its independence from any State. A community-governed State of Being, bridging physical into digital.
 
-We are @WayChain. The first blockchain to declare its independence from any nation. A community-governed State of Being, bridging physical into digital.
+—
 
-Three pillars:
+⬡ Level I — The Lantern
+Proof that you exist. A verified human. A new beginning.
+
+⬡ Level II — The Compass
+Truth. Serve. Learn. Build. Find your true north.
+
+⬡ Level III — The Lighthouse
+Tend the light. Guide others. Leave a legacy.
+
+—
+
+Three pillars uphold this State:
 
 I. Digital Gold, Real Backing
-1WAY is backed by Bitcoin itself — locked in a 3-of-5 multi-sig across 5 jurisdictions. No freeze. No control. Money that answers to no state.
+1WAY backed by Bitcoin — locked in a 3-of-5 multi-sig across 5 jurisdictions. No freeze. No control. Money that answers to no state.
 
 II. The Earth Speaks On-Chain
-Mineral Rights Tokenization (MRT) — the first blockchain precompile for the earth's resources. Geologists verify claims. They earn 1WAY. 1WAY is backed by Bitcoin. Bitcoin is digital gold.
-
-The cycle: physical → digital → physical.
+MRT — the first blockchain precompile for mineral rights. Geologists verify claims, earn 1WAY. 1WAY backed by Bitcoin. Bitcoin is digital gold.
 
 III. One Human, One Voice
-No passport required. Dox_Dev badges prove you are a unique human — soulbound, non-transferable, cannot be replicated. Identity encrypted. Disclosure requires court order + community vote.
+No passport. Dox_Dev badges — soulbound, non-transferable. Identity encrypted. Disclosure requires court order + community vote.
 
-No king can ban you. No corporation can deplatform you. You exist because you chose to.
-
-⬡ The Lantern: proof you exist
-⬡ The Compass: your true north
-⬡ The Lighthouse: you tend the light for others
+—
 
 20 precompiles live. Chain ID 10008. 1-second blocks. Open source.
 
-This is not a product launch. This is a declaration.
+40.7128° N 74.0060° W — N. Tesla — The Vision Continues
 
 → waychain.org/declaration
 
-"The light doesn't push. It shows." — N. Tesla
+"The light doesn't push. It shows."
