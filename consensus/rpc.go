@@ -318,6 +318,52 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		rpc.mu.RUnlock()
 		return strconv.Itoa(count), nil
 
+	// ── Truth Anchoring ──
+	case "way_attestTruth":
+		var p []string
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 2 {
+			return nil, fmt.Errorf("need [address, truth_hash]")
+		}
+		addr := strings.TrimPrefix(p[0], "0x")
+		hash := strings.TrimPrefix(p[1], "0x")
+		if addr == "" || hash == "" {
+			return nil, fmt.Errorf("invalid params")
+		}
+		rpc.mu.Lock()
+		acc := rpc.chain.State.GetOrCreateAccount(strings.ToLower(addr))
+		idx := acc.Nonce
+		key := sha256.Sum256([]byte("truth_" + strconv.FormatUint(idx, 10)))
+		var data [32]byte
+		copy(data[:], []byte(hash))
+		acc.Storage[key] = data
+		rpc.mu.Unlock()
+		return map[string]interface{}{"ok": true, "slot": idx}, nil
+
+	case "way_getTruths":
+		var p []string
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 1 {
+			return nil, fmt.Errorf("need [address]")
+		}
+		addr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
+		rpc.mu.RLock()
+		acc := rpc.chain.State.GetAccount(addr)
+		if acc == nil {
+			rpc.mu.RUnlock()
+			return []interface{}{}, nil
+		}
+		var list []map[string]interface{}
+		for i := uint64(0); i < acc.Nonce+20; i++ {
+			k := sha256.Sum256([]byte("truth_" + strconv.FormatUint(i, 10)))
+			if v := acc.Storage[k]; v != [32]byte{} {
+				list = append(list, map[string]interface{}{"slot": i, "hash": hex.EncodeToString(v[:])})
+			}
+		}
+		rpc.mu.RUnlock()
+		if list == nil {
+			return []interface{}{}, nil
+		}
+		return list, nil
+
 	// ── Transaction methods ──
 
 	case "eth_sendRawTransaction":
