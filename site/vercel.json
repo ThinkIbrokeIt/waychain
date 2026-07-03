@@ -17,6 +17,8 @@
     { "source": "/docs/", "destination": "/docs/index.html" },
     { "source": "/docs/run-a-node", "destination": "/docs/run-a-node.html" },
     { "source": "/declaration", "destination": "/declaration/index.html" },
-    { "source": "/declaration/", "destination": "/declaration/index.html" }
+    { "source": "/declaration/", "destination": "/declaration/index.html" },
+    { "source": "/wallet", "destination": "/wallet/index.html" },
+    { "source": "/wallet/", "destination": "/wallet/index.html" }
   ]
 }
