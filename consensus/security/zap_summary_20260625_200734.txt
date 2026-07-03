@@ -1,0 +1,20 @@
+WayChain Security Scan Summary
+================================
+Target:      http://127.0.0.1:9545
+Date:        Thu Jun 25 08:07:38 PM CDT 2026
+Chain ID:    0x2718
+
+Manual Security Checks:
+  [PASS] CORS restricted to waychain.org\n  [FAIL] Rate limiting not triggered (200 parallel requests all passed)\n  [INFO] Health endpoint exposes: {"blocks":601,"status":"ok"}\n  [INFO] Chain ID: 0x2718 (expected 0x2718 = 10008)\n  [PASS] Chain ID is correct (10008)\n  [INFO] WebSocket upgrade response: HTTP 101timeout\n  [WARN] Method personal_unlockAccount status unclear\n  [WARN] Method admin_nodeInfo status unclear\n  [WARN] Method debug_traceTransaction status unclear\n
+
+Risk Levels:
+  [FAIL] = Must fix immediately
+  [WARN] = Should fix
+  [PASS] = Good
+  [INFO] = Informational
+
+Next Steps:
+  - Review all [FAIL] items above
+  - Run full ZAP scan: docker run --rm -v /tmp/zap:/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://127.0.0.1:9545
+  - Review ZAP report for OWASP Top 10 vulnerabilities
+  - Re-run this scan after fixes
