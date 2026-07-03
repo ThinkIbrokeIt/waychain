@@ -12,6 +12,8 @@
     { "source": "/whitepaper/:path*", "destination": "/whitepaper/index.html" },
     { "source": "/explorer", "destination": "/explorer/index.html" },
     { "source": "/badge", "destination": "/badge/index.html" },
-    { "source": "/plan", "destination": "/plan/index.html" }
+    { "source": "/plan", "destination": "/plan/index.html" },
+    { "source": "/docs", "destination": "/docs/index.html" },
+    { "source": "/docs/", "destination": "/docs/index.html" }
   ]
 }

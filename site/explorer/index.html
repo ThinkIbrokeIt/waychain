@@ -7,21 +7,25 @@
 <meta name="description" content="WayChain block explorer — view real blocks, transactions, and accounts on WayChain.">
 <style>
 :root {
-  --bg: #0a0a1a; --bg2: #12122a; --bg3: #1a1a3a;
-  --fg: #e0e0f0; --fg2: #8888bb;
-  --accent: #00d4ff; --accent2: #ff6b35; --accent3: #7b2ff7;
-  --green: #00ff88; --red: #ff3355; --yellow: #ffcc00;
-  --border: #2a2a5a;
+  --bg: #2A2A2A; --bg2: #1E1E1E; --bg3: #333;
+  --fg: #E8E4DD; --fg2: #9A9A9A;
+  --accent: #B87333; --accent2: #ff6b35; --accent3: #FFBF00;
+  --green: #4CAF50; --red: #E53935; --yellow: #FFBF00;
+  --border: #3A3A3A;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: 'Courier New', monospace;
+  font-family: 'Inter', -apple-system, sans-serif;
   background: var(--bg); color: var(--fg);
-  line-height: 1.6;
+  line-height: 1.8;
+  font-size: 18px;
 }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* Headings */
+h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
 
 /* Header */
 .header {
@@ -57,13 +61,13 @@ a:hover { text-decoration: underline; }
 .search-box input {
   flex: 1; background: var(--bg3); border: 1px solid var(--border);
   color: var(--fg); padding: 10px 14px; border-radius: 6px;
-  font-family: 'Courier New', monospace; font-size: 0.85em;
+  font-family: 'Inter', -apple-system, sans-serif; font-size: 0.85em;
 }
 .search-box input:focus { outline: none; border-color: var(--accent); }
 .search-box button {
   background: var(--accent); color: var(--bg); border: none;
   padding: 10px 20px; border-radius: 6px;
-  font-family: 'Courier New', monospace; font-weight: 700;
+  font-family: 'Inter', -apple-system, sans-serif; font-weight: 700;
   cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
   font-size: 0.8em;
 }
@@ -99,7 +103,7 @@ tr:hover td { background: var(--bg3); }
 
 /* Detail panels */
 .detail { font-size: 0.8em; }
-.detail .row { display: flex; padding: 6px 0; border-bottom: 1px solid rgba(42,42,90,0.3); }
+.detail .row { display: flex; padding: 6px 0; border-bottom: 1px solid rgba(58,58,58,0.3); }
 .detail .label { width: 140px; color: var(--fg2); flex-shrink: 0; }
 .detail .value { flex: 1; word-break: break-all; }
 .detail .hash-value { color: var(--accent); }
@@ -110,7 +114,7 @@ tr:hover td { background: var(--bg3); }
   border-radius: 6px; padding: 10px; font-size: 0.7em;
   max-height: 120px; overflow-y: auto; margin-top: 10px;
 }
-#log div { padding: 2px 0; border-bottom: 1px solid rgba(42,42,90,0.1); }
+#log div { padding: 2px 0; border-bottom: 1px solid rgba(58,58,58,0.1); }
 #log .ok { color: var(--green); }
 #log .err { color: var(--red); }
 #log .info { color: var(--fg2); }

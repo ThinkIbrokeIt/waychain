@@ -3,217 +3,448 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WayChain — Dox_Dev Badge</title>
-<meta name="description" content="WayChain Dox_Dev Badge — verify your identity to deploy contracts on WayChain.">
+<title>WayChain — Dox_Dev Badge Lookup</title>
+<meta name="description" content="WayChain Dox_Dev Badge — verify your identity level on WayChain. Look up any address to see its Dox_Dev level (L0–L3).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0a1a; --bg2: #12122a; --bg3: #1a1a3a;
-  --fg: #e0e0f0; --fg2: #8888bb;
-  --accent: #00d4ff; --accent2: #ff6b35; --accent3: #7b2ff7;
-  --green: #00ff88; --red: #ff3355; --yellow: #ffcc00;
-  --border: #2a2a5a;
+  --warm: #FFF8F0;
+  --slate: #2A2A2A;
+  --slate2: #1E1E1E;
+  --slate3: #333;
+  --fg: #E8E4DD;
+  --muted: #9A9A9A;
+  --copper: #B87333;
+  --amber: #FFBF00;
+  --green: #4CAF50;
+  --red: #E53935;
+  --border: #3A3A3A;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 body {
-  font-family: 'Courier New', monospace;
-  background: var(--bg); color: var(--fg);
-  line-height: 1.6;
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--slate);
+  color: var(--fg);
+  line-height: 1.8;
+  font-size: 18px;
 }
-.container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
+a { color: var(--copper); text-decoration: none; transition: color .2s; }
+a:hover { color: var(--warm); }
+p { margin-bottom: 12px; }
+.container { max-width: 700px; margin: 0 auto; padding: 0 24px; }
 
-.header {
+/* ─── Nav ─── */
+.nav {
+  position: sticky; top: 0; z-index: 200;
   display: flex; justify-content: space-between; align-items: center;
-  padding: 20px 0; border-bottom: 1px solid var(--border);
-  flex-wrap: wrap; gap: 10px;
-}
-.header h1 { font-size: 1.2em; color: var(--accent); }
-.header .nav a {
-  font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px;
-  margin-left: 20px; color: var(--fg2);
-}
-.header .nav a:hover { color: var(--accent); }
-
-.hero {
-  text-align: center; padding: 40px 20px 20px;
+  padding: 12px 24px;
+  background: rgba(42,42,42,.97); backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
 }
-.hero h2 { font-size: 1.5em; color: var(--accent); }
-.hero p { color: var(--fg2); font-size: 0.85em; margin-top: 8px; }
-
-.section {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 8px; margin: 15px 0; padding: 20px;
+.nav-logo { display: flex; align-items: center; gap: 10px; }
+.nav-logo-text { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.2em; color: var(--warm); letter-spacing: 1px; }
+.nav-logo-text span { color: var(--copper); }
+.nav-links { display: flex; gap: 2px; flex-wrap: wrap; align-items: center; }
+.nav-links a {
+  font-size: .65em; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  padding: 5px 8px; color: var(--muted); border-radius: 4px; transition: all .2s;
 }
-.section h3 {
-  font-size: 0.85em; color: var(--accent); text-transform: uppercase;
-  letter-spacing: 2px; margin-bottom: 15px;
-  padding-bottom: 8px; border-bottom: 1px solid var(--border);
-}
-
-.search-box {
-  display: flex; gap: 8px;
-}
-.search-box input {
-  flex: 1; background: var(--bg3); border: 1px solid var(--border);
-  color: var(--fg); padding: 10px 14px; border-radius: 6px;
-  font-family: 'Courier New', monospace; font-size: 0.85em;
-}
-.search-box input:focus { outline: none; border-color: var(--accent); }
-.search-box button {
-  background: var(--accent); color: var(--bg); border: none;
-  padding: 10px 20px; border-radius: 6px;
-  font-family: 'Courier New', monospace; font-weight: 700;
-  cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
-  font-size: 0.8em;
-}
-.search-box button:hover { opacity: 0.9; }
-
-.badge-result { margin-top: 15px; }
-.badge-result .row { display: flex; padding: 8px 0; border-bottom: 1px solid rgba(42,42,90,0.3); }
-.badge-result .label { width: 120px; color: var(--fg2); flex-shrink: 0; font-size: 0.8em; }
-.badge-result .value { flex: 1; word-break: break-all; font-size: 0.8em; }
-
-.badge-level {
-  display: inline-block; padding: 3px 10px; border-radius: 4px;
-  font-weight: 700; font-size: 0.85em;
-}
-.level0 { background: rgba(255,51,85,0.2); color: var(--red); border: 1px solid var(--red); }
-.level1 { background: rgba(136,136,187,0.2); color: var(--fg2); border: 1px solid var(--fg2); }
-.level2 { background: rgba(0,212,255,0.2); color: var(--accent); border: 1px solid var(--accent); }
-.level3 { background: rgba(123,47,247,0.2); color: var(--accent3); border: 1px solid var(--accent3); }
-
-.levels-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-}
-.level-card {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 6px; padding: 15px; text-align: center;
-}
-.level-card .lvl { font-size: 1.2em; font-weight: 700; margin-bottom: 8px; }
-.level-card .desc { font-size: 0.75em; color: var(--fg2); line-height: 1.5; }
-.level-card .perm { font-size: 0.7em; color: var(--green); margin-top: 8px; }
-
-.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.nav-links a:hover { color: var(--warm); background: var(--slate2); }
+.nav-links a.active { color: var(--slate); background: var(--copper); }
+.nav-status { font-size: .6em; color: var(--muted); margin-right: 8px; display: flex; align-items: center; gap: 4px; }
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
 .status-dot.online { background: var(--green); }
 .status-dot.offline { background: var(--red); }
 
-.footer {
-  text-align: center; padding: 30px 20px;
-  color: var(--fg2); font-size: 0.7em; border-top: 1px solid var(--border);
-  margin-top: 30px;
+/* ─── Hero ─── */
+.hero {
+  text-align: center;
+  padding: 80px 24px 60px;
+  background: linear-gradient(180deg, #1a1a2e 0%, var(--slate) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+  width: 800px; height: 800px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(184,115,51,.06) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.8em; color: var(--warm);
+  line-height: 1.1; margin-bottom: 8px; letter-spacing: 2px;
+  position: relative;
+}
+.hero .subhead {
+  font-size: .8em; color: var(--copper);
+  letter-spacing: 4px; text-transform: uppercase;
+  margin-bottom: 12px; position: relative;
+}
+.hero .divider { width: 50px; height: 1px; background: var(--copper); margin: 0 auto 16px; position: relative; }
+.hero p {
+  color: var(--muted); font-size: .85em;
+  max-width: 520px; margin: 0 auto 24px; position: relative;
 }
 
+/* ─── Badge Lookup Form ─── */
+.lookup-section {
+  margin-top: -30px;
+  position: relative; z-index: 10;
+}
+.lookup-card {
+  background: var(--slate2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 32px;
+  max-width: 600px; margin: 0 auto;
+}
+.lookup-card h2 {
+  font-size: 1.1em; color: var(--warm);
+  text-align: center; margin-bottom: 4px;
+}
+.lookup-card .hint {
+  font-size: .7em; color: var(--muted);
+  text-align: center; margin-bottom: 20px;
+}
+.lookup-form {
+  display: flex; gap: 8px;
+}
+.lookup-form input {
+  flex: 1;
+  background: var(--slate);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: .8em;
+  transition: border-color .2s;
+}
+.lookup-form input:focus { outline: none; border-color: var(--copper); }
+.lookup-form input::placeholder { color: var(--muted); opacity: .6; }
+.btn-lookup {
+  background: var(--copper); color: var(--warm);
+  font-weight: 700; font-size: .78em;
+  padding: 12px 24px; border: none; border-radius: 6px;
+  cursor: pointer; letter-spacing: .5px;
+  transition: all .2s; white-space: nowrap;
+  text-transform: uppercase;
+}
+.btn-lookup:hover { background: #a0642a; transform: translateY(-1px); }
+.btn-lookup:active { transform: translateY(0); }
+
+/* ─── Result ─── */
+.badge-result {
+  margin-top: 16px;
+  display: none;
+}
+.badge-result.show { display: block; }
+.result-card {
+  background: var(--slate);
+  border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px 20px;
+}
+.result-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(58,58,58,.4);
+  font-size: .8em;
+}
+.result-row:last-child { border-bottom: none; }
+.result-label {
+  width: 110px; flex-shrink: 0;
+  color: var(--muted); font-size: .9em;
+}
+.result-value { flex: 1; word-break: break-all; }
+.result-value .hash { font-family: 'Inter', monospace; font-size: .9em; }
+.result-error { color: var(--red); font-size: .8em; padding: 8px 0; }
+.result-loading { color: var(--muted); font-size: .8em; padding: 8px 0; }
+
+/* Badge level pills */
+.badge-level {
+  display: inline-block; padding: 2px 10px; border-radius: 4px;
+  font-weight: 700; font-size: .85em;
+}
+.level0 { background: rgba(229,57,53,.15); color: var(--red); border: 1px solid var(--red); }
+.level1 { background: rgba(154,154,154,.15); color: var(--muted); border: 1px solid var(--muted); }
+.level2 { background: rgba(184,115,51,.15); color: var(--copper); border: 1px solid var(--copper); }
+.level3 { background: rgba(255,191,0,.15); color: var(--amber); border: 1px solid var(--amber); }
+
+/* ─── CTA ─── */
+.cta-banner {
+  text-align: center;
+  padding: 40px 24px;
+  border-top: 1px solid var(--border);
+}
+.cta-banner h2 { font-size: 1.4em; color: var(--warm); margin-bottom: 6px; }
+.cta-banner p { font-size: .8em; color: var(--muted); margin-bottom: 20px; }
+.btn-cta {
+  background: var(--copper); color: var(--warm);
+  font-weight: 700; font-size: .85em;
+  padding: 14px 32px; border-radius: 50px;
+  letter-spacing: .5px; transition: all .2s;
+  border: none; cursor: pointer; text-decoration: none; display: inline-block;
+}
+.btn-cta:hover { background: #a0642a; color: var(--warm); transform: translateY(-1px); }
+.btn-outline {
+  border: 1px solid rgba(255,248,240,.2); color: var(--warm);
+  padding: 14px 28px; border-radius: 50px; font-size: .8em;
+  letter-spacing: .5px; transition: all .2s;
+  background: transparent; cursor: pointer; text-decoration: none; display: inline-block;
+  margin-left: 10px;
+}
+.btn-outline:hover { border-color: var(--copper); color: var(--copper); }
+
+/* ─── Levels Grid ─── */
+.section {
+  padding: 50px 24px;
+  border-top: 1px solid var(--border);
+}
+.section h2 {
+  font-size: 1.6em; color: var(--warm);
+  text-align: center; margin-bottom: 4px;
+}
+.section h2 em { font-style: normal; color: var(--copper); }
+.section .subtitle {
+  text-align: center; color: var(--muted);
+  font-size: .8em; margin-bottom: 32px;
+}
+.levels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+.level-card {
+  background: var(--slate2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px 20px;
+  text-align: center;
+  transition: all .3s;
+}
+.level-card:hover { border-color: var(--copper); transform: translateY(-2px); }
+.level-card .lvl-icon { font-size: 2em; margin-bottom: 6px; }
+.level-card .lvl-name { font-size: 1em; color: var(--warm); margin-bottom: 2px; }
+.level-card .lvl-sub { font-size: .7em; color: var(--muted); margin-bottom: 8px; }
+.level-card .lvl-desc { font-size: .75em; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+.level-card .lvl-perms { font-size: .68em; }
+.level-card .lvl-perms .perm-yes { color: var(--green); }
+.level-card .lvl-perms .perm-no { color: var(--red); }
+
+/* ─── Curator Table ─── */
+.curator-section .container {
+  max-width: 600px;
+}
+.curator-table { width: 100%; border-collapse: collapse; font-size: .78em; }
+.curator-table th {
+  text-align: left; padding: 8px 6px;
+  color: var(--muted); font-size: .8em;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+}
+.curator-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(58,58,58,.3);
+}
+.curator-table tr:last-child td { border-bottom: none; }
+.curator-table .addr { color: var(--copper); font-size: .9em; }
+
+/* ─── How to Get Verified ─── */
+.info-text {
+  font-size: .78em; color: var(--muted); line-height: 1.8;
+}
+.info-text strong { color: var(--fg); }
+.info-note {
+  color: var(--amber); font-size: .85em;
+  padding: 12px; background: rgba(255,191,0,.06);
+  border: 1px solid rgba(255,191,0,.15);
+  border-radius: 6px; margin-top: 8px;
+}
+
+/* ─── Footer ─── */
+.footer {
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--muted);
+  font-size: .7em;
+  border-top: 1px solid var(--border);
+}
+.footer a { color: var(--muted); }
+.footer a:hover { color: var(--copper); }
+
+/* ─── Responsive ─── */
 @media (max-width: 600px) {
-  .header { flex-direction: column; align-items: flex-start; }
-  .header .nav a { margin-left: 0; margin-right: 15px; }
+  .hero h1 { font-size: 2em; }
+  .lookup-form { flex-direction: column; }
+  .btn-lookup { width: 100%; }
+  .nav-links a { font-size: .55em; padding: 4px 6px; }
+  .nav-links { gap: 0; }
+  .levels-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .nav { flex-wrap: wrap; gap: 6px; }
+  .nav-links { order: 3; width: 100%; justify-content: flex-end; }
 }
 </style>
 </head>
 <body>
-<div class="container">
 
-  <!-- Header -->
-  <div class="header">
-    <h1>⬡ WayChain</h1>
-    <div class="nav">
-      <span id="statusSpan"><span class="status-dot offline" id="statusDot"></span><span id="statusText">Connecting...</span></span>
-      <a href="https://waychain.org">Dashboard</a>
-      <a href="/explorer">Explorer</a>
+<!-- Nav -->
+<div class="nav">
+  <div class="nav-logo">
+    <span class="nav-logo-text">⬡ <span>WayChain</span></span>
+  </div>
+  <div class="nav-links">
+    <span class="nav-status" id="statusSpan">
+      <span class="status-dot offline" id="statusDot"></span>
+      <span id="statusText">Connecting...</span>
+    </span>
+    <a href="https://waychain.org">Dashboard</a>
+    <a href="/explorer">Explorer</a>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-logo">🪪</div>
+  <div class="subhead">Dox_Dev Badge</div>
+  <h1>Identity on WayChain</h1>
+  <div class="divider"></div>
+  <p>
+    WayChain's identity system separates verified humans from anonymous actors.
+    Only Dox_Dev Level 2+ accounts can deploy contracts. One human. One voice.
+    No anonymous scams.
+  </p>
+</div>
+
+<!-- Badge Lookup Form -->
+<div class="lookup-section">
+  <div class="container">
+    <div class="lookup-card">
+      <h2>🔍 Check a Badge</h2>
+      <p class="hint">Paste a WayChain address to see its Dox_Dev level</p>
+      <div class="lookup-form">
+        <input id="addressInput" type="text" placeholder="e.g. 0x3faf... or alice, bob, treasury" autocomplete="off">
+        <button class="btn-lookup" onclick="checkBadge()">Look Up</button>
+      </div>
+      <div id="badgeResult" class="badge-result"></div>
     </div>
   </div>
+</div>
 
-  <!-- Hero -->
-  <div class="hero">
-    <h2>🛡️ Dox_Dev Badge</h2>
-    <p>WayChain's identity system. Verified humans deploy contracts. Everyone else uses pre-audited templates.<br>One human. One voice. No anonymous scams.</p>
+<!-- CTA: New Visitors -->
+<div class="cta-banner">
+  <h2>New to WayChain?</h2>
+  <p>Start your verification journey. Every human gets one voice on-chain.</p>
+  <div>
+    <a href="https://waychain.org" class="btn-cta">Explore WayChain</a>
+    <a href="/explorer" class="btn-outline">Block Explorer</a>
   </div>
+</div>
 
-  <!-- Check -->
-  <div class="section">
-    <h3>Check Badge</h3>
-    <div class="search-box">
-      <input id="addressInput" type="text" placeholder="Enter an address (e.g. 0x3faf... or validator-1)">
-      <button onclick="checkBadge()">Check</button>
-    </div>
-    <div id="badgeResult" class="badge-result" style="display:none"></div>
-  </div>
-
-  <!-- Levels -->
-  <div class="section">
-    <h3>Badge Levels</h3>
+<!-- Badge Levels -->
+<div class="section">
+  <div class="container">
+    <h2>Badge <em>Levels</em></h2>
+    <p class="subtitle">Three tiers of identity — each unlocks more capabilities</p>
     <div class="levels-grid">
       <div class="level-card">
-        <div class="lvl"><span class="badge-level level0">L0</span></div>
-        <div class="desc">Anonymous<br>No identity verification</div>
-        <div class="perm">Can transfer WAY</div>
-        <div class="perm" style="color:var(--red)">Cannot deploy contracts</div>
+        <div class="lvl-icon">👤</div>
+        <div class="lvl-name">Level 0 — Anonymous</div>
+        <div class="lvl-sub">No identity verification</div>
+        <div class="lvl-desc">Default state for all new addresses. Can transfer WAY and interact with pre-deployed contracts.</div>
+        <div class="lvl-perms">
+          <div class="perm-yes">✓ Transfer WAY</div>
+          <div class="perm-no">✗ Deploy contracts</div>
+        </div>
       </div>
       <div class="level-card">
-        <div class="lvl"><span class="badge-level level1">L1</span></div>
-        <div class="desc">Basic<br>Social verification complete</div>
-        <div class="perm">Can transfer WAY</div>
-        <div class="perm" style="color:var(--red)">Cannot deploy contracts</div>
+        <div class="lvl-icon">✅</div>
+        <div class="lvl-name">Level 1 — Basic</div>
+        <div class="lvl-sub">Social verification complete</div>
+        <div class="lvl-desc">Linked GitHub, X (Twitter), or other identity via signed message. Still cannot deploy contracts.</div>
+        <div class="lvl-perms">
+          <div class="perm-yes">✓ Transfer WAY</div>
+          <div class="perm-no">✗ Deploy contracts</div>
+        </div>
       </div>
       <div class="level-card">
-        <div class="lvl"><span class="badge-level level2">L2</span></div>
-        <div class="desc">Developer<br>KYC + developer profile</div>
-        <div class="perm">Can deploy contracts</div>
-        <div class="perm">Can use Template Registry</div>
+        <div class="lvl-icon">🛠️</div>
+        <div class="lvl-name">Level 2 — Developer</div>
+        <div class="lvl-sub">KYC + developer profile</div>
+        <div class="lvl-desc">Reviewed and approved by curators. Can deploy contracts via Template Registry.</div>
+        <div class="lvl-perms">
+          <div class="perm-yes">✓ Transfer WAY</div>
+          <div class="perm-yes">✓ Deploy contracts</div>
+          <div class="perm-yes">✓ Use Template Registry</div>
+        </div>
       </div>
       <div class="level-card">
-        <div class="lvl"><span class="badge-level level3">L3</span></div>
-        <div class="desc">Curator<br>Dox_Dev verified trusted member</div>
-        <div class="perm">Can issue badges</div>
-        <div class="perm">Can deploy any class</div>
-        <div class="perm" style="color:var(--accent3)">Genesis set: 3 curators</div>
+        <div class="lvl-icon">🌟</div>
+        <div class="lvl-name">Level 3 — Curator</div>
+        <div class="lvl-sub">Dox_Dev verified trusted member</div>
+        <div class="lvl-desc">Invite-only. The most trusted members of the community. Approve L2 applications.</div>
+        <div class="lvl-perms">
+          <div class="perm-yes">✓ Issue badges</div>
+          <div class="perm-yes">✓ Deploy any class</div>
+          <div class="perm-yes" style="color:var(--amber)">✦ Genesis set: 3 curators</div>
+        </div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- How to Get Verified -->
-  <div class="section">
-    <h3>Get Verified</h3>
-    <div style="font-size:0.8em;color:var(--fg2);line-height:1.8">
-      <p><strong style="color:var(--fg)">L1 — Social verification</strong><br>
+<!-- How to Get Verified -->
+<div class="section">
+  <div class="container">
+    <h2>Get <em>Verified</em></h2>
+    <p class="subtitle">Your path to Dox_Dev on WayChain</p>
+    <div class="info-text">
+      <p><strong>Level 1 — Social verification</strong><br>
       Link your GitHub, X (Twitter), or other identity to your WayChain address via a signed message.<br>
       <em>Coming soon: self-serve verification portal.</em></p>
       <br>
-      <p><strong style="color:var(--fg)">L2 — Developer badge</strong><br>
+      <p><strong>Level 2 — Developer badge</strong><br>
       Complete L1 verification and submit a developer profile. Curators review and approve.<br>
       Required to deploy contracts on WayChain.</p>
       <br>
-      <p><strong style="color:var(--fg)">L3 — Curator badge</strong><br>
+      <p><strong>Level 3 — Curator badge</strong><br>
       Invite-only. L3 curators are the most trusted members of the WayChain community.<br>
       They approve L2 applications and help maintain the network.</p>
-      <br>
-      <p style="color:var(--yellow)">⚠️  Current genesis curators: 3. The badge system is active but self-serve applications are not yet open. Contact a curator to begin the verification process.</p>
+      <div class="info-note">
+        ⚠️ Current genesis curators: 3. The badge system is active but self-serve applications are not yet open. Contact a curator to begin the verification process.
+      </div>
     </div>
   </div>
-
-  <!-- Genesis Curators -->
-  <div class="section">
-    <h3>Genesis Curators</h3>
-    <div style="font-size:0.8em;color:var(--fg2)">
-      <p>The initial curators were set at genesis and can issue Level 2 badges:</p>
-      <br>
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr><th style="text-align:left;padding:6px;color:var(--fg2);font-size:0.8em;border-bottom:1px solid var(--border)">Address</th><th style="text-align:left;padding:6px;color:var(--fg2);font-size:0.8em;border-bottom:1px solid var(--border)">Level</th></tr></thead>
-        <tbody>
-          <tr><td style="padding:6px;border-bottom:1px solid rgba(42,42,90,0.3)"><a href="/explorer?rpc=https://api.waychain.org#search=alice" class="hash">alice</a></td><td style="padding:6px;border-bottom:1px solid rgba(42,42,90,0.3)"><span class="badge-level level3">L3</span></td></tr>
-          <tr><td style="padding:6px;border-bottom:1px solid rgba(42,42,90,0.3)"><a href="/explorer?rpc=https://api.waychain.org#search=bob" class="hash">bob</a></td><td style="padding:6px;border-bottom:1px solid rgba(42,42,90,0.3)"><span class="badge-level level2">L2</span></td></tr>
-          <tr><td style="padding:6px;border-bottom:1px solid rgba(42,42,90,0.3)"><a href="/explorer?rpc=https://api.waychain.org#search=treasury" class="hash">treasury</a></td><td style="padding:6px;border-bottom:1px solid rgba(42,42,90,0.3)"><span class="badge-level level3">L3</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
 </div>
 
+<!-- Genesis Curators -->
+<div class="section curator-section">
+  <div class="container">
+    <h2>Genesis <em>Curators</em></h2>
+    <p class="subtitle">The initial curators set at genesis can issue Level 2 badges</p>
+    <table class="curator-table">
+      <thead>
+        <tr><th>Address</th><th>Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="addr"><a href="/explorer?rpc=https://api.waychain.org#search=alice">alice</a></td><td><span class="badge-level level3">L3</span></td></tr>
+        <tr><td class="addr"><a href="/explorer?rpc=https://api.waychain.org#search=bob">bob</a></td><td><span class="badge-level level2">L2</span></td></tr>
+        <tr><td class="addr"><a href="/explorer?rpc=https://api.waychain.org#search=treasury">treasury</a></td><td><span class="badge-level level3">L3</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Footer -->
 <div class="footer">
-  WayChain v0.1.0 — "Actually Decentralized"<br>
+  WayChain v0.1.0 — <em>"Actually Decentralized"</em><br>
   <a href="https://waychain.org">waychain.org</a> &middot; Chain ID 10008
 </div>
 
@@ -246,8 +477,8 @@ async function checkBadge() {
   if (!addr) return;
 
   const resultDiv = document.getElementById('badgeResult');
-  resultDiv.style.display = 'block';
-  resultDiv.innerHTML = '<div class="row"><span style="color:var(--fg2)">Checking...</span></div>';
+  resultDiv.className = 'badge-result show';
+  resultDiv.innerHTML = '<div class="result-card"><div class="result-loading">Checking badge...</div></div>';
 
   try {
     const cleanAddr = addr.startsWith('0x') ? addr : '0x' + addr;
@@ -266,15 +497,32 @@ async function checkBadge() {
     else if (lvl >= 1) { levelClass = 'level1'; levelName = 'Basic (L1)'; desc = 'Social verification complete. Cannot deploy contracts.'; }
 
     resultDiv.innerHTML = `
-      <div class="row"><div class="label">Address</div><div class="value hash">${cleanAddr}</div></div>
-      <div class="row"><div class="label">Badge</div><div class="value"><span class="badge-level ${levelClass}">${levelName}</span></div></div>
-      <div class="row"><div class="label">Dox_Dev Level</div><div class="value">${lvl}</div></div>
-      <div class="row"><div class="label">Balance</div><div class="value">${bal.toLocaleString()} WAY</div></div>
-      <div class="row" style="border-bottom:none"><div class="label">Status</div><div class="value" style="color:var(--fg2);font-size:0.75em">${desc}</div></div>
+      <div class="result-card">
+        <div class="result-row">
+          <div class="result-label">Address</div>
+          <div class="result-value hash">${cleanAddr}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-label">Badge</div>
+          <div class="result-value"><span class="badge-level ${levelClass}">${levelName}</span></div>
+        </div>
+        <div class="result-row">
+          <div class="result-label">Dox_Dev Level</div>
+          <div class="result-value">${lvl}</div>
+        </div>
+        <div class="result-row">
+          <div class="result-label">Balance</div>
+          <div class="result-value">${bal.toLocaleString()} WAY</div>
+        </div>
+        <div class="result-row" style="border-bottom:none">
+          <div class="result-label">Status</div>
+          <div class="result-value" style="color:var(--muted);font-size:.9em">${desc}</div>
+        </div>
+      </div>
     `;
     setStatus(true);
   } catch(e) {
-    resultDiv.innerHTML = `<div class="row"><span class="red">Error: ${e.message}</span></div>`;
+    resultDiv.innerHTML = `<div class="result-card"><div class="result-error">Error: ${e.message}</div></div>`;
     setStatus(false);
   }
 }
@@ -284,10 +532,12 @@ rpc('eth_chainId').then(id => {
   setStatus(id === '0x171');
 }).catch(() => setStatus(false));
 
-// Auto-check the dev address from the dashboard
-setTimeout(() => {
-  document.getElementById('addressInput').placeholder = 'Enter address (e.g. 0x3faf... or alice)';
-}, 500);
+// Enter key triggers lookup
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('addressInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') checkBadge();
+  });
+});
 </script>
 </body>
 </html>

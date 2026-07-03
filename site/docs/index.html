@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Getting Started</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:18px;max-width:700px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);transition:color .2s}
+a:hover{color:var(--warm)}
+p{margin-bottom:16px}
+
+.nav{position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:var(--slate);border-bottom:1px solid var(--border);margin-bottom:40px}
+.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.1em;color:var(--warm);letter-spacing:1px}
+.nav-logo span{color:var(--copper)}
+.nav-links{display:flex;gap:16px}
+.nav-links a{font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.nav-links a:hover{color:var(--warm)}
+
+h1{font-size:2.2em;color:var(--warm);margin-bottom:8px}
+h2{font-size:1.5em;color:var(--copper);margin:32px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+h3{font-size:1.1em;color:var(--warm);margin:24px 0 8px}
+
+code{background:var(--slate2);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--copper)}
+pre{background:var(--slate2);padding:18px;border-radius:6px;overflow-x:auto;margin:16px 0;border:1px solid var(--border);font-size:.85em}
+pre code{background:none;padding:0}
+hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+
+.badge{display:inline-block;background:var(--copper);color:var(--warm);font-size:.65em;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.info-box{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:20px;margin:16px 0}
+.info-box h4{color:var(--copper);margin-bottom:8px;font-family:'Playfair Display',Georgia,serif}
+
+.step{display:flex;gap:16px;margin:20px 0;align-items:flex-start}
+.step-num{background:var(--copper);color:var(--warm);min-width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em}
+.step-content{flex:1}
+
+.footer{text-align:center;padding:40px 0;color:var(--muted);font-size:.75em;border-top:1px solid var(--border);margin-top:40px}
+
+@media(max-width:768px){body{padding:0 16px;font-size:16px;line-height:2.0}h1{font-size:1.8em}h2{font-size:1.3em}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-logo"><span>⬡</span> WayChain</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/docs">Docs</a>
+    <a href="/whitepaper">Whitepaper</a>
+  </div>
+</div>
+
+<h1>Getting Started</h1>
+<p>WayChain is live at chain ID <code>10008</code> (0x2718). Blocks every 1 second. Instant finality. One verified human = one voice.</p>
+<p>This guide gets you from zero to querying the chain in under 5 minutes.</p>
+
+<hr>
+
+<h2>1. Check the Chain Is Alive</h2>
+
+<p>No wallet needed. No tokens needed. Any HTTP client works:</p>
+
+<pre><code># Get chain ID
+curl -s -X POST https://api.waychain.org \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","id":1}'</code></pre>
+
+<p>Expected response: <code>{"jsonrpc":"2.0","result":"0x2718","id":1}</code></p>
+
+<pre><code># Get latest block number
+curl -s -X POST https://api.waychain.org \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","id":1}'</code></pre>
+
+<p>Expected: an increasing hex number. WayChain produces one block per second.</p>
+
+<pre><code># Get block by number (replace with actual hex)
+curl -s -X POST https://api.waychain.org \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["0xC0000",false],"id":1}'</code></pre>
+
+<hr>
+
+<h2>2. The WayChain RPC</h2>
+
+<div class="info-box">
+  <h4>RPC Endpoint</h4>
+  <p><strong>HTTP:</strong> <code>https://api.waychain.org</code></p>
+  <p><strong>WebSocket:</strong> <code>wss://api.waychain.org</code></p>
+  <p><strong>Chain ID:</strong> 10008 (0x2718)</p>
+</div>
+
+<p>Supported methods include all standard <code>eth_*</code> methods plus WayChain-specific <code>way_*</code> methods:</p>
+
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+  <tr><th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)">Method</th><th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)">Purpose</th></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_chainId</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Verify chain</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_blockNumber</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Latest block</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_getBlockByNumber</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Block details</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_getBalance</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Account balance</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_sendRawTransaction</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Submit binary tx</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_getTransactionByHash</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Tx lookup</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>way_getDoxLevel</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Badge level lookup</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)"><code>eth_subscribe</code></td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">WebSocket push</td></tr>
+</table>
+
+<hr>
+
+<h2>3. What You Need to Deploy</h2>
+
+<p>WayChain requires <strong>Dox_Dev Level 2+</strong> to deploy smart contracts. This is enforced at the protocol level — the EVM itself rejects deploys from unverified addresses.</p>
+
+<div class="info-box">
+  <h4>Why? No anonymous rug-pulls.</h4>
+  <p>Every deployer is a verified human. Bad actors cannot re-verify after revocation. This is not KYC — your identity is encrypted, disclosed only on verified legal request.</p>
+</div>
+
+<p>For now, badge applications are handled manually. <a href="https://github.com/ThinkIbrokeIt/waychain">Open an issue</a> on the monorepo with your WayChain address to begin verification.</p>
+
+<hr>
+
+<h2>4. Developer Resources</h2>
+
+<div class="info-box">
+  <h4>WayChain uses SHA256, not keccak256</h4>
+  <p>All function selectors, storage keys, and transaction hashes use SHA256. Standard EVM tooling (ethers.js, Foundry) uses keccak256 — adapt your ABI selectors accordingly.</p>
+</div>
+
+<p><strong>Key differences from standard EVM:</strong></p>
+<ul>
+  <li>Binary transaction format (not RLP) — see <code>consensus/serialize.go</code></li>
+  <li>Ed25519 signatures (not ECDSA)</li>
+  <li>SHA256-based selectors (not keccak256)</li>
+  <li>20 native precompiles at addresses 0x0C-0x20</li>
+  <li>Fixed fees: 0.001/0.005/0.01 WAY (not auctioned)</li>
+  <li>1-second block time with instant finality</li>
+</ul>
+
+<pre><code># Source code
+git clone https://github.com/ThinkIbrokeIt/waychain
+cd waychain/consensus
+go build .
+./waychain start</code></pre>
+
+<hr>
+
+<h2>5. The Professional Oracle Program</h2>
+
+<p>WayChain is the first blockchain where professionals earn directly from the protocol. Geologists, lawyers, surveyors, and engineers can earn WAY for their attestation work.</p>
+
+<table style="width:100%;border-collapse:collapse;margin:16px 0">
+  <tr><th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)">Profession</th><th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)">Attestations</th><th style="text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)">Reward</th></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Geologist</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Mineral reserves, land value</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">100 WAY</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Lawyer</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Legal standing, compliance</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">80 WAY</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Engineer</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Structural, standards compliance</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">70 WAY</td></tr>
+  <tr><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Surveyor</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">Property boundaries, land use</td><td style="padding:8px 12px;border-bottom:1px solid var(--border)">60 WAY</td></tr>
+</table>
+
+<p><a href="https://github.com/ThinkIbrokeIt/waychain">Apply via GitHub</a> — mention your profession and WayChain address.</p>
+
+<hr>
+
+<h2>Next Steps</h2>
+
+<p><a href="/whitepaper">Read the whitepaper</a> — full architecture, 20 precompiles, live vs spec'd transparency.</p>
+<p><a href="/explorer">Open the explorer</a> — watch blocks being produced in real time.</p>
+<p><a href="/badge">Check the badge UI</a> — look up Dox_Dev levels.</p>
+<p><a href="https://github.com/ThinkIbrokeIt/waychain">Browse the source on GitHub</a> — monorepo with consensus, frontend, contracts, and specs.</p>
+
+<div class="footer">
+  <p>WayChain — Actually Decentralized. Chain ID 10008.</p>
+  <p><a href="https://waychain.org">waychain.org</a></p>
+</div>
+
+</body>
+</html>
