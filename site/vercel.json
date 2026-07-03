@@ -1,0 +1,17 @@
+{
+  "name": "waychain-site",
+  "framework": null,
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "installCommand": "",
+  "rewrites": [
+    { "source": "/version.json", "destination": "/version.json" },
+    { "source": "/whitepaper", "destination": "/whitepaper/index.html" },
+    { "source": "/whitepaper/", "destination": "/whitepaper/index.html" },
+    { "source": "/whitepaper/:path*", "destination": "/whitepaper/index.html" },
+    { "source": "/explorer", "destination": "/explorer/index.html" },
+    { "source": "/badge", "destination": "/badge/index.html" },
+    { "source": "/plan", "destination": "/plan/index.html" }
+  ]
+}

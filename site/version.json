@@ -1,0 +1,28 @@
+{
+  "version": "3.1.4",
+  "chain_id": 10008,
+  "chain_id_hex": "0x2718",
+  "name": "WayChain",
+  "tagline": "Actually Decentralized",
+  "deployed_at": "2026-07-02",
+  "whitepaper_sections": 22,
+  "live_features": 18,
+  "spec_features": 6,
+  "precompiles": 20,
+  "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
+  "blueprint_files": 29,
+  "blueprint_lines": 11947,
+  "new_features": [
+    "Progressive Staking (anti-whale reward brackets)",
+    "Oracle VRF + Time Execution (scheduled triggers)",
+    "Mineral Rights Tokenization (MRT Registry 0x20)"
+  ],
+  "fixes": [
+    "BIJO clarified as ecosystem reward token (not fuel token)",
+    "BIJO supply corrected: 369B → 369M (matches on-chain precompile)",
+    "State rent pricing updated to match 2026 cloud storage costs",
+    "Whitepaper HTML restored (was broken/regressed in v3.1.1)",
+    "Version consistency: all sources now say 3.1.2",
+    "CHANGELOG backfilled v3.0.2–v3.1.1"
+  ]
+}

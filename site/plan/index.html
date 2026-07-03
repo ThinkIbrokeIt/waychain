@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Launch Plan</title>
+<style>
+:root {
+  --bg: #0a0a1a; --bg2: #12122a; --bg3: #1a1a3a;
+  --fg: #e0e0f0; --fg2: #8888bb; --accent: #00d4ff;
+  --green: #00ff88; --red: #ff3355; --border: #2a2a5a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Courier New', monospace; background: var(--bg); color: var(--fg); line-height: 1.7; }
+.container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.header { border-bottom: 1px solid var(--border); padding: 20px 0; margin-bottom: 30px; }
+.header h1 { color: var(--accent); font-size: 1.4em; }
+.nav { margin-top: 8px; }
+.nav a { font-size: 0.8em; color: var(--fg2); margin-right: 20px; text-transform: uppercase; letter-spacing: 1px; }
+.nav a:hover { color: var(--accent); }
+h2 { color: var(--accent); font-size: 1.2em; margin: 30px 0 15px; }
+h3 { color: var(--accent); font-size: 1em; margin: 25px 0 10px; }
+p { margin: 10px 0; font-size: 0.9em; }
+table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.8em; }
+th { color: var(--fg2); text-transform: uppercase; font-size: 0.7em; }
+tr:hover td { background: var(--bg3); }
+code { background: var(--bg3); padding: 2px 6px; border-radius: 3px; font-size: 0.85em; }
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+.status-dot.online { background: var(--green); }
+.status-dot.offline { background: var(--red); }
+.badge-tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.7em; background: rgba(0,212,255,0.2); color: var(--accent); margin-right: 5px; }
+ul { padding-left: 20px; }
+li { margin: 4px 0; font-size: 0.9em; }
+.completed { color: var(--green); }
+.footer { border-top: 1px solid var(--border); padding: 30px 0; margin-top: 50px; color: var(--fg2); font-size: 0.7em; text-align: center; }
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>⬡ WayChain Launch Plan</h1>
+<div class="nav">
+<a href="https://waychain.org">Dashboard</a>
+<a href="/whitepaper">Whitepaper</a>
+<a href="https://waychain.org/explorer">Explorer</a>
+</div>
+</div>
+
+<h2>Status: <span class="completed">All 5 Phases Complete</span></h2>
+
+<p>Chain is live at <strong>waychain.org</strong>. 80,000+ blocks at 1/sec, 3 validators, BoltDB persistence.</p>
+
+<h2>Phase 0: Foundation ✅</h2>
+<ul>
+<li class="completed">BoltDB persistence — accounts, blocks, node, txs buckets</li>
+<li class="completed">Tx storage with hash index — O(1) lookup</li>
+<li class="completed">Transaction lifecycle — sendRawTransaction, getByHash, getReceipt</li>
+<li class="completed">Binary wire format serialization</li>
+<li class="completed">Deploy gate — 3-layer enforcement (RPC, block, EVM)</li>
+<li class="completed">P2P networking — TCP gob, 6 message types, mesh topology</li>
+<li class="completed">3-validator set with sqrt-weighted proposer lottery</li>
+<li class="completed">Systemd service, graceful shutdown, health endpoint</li>
+</ul>
+
+<h2>Phase 1: Safety ✅</h2>
+<ul>
+<li class="completed">Dox_Dev badges — L1/L2/L3, gated contract deployment</li>
+<li class="completed">Deploy gate enforcement at all 3 layers</li>
+<li class="completed">Badge checker UI at /badge</li>
+<li class="completed">Genesis curators: alice (L3), bob (L2), treasury (L3)</li>
+</ul>
+
+<h2>Phase 2: Infrastructure ✅</h2>
+<ul>
+<li class="completed">waychain.org via Vercel with HTTPS</li>
+<li class="completed">Cloudflare Tunnel for RPC (api.waychain.org)</li>
+<li class="completed">WebSocket support on same port</li>
+<li class="completed">Rate limiting — 100 req/sec/IP</li>
+<li class="completed">Token infrastructure — 1WAY, 2WAY specs, DEX contracts</li>
+</ul>
+
+<h2>Phase 3: Interfaces ✅</h2>
+<ul>
+<li class="completed">Block Explorer — latest blocks, search, detail views</li>
+<li class="completed">Dashboard — real-time WS push, stats, lookup</li>
+<li class="completed">Badge UI — check Dox_Dev level, descriptions</li>
+</ul>
+
+<h2>Phase 4: Real-Time ✅</h2>
+<ul>
+<li class="completed">eth_subscribe: newHeads, newPendingTransactions</li>
+<li class="completed">SubscriptionManager with auto-cleanup</li>
+<li class="completed">Dashboard WebSocket integration with HTTP fallback</li>
+</ul>
+
+<h2>Phase 5: Hardening ✅</h2>
+<ul>
+<li class="completed">3 validators producing blocks with rotating proposers</li>
+<li class="completed">Rate limiter: token bucket, 100/sec/IP, auto-refill</li>
+<li class="completed">Structured logging: slog JSON format</li>
+</ul>
+
+<h2>Architecture</h2>
+<pre><code>Internet → Cloudflare (HTTPS) → Vercel
+  ├── / → Dashboard
+  ├── /explorer → Explorer  
+  ├── /badge → Badge
+  └── api.waychain.org → Cloudflare Tunnel → Daemon
+        ├── Blockchain (BFT + EVM)
+        ├── 13 Precompiles (0x0C-0x17)
+        ├── BoltDB persistence
+        ├── Tx Pool + P2P Network
+        ├── WebSocket subscriptions
+        └── Rate limiter + structured logging</code></pre>
+
+<h2>Pre verified</h2>
+<table>
+<tr><th>Test</th><th>Status</th></tr>
+<tr><td>Real tx pipeline</td><td>✅ eth_sendRawTransaction → block → receipt 0x1</td></tr>
+<tr><td>Persistent tx</td><td>✅ Survives daemon restart</td></tr>
+<tr><td>Public access</td><td>✅ https://waychain.org live</td></tr>
+<tr><td>Block explorer</td><td>✅ Real blocks, real txs</td></tr>
+<tr><td>Badge check</td><td>✅ Dox_Dev levels</td></tr>
+<tr><td>WebSocket</td><td>✅ wss push notifications</td></tr>
+<tr><td>Multi-validator</td><td>✅ 3 proposers rotating</td></tr>
+<tr><td>Rate limiting</td><td>✅ 100/sec/IP token bucket</td></tr>
+<tr><td>Structured logs</td><td>✅ JSON with msg/level fields</td></tr>
+</table>
+
+<h2>What's Next</h2>
+<ul>
+<li><strong>2WAY Deployment</strong> — Multi-collateral stablecoin precompile</li>
+<li><strong>Template Registry</strong> — First Solidity contracts on chain</li>
+<li><strong>Multi-Node Network</strong> — 3 validators on separate machines</li>
+<li><strong>Cross-Chain Bridge</strong> — LayerZero OFT for 2WAY</li>
+</ul>
+
+<div class="footer">
+WayChain v2.0 — Launch Plan Complete<br>
+waychain.org · Chain ID 10008 · Actually Decentralized
+</div>
+</div>
+</body>
+</html>
