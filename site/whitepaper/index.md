@@ -491,6 +491,8 @@ WayChain is the first blockchain where identity — not capital — determines p
 
 WayChain does not chase exchange listings. The treasury holds the supply. Governance votes on every distribution. When 1WAY brings Bitcoin liquidity into the ecosystem, every transaction needs WAY for fees. The value flows to the community — not to exchange order books. As Wink put it: *"They will need us when the Bitcoin starts rolling in."*
 
+*A closed loop with a bridge to close the gap.* 1WAY is the bridge. The internal economy is self-sustaining — validators, attesters, professionals, and token holders all exchange value within the chain. The bridge connects this economy to the largest, most decentralized asset in existence: Bitcoin. The loop is sealed. The bridge is open.
+
 **Go to waychain.org. See blocks being produced in real time. Check the Badge UI and start your Dox_Dev verification. If you're a builder, deploy through the template registry. If you're a professional — geologist, lawyer, surveyor, engineer — apply for your oracle badge and start earning WAY for your expertise.**
 
 **One human. One voice. One way.**
