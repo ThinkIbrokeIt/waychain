@@ -446,6 +446,107 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 	case "eth_unsubscribe":
 		return nil, fmt.Errorf("eth_unsubscribe requires a WebSocket connection")
 
+	// ── Professional Badge methods ──
+	case "way_applyBadge":
+		var p []string
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 2 {
+			return nil, fmt.Errorf("invalid params: expected [\"0xaddress\", \"profession\"]")
+		}
+		addr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
+		profession := strings.ToLower(p[1])
+
+		// Generate license hash from address+profession
+		licenseInput := fmt.Sprintf("%s:%s", addr, profession)
+		licenseHash := sha256.Sum256([]byte(licenseInput))
+
+		rpc.mu.Lock()
+		err := evm.ApplyForProfessionalBadge(profession, licenseHash, rpc.chain.State, addr)
+		rpc.mu.Unlock()
+		if err != nil {
+			return nil, fmt.Errorf("apply failed: %v", err)
+		}
+		return map[string]interface{}{
+			"success":    true,
+			"address":    "0x" + addr,
+			"profession": profession,
+		}, nil
+
+	case "way_getPendingApplications":
+		schedulerAddr := evm.PrecompileAddrHex(0x0D)
+
+		rpc.mu.RLock()
+		schedulerAcc := rpc.chain.State.GetAccount(schedulerAddr)
+		if schedulerAcc == nil {
+			rpc.mu.RUnlock()
+			return []interface{}{}, nil
+		}
+
+		validProfessions := []string{"geologist", "lawyer", "surveyor", "engineer"}
+		var applications []map[string]interface{}
+
+		// Iterate all accounts; check each for pending applications
+		for addr, acc := range rpc.chain.State.Accounts {
+			if acc.DoxDevLevel >= 2 {
+				for _, prof := range validProfessions {
+					appKey := sha256.Sum256(append(append([]byte{0x15}, []byte(addr)...), []byte(prof)...))
+					if val, ok := schedulerAcc.Storage[appKey]; ok {
+						status := "pending"
+						if val[31] == 2 {
+							status = "verified"
+						} else if val[31] == 0 {
+							status = "rejected"
+						}
+						applications = append(applications, map[string]interface{}{
+							"address":    "0x" + addr,
+							"profession": prof,
+							"status":     status,
+						})
+					}
+				}
+			}
+		}
+		rpc.mu.RUnlock()
+
+		if applications == nil {
+			return []interface{}{}, nil
+		}
+		return applications, nil
+
+	case "way_approveBadge":
+		var p []string
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 3 {
+			return nil, fmt.Errorf("invalid params: expected [\"0xcaller\", \"0xapplicant\", \"profession\"]")
+		}
+		callerAddr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
+		applicantAddr := strings.ToLower(strings.TrimPrefix(p[1], "0x"))
+		profession := strings.ToLower(p[2])
+
+		rpc.mu.Lock()
+		verified, err := evm.VerifyProfessionalBadge(profession, rpc.chain.State, callerAddr)
+		if err != nil {
+			rpc.mu.Unlock()
+			return nil, fmt.Errorf("verification failed: %v", err)
+		}
+
+		// Update the application status in precompile 0x0D's storage
+		if verified {
+			schedulerAddr := evm.PrecompileAddrHex(0x0D)
+			schedulerAcc := rpc.chain.State.GetOrCreateAccount(schedulerAddr)
+			appKey := sha256.Sum256(append(append([]byte{0x15}, []byte(applicantAddr)...), []byte(profession)...))
+			if val, ok := schedulerAcc.Storage[appKey]; ok {
+				val[31] = 2 // Mark as verified
+				schedulerAcc.Storage[appKey] = val
+			}
+		}
+		rpc.mu.Unlock()
+
+		return map[string]interface{}{
+			"success":    verified,
+			"caller":     "0x" + callerAddr,
+			"applicant":  "0x" + applicantAddr,
+			"profession": profession,
+		}, nil
+
 	default:
 		return nil, fmt.Errorf("method not found: %s", method)
 	}
