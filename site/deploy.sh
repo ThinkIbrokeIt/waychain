@@ -40,7 +40,7 @@ git commit -m "v$NEW_VERSION: $MESSAGE"
 # Deploy to production
 echo ""
 echo "=== Deploying v$NEW_VERSION to production ==="
-vercel deploy --prod
+vercel deploy --prod --yes
 
 # Tag
 git tag -a "v$NEW_VERSION" -m "$MESSAGE"
