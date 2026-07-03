@@ -54,7 +54,7 @@ var PrecompilesTable = map[byte]*Precompile{
 	},
 	0x12: {
 		Address: 0x12,
-		Name:    "StateRent",
+		Name:    "StateRentCalc",
 		Gas:     2000,
 		Fn:      stateRentCalc,
 	},
@@ -108,6 +108,12 @@ var PrecompilesTable = map[byte]*Precompile{
 		Name:    "TrustlessLock",
 		Gas:     5000,
 		Fn:      trustlessLockPrecompile,
+	},
+	0x1B: {
+		Address: 0x1B,
+		Name:    "AccountManager",
+		Gas:     3000,
+		Fn:      accountManagerPrecompile,
 	},
 	0x1C: {
 		Address: 0x1C,
@@ -386,8 +392,8 @@ func stateRentCalc(input []byte, caller string, state *StateDB, blockNum uint64)
 
 // PrecompileNames returns a formatted list of all precompiles
 func PrecompileNames() string {
-	result := "\nWayChain Precompiles (0x0C-0x17):\n"
-	for addr := byte(0x0C); addr <= 0x17; addr++ {
+	result := "\nWayChain Precompiles (0x0C-0x20):\n"
+	for addr := byte(0x0C); addr <= 0x20; addr++ {
 		if pc, ok := PrecompilesTable[addr]; ok {
 			result += fmt.Sprintf("  0x%02X — %s (gas: %d)\n", addr, pc.Name, pc.Gas)
 		}
@@ -502,10 +508,13 @@ const (
 
 // StorageEndowment selectors
 const (
+	selSERegisterOperator     uint32 = 0x13E4F0A2 // registerOperator(uint256) - stake WAY amount
+	selSEUnregisterOperator   uint32 = 0x24B5D1C3 // unregisterOperator()
+	selSESubmitProof          uint32 = 0xE4E68365 // submitProof(bytes32)
+	selSEGetOperatorInfo      uint32 = 0x35C6E2D4 // getOperatorInfo(address) → (active, joinedAt, totalPaidBijo, totalPaidWay)
 	selSEGetOperatorCount       uint32 = 0xA8A012F7 // getOperatorCount()
 	selSEGetCurrentEpoch        uint32 = 0xC5BAF020 // getCurrentEpoch()
 	selSECalculateEpochAllocation uint32 = 0xA7559A16 // calculateEpochAllocation()
-	selSESubmitProof            uint32 = 0xE4E68365 // submitProof(bytes32)
 	selSEGetOperators           uint32 = 0x2D2DC686 // getOperators()
 )
 
@@ -1151,6 +1160,96 @@ func storageEndowmentPrecompile(input []byte, caller string, state *StateDB, blo
 	acc := state.GetOrCreateAccount(addr)
 
 	switch sel {
+	case selSERegisterOperator:
+			// registerOperator(uint256) - stake WAY amount, register as storage operator
+			stakeAmount := readBigInt(readSlot(input, 4))
+			if stakeAmount.Sign() == 0 {
+				return []byte{0}, nil // Must stake > 0
+			}
+
+			// Parse caller as 20-byte address (strip 0x prefix if present)
+			var callerAddr [20]byte
+			callerBytes := []byte(caller)
+			if len(callerBytes) >= 4 && callerBytes[0] == '0' && callerBytes[1] == 'x' {
+				copy(callerAddr[:], callerBytes[2:22])
+			} else {
+				copy(callerAddr[:], callerBytes[:20])
+			}
+
+			// Check if already registered
+			operatorKey := storageKey(append([]byte{0x10}, callerAddr[:]...))
+			existing := acc.Storage[operatorKey]
+			if existing[0] == 1 && existing[1] != 0 {
+				return []byte{0}, nil // Already registered
+			}
+
+			// Increment operator count
+			countKey := writeUint64(0)
+			count := readUint64(acc.Storage[countKey]) + 1
+			acc.Storage[countKey] = writeUint64(count)
+
+			// Store operator info: [active(1)] [joinedAt(8)] [stakedWay(32)]
+			var opData [32]byte
+			opData[0] = 1 // active
+			new(big.Int).SetUint64(blockNum).FillBytes(opData[1:9]) // joinedAt
+
+			// Store WAY staked at bytes 9-32 (23 bytes)
+			stakeCopy := new(big.Int).Set(stakeAmount)
+			stakeBytes := stakeCopy.Bytes()
+			if len(stakeBytes) > 23 {
+				stakeBytes = stakeBytes[len(stakeBytes)-23:]
+			}
+			copy(opData[9+23-len(stakeBytes):], stakeBytes)
+			acc.Storage[operatorKey] = opData
+
+			// Add to operator list
+			listKey := storageKey(append([]byte{0x20}, new(big.Int).SetUint64(count-1).Bytes()...))
+			var listSlot [32]byte
+			copy(listSlot[:], callerAddr[:])
+			acc.Storage[listKey] = listSlot
+
+			state.AddLog(addr, [][32]byte{
+				storageKey([]byte("OperatorRegistered")),
+			}, []byte(caller), blockNum)
+
+			return []byte{1}, nil
+
+		case selSEUnregisterOperator:
+			// unregisterOperator() - removes operator from active list
+			// Parse caller as 20-byte address
+			var callerAddr [20]byte
+			callerBytes := []byte(caller)
+			if len(callerBytes) >= 4 && callerBytes[0] == '0' && callerBytes[1] == 'x' {
+				copy(callerAddr[:], callerBytes[2:22])
+			} else {
+				copy(callerAddr[:], callerBytes[:20])
+			}
+			operatorKey := storageKey(append([]byte{0x10}, callerAddr[:]...))
+			opData := acc.Storage[operatorKey]
+			if opData[0] != 1 {
+				return []byte{0}, nil // Not registered
+			}
+
+			opData[0] = 0 // Mark inactive
+			acc.Storage[operatorKey] = opData
+
+			return []byte{1}, nil
+
+		case selSEGetOperatorInfo:
+			// getOperatorInfo(address) → (active, joinedAt, stakedWay)
+			target := readAddress(input, 4)
+			operatorKey := storageKey(append([]byte{0x10}, target[:]...))
+			opData := acc.Storage[operatorKey]
+
+			if opData == [32]byte{} {
+				return nil, nil // Not registered - return empty
+			}
+
+			out := make([]byte, 32)
+			out[0] = opData[0]        // active
+			copy(out[1:], opData[1:31]) // joinedAt + stakedWay
+			return out, nil
+
 	case selSEGetOperatorCount:
 		// getOperatorCount() → uint64
 		countKey := writeUint64(0)
@@ -1197,10 +1296,24 @@ func storageEndowmentPrecompile(input []byte, caller string, state *StateDB, blo
 
 	case selSESubmitProof:
 		// submitProof(bytes32) → bool
+		// Verifies operator is registered, stores file proof
+		operatorKey := storageKey(append([]byte{0x10}, []byte(caller)...))
+		opData := acc.Storage[operatorKey]
+		if opData[0] != 1 {
+			return []byte{0}, nil // Operator not active
+		}
+
 		var fileHash [32]byte
 		copy(fileHash[:], input[4:36])
-		// Store proof with caller context
-		// For now, just acknowledge
+		proofKey := storageKey(append([]byte{0x30}, append([]byte(caller), fileHash[:]...)...))
+		var proofSlot [32]byte
+		new(big.Int).SetUint64(blockNum).FillBytes(proofSlot[0:8]) // timestamp
+		acc.Storage[proofKey] = proofSlot
+
+		// Schedule BIJO release (70% to node operators who store data)
+		// Formula: WAY staked × time = BIJO released
+		// This is handled by the epoch allocation system
+
 		return []byte{1}, nil
 
 	case selSEGetOperators:

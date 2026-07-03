@@ -28,7 +28,7 @@ func Open(path string) (*Store, error) {
 	}
 
 	db, err := bbolt.Open(path, 0600, &bbolt.Options{
-		Timeout: 1 * time.Second,
+		Timeout: 10 * time.Second,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("store: open %s: %w", path, err)

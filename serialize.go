@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
+
+	"github.com/wink/waychain-consensus/evm"
 )
 
 // ── Binary Wire Format for Transaction ──
@@ -13,22 +15,25 @@ import (
 // Transactions are serialized to binary (then hex-wrapped for RPC).
 // Fields in order:
 //
-//   nonce:      uint64 big-endian (8 bytes)
-//   fromLen:    uint16 big-endian (2 bytes)
-//   from:       UTF-8 string (fromLen bytes) — hex-encoded public key
-//   toLen:      uint16 big-endian (2 bytes)
-//   to:         UTF-8 string (toLen bytes) — hex address or empty
-//   valueLen:   uint16 big-endian (2 bytes)
-//   value:      big.Int bytes (valueLen bytes)
-//   gasLimit:   uint64 big-endian (8 bytes)
-//   gasPrice:   uint64 big-endian (8 bytes)
-//   dataLen:    uint32 big-endian (4 bytes)
-//   data:       raw bytes (dataLen bytes)
-//   sigLen:     uint16 big-endian (2 bytes)
-//   signature:  raw bytes (sigLen bytes)
+//   nonce:       uint64 big-endian (8 bytes)
+//   fromLen:     uint16 big-endian (2 bytes)
+//   from:        UTF-8 string (fromLen bytes) — hex-encoded public key
+//   toLen:       uint16 big-endian (2 bytes)
+//   to:          UTF-8 string (toLen bytes) — hex address or empty
+//   valueLen:    uint16 big-endian (2 bytes)
+//   value:       big.Int bytes (valueLen bytes)
+//   gasLimit:    uint64 big-endian (8 bytes)
+//   gasPrice:    uint64 big-endian (8 bytes)
+//   lane:        uint8 (1 byte) — execution lane (0=consensus, 1=oracle, 2=private)
+//   encDataLen:  uint32 big-endian (4 bytes) — encrypted data length
+//   encData:     raw bytes (encDataLen bytes) — encrypted payload for private lanes
+//   dataLen:     uint32 big-endian (4 bytes)
+//   data:        raw bytes (dataLen bytes)
+//   sigLen:      uint16 big-endian (2 bytes)
+//   signature:   raw bytes (sigLen bytes)
 //
 // The tx Hash is NOT on the wire — it is computed by the receiver
-// as SHA256(nonce + from + to + value + gasLimit + gasPrice + data).
+// as SHA256(nonce + from + to + value + gasLimit + lane + data).
 // The signature covers tx.Hash.
 
 // SerializeTx serializes a Transaction (including signature) to binary.
@@ -36,7 +41,7 @@ func SerializeTx(tx *Transaction) []byte {
 	valBytes := tx.Value.Bytes()
 	var buf []byte
 
-	buf = append(buf, u64be(tx.Nonce)...)          // nonce
+	buf = append(buf, u64be(tx.Nonce)...)           // nonce
 	buf = append(buf, u16be(uint16(len(tx.From)))...) // fromLen
 	buf = append(buf, []byte(tx.From)...)            // from
 	buf = append(buf, u16be(uint16(len(tx.To)))...)   // toLen
@@ -45,6 +50,9 @@ func SerializeTx(tx *Transaction) []byte {
 	buf = append(buf, valBytes...)                     // value
 	buf = append(buf, u64be(tx.GasLimit)...)           // gasLimit
 	buf = append(buf, u64be(tx.GasPrice)...)           // gasPrice
+	buf = append(buf, byte(tx.Lane))                  // lane (1 byte)
+	buf = append(buf, u32be(uint32(len(tx.EncryptedData)))...) // encDataLen
+	buf = append(buf, tx.EncryptedData...)                     // encrypted data
 	buf = append(buf, u32be(uint32(len(tx.Data)))...)  // dataLen
 	buf = append(buf, tx.Data...)                      // data
 	buf = append(buf, u16be(uint16(len(tx.Signature)))...) // sigLen
@@ -91,6 +99,17 @@ func DeserializeTx(data []byte) (*Transaction, error) {
 	if !r.read(8) { return nil, fmt.Errorf("tx: short read for gasPrice") }
 	tx.GasPrice = be64(r.buf)
 
+	// lane
+	if !r.read(1) { return nil, fmt.Errorf("tx: short read for lane") }
+	tx.Lane = evm.LaneType(r.buf[0])
+
+	// encrypted data
+	if !r.read(4) { return nil, fmt.Errorf("tx: short read for encDataLen") }
+	encDataLen := be32(r.buf)
+	if !r.read(int(encDataLen)) { return nil, fmt.Errorf("tx: short read for encrypted data") }
+	tx.EncryptedData = make([]byte, encDataLen)
+	copy(tx.EncryptedData, r.buf)
+
 	// data
 	if !r.read(4) { return nil, fmt.Errorf("tx: short read for dataLen") }
 	dataLen := be32(r.buf)
@@ -105,10 +124,10 @@ func DeserializeTx(data []byte) (*Transaction, error) {
 	tx.Signature = make([]byte, sigLen)
 	copy(tx.Signature, r.buf)
 
-	// Compute hash from fields (hash excludes signature)
-	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%x",
-		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, len(tx.Data), tx.Data)
-	tx.Hash = sha256.Sum256([]byte(hashInput))
+	// Compute hash from fields (hash excludes signature, includes lane and encryptedData)
+		hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
+			tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, tx.Lane, len(tx.Data), tx.Data, tx.EncryptedData)
+		tx.Hash = sha256.Sum256([]byte(hashInput))
 
 	return tx, nil
 }
@@ -186,28 +205,32 @@ func (r *reader) read(n int) bool {
 // TxJSON is a JSON-serializable representation of a Transaction
 // for use in RPC responses.
 type TxJSON struct {
-	Nonce     string   `json:"nonce"`
-	From      string   `json:"from"`
-	To        string   `json:"to"`
-	Value     string   `json:"value"`
-	GasLimit  string   `json:"gasLimit"`
-	GasPrice  string   `json:"gasPrice"`
-	Data      string   `json:"data"`
-	Hash      string   `json:"hash"`
-	Signature string   `json:"signature"`
+	Nonce       string `json:"nonce"`
+	From        string `json:"from"`
+	To          string `json:"to"`
+	Value       string `json:"value"`
+	GasLimit    string `json:"gasLimit"`
+	GasPrice    string `json:"gasPrice"`
+	Data        string `json:"data"`
+	Hash        string `json:"hash"`
+	Signature   string `json:"signature"`
+	Lane        string `json:"lane"`        // Added: execution lane
+	EncryptedData string `json:"encryptedData,omitempty"` // Added: encrypted payload
 }
 
 // ToJSON converts a Transaction to its JSON representation.
 func (tx *Transaction) ToJSON() TxJSON {
 	return TxJSON{
-		Nonce:     fmt.Sprintf("0x%x", tx.Nonce),
-		From:      "0x" + tx.From,
-		To:        "0x" + tx.To,
-		Value:     "0x" + tx.Value.Text(16),
-		GasLimit:  fmt.Sprintf("0x%x", tx.GasLimit),
-		GasPrice:  fmt.Sprintf("0x%x", tx.GasPrice),
-		Data:      "0x" + hex.EncodeToString(tx.Data),
-		Hash:      "0x" + hex.EncodeToString(tx.Hash[:]),
-		Signature: "0x" + hex.EncodeToString(tx.Signature),
+		Nonce:       fmt.Sprintf("0x%x", tx.Nonce),
+		From:        "0x" + tx.From,
+		To:          "0x" + tx.To,
+		Value:       "0x" + tx.Value.Text(16),
+		GasLimit:    fmt.Sprintf("0x%x", tx.GasLimit),
+		GasPrice:    fmt.Sprintf("0x%x", tx.GasPrice),
+		Data:        "0x" + hex.EncodeToString(tx.Data),
+		Hash:        "0x" + hex.EncodeToString(tx.Hash[:]),
+		Signature:   "0x" + hex.EncodeToString(tx.Signature),
+		Lane:        fmt.Sprintf("0x%d", tx.Lane),
+		EncryptedData: hex.EncodeToString(tx.EncryptedData),
 	}
 }

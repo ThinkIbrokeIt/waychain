@@ -339,7 +339,23 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 
 		// 1. Search pending pool (in-memory)
 		rpc.mu.RLock()
-		for _, tx := range rpc.chain.Pool.Pending {
+		for _, tx := range rpc.chain.Pool.Consensus {
+			txHex := hex.EncodeToString(tx.Hash[:])
+			if strings.EqualFold(txHex, searchHash) {
+				result := tx.ToJSON()
+				rpc.mu.RUnlock()
+				return result, nil
+			}
+		}
+		for _, tx := range rpc.chain.Pool.Oracle {
+			txHex := hex.EncodeToString(tx.Hash[:])
+			if strings.EqualFold(txHex, searchHash) {
+				result := tx.ToJSON()
+				rpc.mu.RUnlock()
+				return result, nil
+			}
+		}
+		for _, tx := range rpc.chain.Pool.Private {
 			txHex := hex.EncodeToString(tx.Hash[:])
 			if strings.EqualFold(txHex, searchHash) {
 				result := tx.ToJSON()

@@ -40,8 +40,8 @@ func TestTransactionPipeline(t *testing.T) {
 	}
 
 	// Compute hash
-	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%x",
-		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, len(tx.Data), tx.Data)
+	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
+		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, tx.Lane, len(tx.Data), tx.Data, tx.EncryptedData)
 	tx.Hash = sha256.Sum256([]byte(hashInput))
 	// Sign
 	tx.Signature = ed25519.Sign(priv, tx.Hash[:])
@@ -158,9 +158,10 @@ func TestDeployGateViaRPC(t *testing.T) {
 		GasLimit: 100000,
 		GasPrice: 1,
 		Data:     []byte{0x60, 0x00, 0x60, 0x00}, // dummy init code
+		Lane:     evm.ConsensusLane, // explicit default
 	}
-	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%x",
-		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, len(tx.Data), tx.Data)
+	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
+		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, tx.Lane, len(tx.Data), tx.Data, tx.EncryptedData)
 	tx.Hash = sha256.Sum256([]byte(hashInput))
 	tx.Signature = ed25519.Sign(priv, tx.Hash[:])
 
@@ -212,9 +213,10 @@ func TestRPCSendRawTransaction(t *testing.T) {
 		GasLimit: 21000,
 		GasPrice: 1,
 		Data:     []byte{},
+		Lane:     evm.ConsensusLane, // explicit default
 	}
-	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%x",
-		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, len(tx.Data), tx.Data)
+	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
+		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, tx.Lane, len(tx.Data), tx.Data, tx.EncryptedData)
 	tx.Hash = sha256.Sum256([]byte(hashInput))
 	tx.Signature = ed25519.Sign(priv, tx.Hash[:])
 
@@ -297,4 +299,107 @@ func TestRPCSendRawTransaction(t *testing.T) {
 	if !receiptFound {
 		t.Fatal("RPC: receipt not found")
 	}
+}
+
+// TestLaneSelection verifies transactions are routed to correct pools by lane
+func TestLaneSelection(t *testing.T) {
+	chain := NewChain()
+	pool := NewTxPool()
+
+	// Create test accounts
+	pub1, _, _ := ed25519.GenerateKey(rand.Reader)
+	fromAddr1 := hex.EncodeToString(pub1)
+	acc1 := chain.State.GetOrCreateAccount(fromAddr1)
+	acc1.Balance.SetUint64(1_000_000)
+
+	// Create transactions for each lane
+	txConsensus := Transaction{
+		Nonce:    0,
+		From:     fromAddr1,
+		To:       "consensus-recipient",
+		Value:    big.NewInt(1000),
+		GasLimit: 21000,
+		GasPrice: 1,
+		Lane:     evm.ConsensusLane, // 0
+	}
+	txConsensus.Hash = sha256.Sum256([]byte("consensus"))
+
+	txOracle := Transaction{
+		Nonce:    0,
+		From:     fromAddr1,
+		To:       "oracle-recipient",
+		Value:    big.NewInt(2000),
+		GasLimit: 21000,
+		GasPrice: 1,
+		Lane:     evm.OracleLane, // 1
+	}
+	txOracle.Hash = sha256.Sum256([]byte("oracle"))
+
+	txPrivate := Transaction{
+		Nonce:       0,
+		From:        fromAddr1,
+		To:          "private-recipient",
+		Value:       big.NewInt(3000),
+		GasLimit:    21000,
+		GasPrice:    1,
+		Lane:        evm.PrivateLane, // 2
+		EncryptedData: []byte("encrypted-payload"),
+	}
+	txPrivate.Hash = sha256.Sum256([]byte("private"))
+
+	// Add to pool
+	pool.Add(txConsensus)
+	pool.Add(txOracle)
+	pool.Add(txPrivate)
+
+	// Verify routing
+	if len(pool.Consensus) != 1 {
+		t.Fatalf("expected 1 consensus tx, got %d", len(pool.Consensus))
+	}
+	if len(pool.Oracle) != 1 {
+		t.Fatalf("expected 1 oracle tx, got %d", len(pool.Oracle))
+	}
+	if len(pool.Private) != 1 {
+		t.Fatalf("expected 1 private tx, got %d", len(pool.Private))
+	}
+
+	// Verify pop methods
+	consensusTxs := pool.PopConsensus(10)
+	if len(consensusTxs) != 1 {
+		t.Fatal("PopConsensus should return 1 tx")
+	}
+	if consensusTxs[0].Lane != evm.ConsensusLane {
+		t.Fatal("popped tx should be consensus lane")
+	}
+
+	oracleTxs := pool.PopOracle(10)
+	if len(oracleTxs) != 1 {
+		t.Fatal("PopOracle should return 1 tx")
+	}
+	if oracleTxs[0].Lane != evm.OracleLane {
+		t.Fatal("popped tx should be oracle lane")
+	}
+
+	privateTxs := pool.PopPrivate(10)
+	if len(privateTxs) != 1 {
+		t.Fatal("PopPrivate should return 1 tx")
+	}
+	if privateTxs[0].Lane != evm.PrivateLane {
+		t.Fatal("popped tx should be private lane")
+	}
+
+	// Verify encrypted data preserved
+	if string(privateTxs[0].EncryptedData) != "encrypted-payload" {
+		t.Fatal("encrypted data not preserved for private lane tx")
+	}
+
+	// Verify lane in JSON
+	json := privateTxs[0].ToJSON()
+	if json.Lane != "0x2" {
+		t.Fatalf("expected lane 0x2 in JSON, got %s", json.Lane)
+	}
+
+	fmt.Println("  ✅ Lane selection: tx routed to correct pools (consensus/oracle/private)")
+	fmt.Println("  ✅ Lane selection: encrypted data preserved for private lane")
+	fmt.Println("  ✅ Lane selection: JSON includes lane field")
 }

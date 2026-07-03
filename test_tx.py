@@ -37,6 +37,8 @@ print()
 
 # Build tx fields
 nonce_val = 0   # first tx
+ENC_DATA = b""
+LANE_VAL = 0
 to_addr = "bob"
 value = 5000
 gas_limit = 21000
@@ -44,7 +46,7 @@ gas_price = 1
 data = b""
 
 # Compute hash (same as Go: sha256 of fields)
-hash_input = f"{nonce_val}:{from_addr}:{to_addr}:{value}:{gas_limit}:{len(data)}:{data.hex()}"
+hash_input = f"{nonce_val}:{from_addr}:{to_addr}:{value}:{gas_limit}:{LANE_VAL}:{len(data)}:{data.hex()}:{ENC_DATA.hex()}"
 tx_hash = hashlib.sha256(hash_input.encode()).digest()
 
 # Sign
@@ -55,7 +57,7 @@ print(f"  Signature: 0x{signature.hex()[:32]}...")
 print()
 
 # Serialize to binary (same as Go serialize.go)
-def serialize_tx(nonce, from_addr, to_addr, value_bytes, gas_limit, gas_price, data, sig):
+def serialize_tx(nonce, from_addr, to_addr, value_bytes, gas_limit, gas_price, lane, enc_data, data, sig):
     buf = b""
     buf += struct.pack(">Q", nonce)          # nonce (8 bytes)
     from_b = from_addr.encode()
@@ -68,6 +70,9 @@ def serialize_tx(nonce, from_addr, to_addr, value_bytes, gas_limit, gas_price, d
     buf += value_bytes                       # value
     buf += struct.pack(">Q", gas_limit)      # gasLimit (8)
     buf += struct.pack(">Q", gas_price)      # gasPrice (8)
+    buf += struct.pack(">B", lane)           # lane (1 byte)
+    buf += struct.pack(">I", len(enc_data))    # encDataLen (4)
+    buf += enc_data                          # encrypted data
     buf += struct.pack(">I", len(data))      # dataLen (4)
     buf += data                              # data
     buf += struct.pack(">H", len(sig))       # sigLen (2)
@@ -77,7 +82,7 @@ def serialize_tx(nonce, from_addr, to_addr, value_bytes, gas_limit, gas_price, d
 # Value as big.Int bytes
 value_bytes = value.to_bytes((value.bit_length() + 7) // 8 or 1, 'big')
 
-tx_binary = serialize_tx(nonce_val, from_addr, to_addr, value_bytes, gas_limit, gas_price, data, signature)
+tx_binary = serialize_tx(nonce_val, from_addr, to_addr, value_bytes, gas_limit, gas_price, LANE_VAL, ENC_DATA, data, signature)
 tx_hex = tx_binary.hex()
 
 print(f"  Serialized: {len(tx_binary)} bytes")

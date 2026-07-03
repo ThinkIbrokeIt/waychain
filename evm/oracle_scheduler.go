@@ -186,3 +186,142 @@ func (task *ScheduledTask) PrintTaskSummary() {
 	fmt.Printf("  Task %x: feed=%x interval=%d next=%d executed=%d [%s]\n",
 		task.ID[:8], task.FeedID[:8], task.Interval, task.NextBlock, task.ExecutionCount, status)
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// Professional Oracle Badges — Earn income through verified profession
+// ══════════════════════════════════════════════════════════════════════
+
+// ProfessionalBadge stores verified professional credentials for oracle earnings
+type ProfessionalBadge struct {
+	Profession  string  // "geologist", "lawyer", "surveyor", "engineer"
+	Verified    bool    // Dox_Dev badge + license verification
+	RewardRate  uint64  // Reward per attestation (in WAY wei)
+	TotalEarned uint64  // Lifetime earnings from professional attestations
+}
+
+// ProfessionalBadge storage slots (under TimeExecution precompile 0x0D)
+const (
+	pbSlotBadgeCount  byte = 0x10 // Total professional badges issued
+	pbSlotBadgeList   byte = 0x11 // List of badge holders
+	pbSlotProfession  byte = 0x12 // Profession string (hashed)
+	pbSlotRewardRate  byte = 0x13 // Reward per attestation
+	pbSlotTotalEarned byte = 0x14 // Lifetime earnings
+	pbSlotApplication byte = 0x15 // Pending applications
+	pbSlotVerification byte = 0x16 // Verification status
+)
+
+// ProfessionalBadge storage key helpers
+func professionalBadgeKey(oracle string) [32]byte {
+	return storageKey(append([]byte{pbSlotProfession}, []byte(oracle)...))
+}
+
+// profRewardKey returns reward rate storage key
+func profRewardKey(oracle string) [32]byte {
+	return storageKey(append([]byte{pbSlotRewardRate}, []byte(oracle)...))
+}
+
+// profEarnedKey returns total earned storage key
+func profEarnedKey(oracle string) [32]byte {
+	return storageKey(append([]byte{pbSlotTotalEarned}, []byte(oracle)...))
+}
+
+// profApplicationKey returns application storage key
+func profApplicationKey(oracle, profession string) [32]byte {
+	return storageKey(append(append([]byte{pbSlotApplication}, []byte(oracle)...), []byte(profession)...))
+}
+
+// CalculateProfessionalReward computes reward based on profession
+// Geologist: 100 WAY wei per attestation
+// Lawyer: 80 WAY wei per attestation
+// Surveyor: 60 WAY wei per attestation
+// Engineer: 70 WAY wei per attestation
+func CalculateProfessionalReward(profession string, attestorAddress string) uint64 {
+	rewardRates := map[string]uint64{
+		"geologist": 100,
+		"lawyer":    80,
+		"surveyor":  60,
+		"engineer":  70,
+	}
+
+	// Base reward for Level 2+ oracles
+	rate, exists := rewardRates[profession]
+	if !exists || rate == 0 {
+		return 0
+	}
+	return rate
+}
+
+// ApplyForProfessionalBadge submits an application for a professional badge
+// Requires Dox_Dev Level 2+ and valid profession
+func ApplyForProfessionalBadge(profession string, licenseHash [32]byte, state *StateDB, caller string) error {
+	// Validate profession
+	validProfessions := map[string]bool{
+		"geologist": true,
+		"lawyer":    true,
+		"surveyor":  true,
+		"engineer":  true,
+	}
+	if !validProfessions[profession] {
+		return fmt.Errorf("ProfessionalBadge: invalid profession %s", profession)
+	}
+
+	// Verify caller has Dox_Dev Level 2+
+	acc := state.GetAccount(caller)
+	if acc == nil || acc.DoxDevLevel < 2 {
+		return fmt.Errorf("ProfessionalBadge: caller not verified (need Dox_Dev 2+)")
+	}
+
+	// Store application for curator review
+	addr := PrecompileAddrHex(0x0D)
+	precompileAcc := state.GetOrCreateAccount(addr)
+	appKey := profApplicationKey(caller, profession)
+
+	var appSlot [32]byte
+	copy(appSlot[:], licenseHash[:])
+	appSlot[31] = 1 // Application pending
+
+	precompileAcc.Storage[appKey] = appSlot
+
+	return nil
+}
+
+// VerifyProfessionalBadge marks a professional badge as verified
+// Called by verified curators with Level 2+
+func VerifyProfessionalBadge(profession string, state *StateDB, caller string) (bool, error) {
+	// Verify caller is a curator
+	addr := PrecompileAddrHex(0x13)
+	badgeAcc := state.GetAccount(addr)
+	if badgeAcc == nil {
+		return false, fmt.Errorf("ProfessionalBadge: DoxDevBadge contract not found")
+	}
+
+	callerKey := storageKey(append([]byte{0x30}, []byte(caller)...))
+	if readUint64(badgeAcc.Storage[callerKey]) == 0 {
+		return false, fmt.Errorf("ProfessionalBadge: only curators can verify")
+	}
+
+	// Validate profession
+	rewardRate := CalculateProfessionalReward(profession, caller)
+	if rewardRate == 0 {
+		return false, fmt.Errorf("ProfessionalBadge: invalid profession %s", profession)
+	}
+
+	// Mark as verified
+	verificationKey := storageKey(append([]byte{pbSlotVerification}, []byte(caller)...))
+	var verifySlot [32]byte
+	// Store profession hash and mark verified
+	profHash := sha256.Sum256([]byte(profession))
+	copy(verifySlot[:], profHash[:])
+
+	schedulerAddr := PrecompileAddrHex(0x0D)
+	schedulerAcc := state.GetOrCreateAccount(schedulerAddr)
+	schedulerAcc.Storage[verificationKey] = verifySlot
+
+	// Set reward rate
+	rewardKey := profRewardKey(caller)
+	var rewardSlot [32]byte
+	new(big.Int).SetUint64(rewardRate).FillBytes(rewardSlot[:])
+	schedulerAcc.Storage[rewardKey] = rewardSlot
+
+	return true, nil
+}

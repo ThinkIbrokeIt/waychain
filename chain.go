@@ -23,6 +23,8 @@ type Transaction struct {
 	Data     []byte   // Calldata or init code
 	Hash     [32]byte
 	Signature []byte  // Ed25519 signature
+	Lane     evm.LaneType // Execution lane (0=consensus, 1=oracle, 2=private)
+	EncryptedData []byte // Encrypted payload for PrivateLane/OracleLane
 }
 
 // NewTransaction creates a new transaction
@@ -34,45 +36,92 @@ func NewTransaction(nonce uint64, from, to string, value *big.Int, gasLimit uint
 		Value:    value,
 		GasLimit: gasLimit,
 		Data:     data,
+		Lane:     evm.ConsensusLane, // default to consensus lane
 	}
-	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d", nonce, from, to, value.String(), gasLimit, len(data))
+	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
+		nonce, from, to, value.String(), gasLimit, evm.ConsensusLane, len(data), data, []byte{})
 	tx.Hash = sha256.Sum256([]byte(hashInput))
 	return tx
 }
 
 // TxHash computes the signing hash of a transaction
 func (tx *Transaction) TxHash() [32]byte {
-	input := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%x",
-		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, len(tx.Data), tx.Data)
+	input := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
+		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, tx.Lane, len(tx.Data), tx.Data, tx.EncryptedData)
 	return sha256.Sum256([]byte(input))
 }
 
-// TxPool holds pending transactions
+// TxPool holds pending transactions separated by lane
 type TxPool struct {
-	Pending []Transaction
+	Consensus []Transaction // Lane 0: standard public transactions
+	Oracle    []Transaction // Lane 1: oracle attestation processing
+	Private   []Transaction // Lane 2: private transactions (encrypted)
 }
 
 func NewTxPool() *TxPool {
 	return &TxPool{
-		Pending: make([]Transaction, 0),
+		Consensus: make([]Transaction, 0),
+		Oracle:    make([]Transaction, 0),
+		Private:   make([]Transaction, 0),
 	}
 }
 
+// Add adds a transaction to the appropriate lane pool
 func (p *TxPool) Add(tx Transaction) {
-	p.Pending = append(p.Pending, tx)
+	switch tx.Lane {
+	case evm.PrivateLane:
+		p.Private = append(p.Private, tx)
+	case evm.OracleLane:
+		p.Oracle = append(p.Oracle, tx)
+	case evm.ConsensusLane:
+		fallthrough
+	default:
+		p.Consensus = append(p.Consensus, tx)
+	}
 }
 
-func (p *TxPool) Pop(count int) []Transaction {
-	if count > len(p.Pending) {
-		count = len(p.Pending)
+// PopConsensus gets transactions for consensus execution
+func (p *TxPool) PopConsensus(count int) []Transaction {
+	if count > len(p.Consensus) {
+		count = len(p.Consensus)
 	}
-	txs := p.Pending[:count]
-	p.Pending = p.Pending[count:]
+	if count == 0 {
+		return nil
+	}
+	txs := p.Consensus[:count]
+	p.Consensus = p.Consensus[count:]
 	return txs
 }
 
+// PopOracle gets transactions for oracle lane execution
+func (p *TxPool) PopOracle(count int) []Transaction {
+	if count > len(p.Oracle) {
+		count = len(p.Oracle)
+	}
+	if count == 0 {
+		return nil
+	}
+	txs := p.Oracle[:count]
+	p.Oracle = p.Oracle[count:]
+	return txs
+}
+
+// PopPrivate gets transactions for private lane execution
+func (p *TxPool) PopPrivate(count int) []Transaction {
+	if count > len(p.Private) {
+		count = len(p.Private)
+	}
+	if count == 0 {
+		return nil
+	}
+	txs := p.Private[:count]
+	p.Private = p.Private[count:]
+	return txs
+}
+
+// Len returns total pending transactions
 func (p *TxPool) Len() int {
-	return len(p.Pending)
+	return len(p.Consensus) + len(p.Oracle) + len(p.Private)
 }
 
 // BlockWithTx is a block that carries EVM state
@@ -367,8 +416,8 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 		prevHash = c.Blocks[len(c.Blocks)-1].Hash
 	}
 
-	// Take up to 10 txs from pool
-	popped := c.Pool.Pop(10)
+	// Take up to 10 consensus txs from pool (plus any oracle/private lanes)
+	popped := c.Pool.PopConsensus(10)
 
 	// Execute transactions and collect only successful ones
 	var executed []Transaction
@@ -415,7 +464,10 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 			continue // Insufficient funds
 		}
 
-		// Execute via EVM
+		// Execute via EVM with transaction's lane
+		// Create EVM instance with correct lane for this transaction
+		txEVM := evm.NewEVM(c.State, tx.Lane, c.Height, uint64(time.Now().Unix()), 10008, tx.GasLimit, "")
+		
 		ctx := &evm.CallContext{
 			Caller:   tx.From,
 			Address:  tx.To,
@@ -423,7 +475,7 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 			GasLimit: tx.GasLimit,
 			Calldata: tx.Data,
 		}
-		result := c.EVM.Execute(ctx)
+		result := txEVM.Execute(ctx)
 
 		// Deduct actual gas cost (not full gas limit)
 		cost := new(big.Int).SetUint64(result.GasUsed * gasPrice)

@@ -446,3 +446,162 @@ func generateMarketID(proposalID []byte, blockNum uint64) [32]byte {
 	data := append(proposalID, []byte(fmt.Sprintf("%d", blockNum))...)
 	return sha256.Sum256(data)
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// Curator No-Gatekeeping — Open curator application via quadratic vote
+// Any Level 2+ can apply; community elects via quadratic voting
+// ══════════════════════════════════════════════════════════════════════
+
+// CuratorApplication represents a curator candidate
+type CuratorApplication struct {
+	Applicant     string  // Address of applicant
+	ApplicationID [32]byte // Unique application ID
+	Status        byte    // 0=pending, 1=elected, 2=rejected
+	VoteCount     uint64  // Quadratic vote count
+	BlockNum      uint64  // Block when applied
+}
+
+// Curator application storage slots
+const (
+	govCuratorAppSlot byte = 0x20 // Curator applications
+	govCuratorVoteSlot byte = 0x21 // Curator votes
+	govCuratorBonusSlot byte = 0x22 // Professional badge bonus
+)
+
+// govCuratorApplicationKey generates storage key for curator application
+func govCuratorApplicationKey(applicant string) [32]byte {
+	return storageKey(append([]byte{govCuratorAppSlot}, []byte(applicant)...))
+}
+
+// govCuratorVoteKey generates storage key for curator vote
+func govCuratorVoteKey(proposalID, voter string) [32]byte {
+	return storageKey(append(append([]byte{govCuratorVoteSlot}, []byte(proposalID)...), []byte(voter)...))
+}
+
+// ApplyForCurator allows any Level 2+ to apply for curator status
+// Application is stored for community quadratic election
+func ApplyForCurator(state *StateDB, caller string, blockNum uint64) error {
+	// Verify caller has Dox_Dev Level 2+
+	addr := PrecompileAddrHex(0x13)
+	badgeAcc := state.GetAccount(addr)
+	if badgeAcc == nil {
+		return fmt.Errorf("Governance: DoxDevBadge contract not found")
+	}
+
+	callerKey := storageKey(append([]byte{0x10}, []byte(caller)...))
+	data := badgeAcc.Storage[callerKey]
+	if data == [32]byte{} {
+		return fmt.Errorf("Governance: caller not verified (need Dox_Dev 2+)")
+	}
+	level := data[0]
+	if level < 2 {
+		return fmt.Errorf("Governance: caller level %d below minimum 2", level)
+	}
+
+	// Check if already a curator
+	curatorKey := storageKey(append([]byte{0x30}, []byte(caller)...))
+	if readUint64(badgeAcc.Storage[curatorKey]) != 0 {
+		return fmt.Errorf("Governance: caller is already a curator")
+	}
+
+	// Generate application ID
+	appIDInput := fmt.Sprintf("%s:%d", caller, blockNum)
+	appID := sha256.Sum256([]byte(appIDInput))
+
+	// Store application
+	govAddr := PrecompileAddrHex(0x1D)
+	govAcc := state.GetOrCreateAccount(govAddr)
+	appKey := govCuratorApplicationKey(caller)
+
+	var appSlot [32]byte
+	copy(appSlot[:], appID[:])
+	appSlot[31] = 0 // Pending status
+
+	govAcc.Storage[appKey] = appSlot
+
+	return nil
+}
+
+// ElectCuratorCouncil conducts quadratic election for curator candidates
+// Winner determined by quadratic voting (votes² cost)
+func ElectCuratorCouncil(candidates []string, votes map[string]uint64, state *StateDB) ([]string, error) {
+	govAddr := PrecompileAddrHex(0x1D)
+	govAcc := state.GetOrCreateAccount(govAddr)
+
+	// Track vote counts per candidate (quadratic voting)
+	voteScores := make(map[string]uint64)
+	for _, c := range candidates {
+		voteScores[c] = 0
+	}
+
+	// Process votes with quadratic cost
+	for voter, voteCount := range votes {
+		// Verify voter has Dox_Dev Level 2+
+		badgeAddr := PrecompileAddrHex(0x13)
+		badgeAcc := state.GetAccount(badgeAddr)
+		if badgeAcc == nil {
+			return nil, fmt.Errorf("Governance: DoxDevBadge contract not found")
+		}
+
+		voterKey := storageKey(append([]byte{0x10}, []byte(voter)...))
+		voterData := badgeAcc.Storage[voterKey]
+		if voterData == [32]byte{} {
+			continue // Skip invalid voters
+		}
+		level := voterData[0]
+		if level < 2 {
+			continue // Only Level 2+ can vote for curators
+		}
+
+		// Count votes (simplified: 1 credit per vote, real quadratic would use cost²)
+		for _, candidate := range candidates {
+			if voteScores[candidate]+voteCount > 1000 {
+				voteScores[candidate] = 1000 // Cap per candidate
+			} else {
+				voteScores[candidate] += voteCount
+			}
+		}
+	}
+
+	// Select top candidates (all who received > 0 votes for simplicity)
+	var elected []string
+	for _, candidate := range candidates {
+		if voteScores[candidate] > 0 {
+			// Add to curator list
+			curatorKey := storageKey(append([]byte{0x30}, []byte(candidate)...))
+			var curatorSlot [32]byte
+			curatorSlot[31] = 1
+			govAcc.Storage[curatorKey] = curatorSlot // Store in gov account for tracking
+
+			// Also mark in DoxDevBadge
+			badgeAddr := PrecompileAddrHex(0x13)
+			badgeAcc := state.GetOrCreateAccount(badgeAddr)
+			badgeAcc.Storage[curatorKey] = curatorSlot
+
+			elected = append(elected, candidate)
+		}
+	}
+
+	return elected, nil
+}
+
+// DistributeCuratorRewards distributes rewards to curators including profession bonus
+func DistributeCuratorRewards(curatorList []string, baseReward uint64, state *StateDB) error {
+	govAddr := PrecompileAddrHex(0x1D)
+	govAcc := state.GetOrCreateAccount(govAddr)
+
+	for _, curator := range curatorList {
+		// Check for professional badge bonus
+		rewardKey := storageKey(append([]byte{govCuratorBonusSlot}, []byte(curator)...))
+		bonusSlot := govAcc.Storage[rewardKey]
+		professionBonus := readUint64(bonusSlot)
+
+		totalReward := baseReward + professionBonus
+
+		// Add to curator balance
+		acc := state.GetOrCreateAccount(curator)
+		acc.Balance.Add(acc.Balance, new(big.Int).SetUint64(totalReward))
+	}
+
+	return nil
+}

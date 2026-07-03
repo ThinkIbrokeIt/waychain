@@ -1,0 +1,16 @@
+# Binaries
+waychain
+waychain-consensus
+waychain-test
+*.test
+
+# Test output
+evm/circuits/*
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
