@@ -160,7 +160,7 @@ func NewChain() *Chain {
 	state := evm.NewStateDB()
 	// Fund some test accounts
 	funder := state.GetOrCreateAccount("funder")
-	funder.Balance.SetUint64(1_000_000_000)
+	funder.Balance = new(big.Int).Mul(big.NewInt(1_000_000), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)) // 1M WAY
 
 	evmEngine := evm.NewEVM(state, evm.ConsensusLane, 1, uint64(time.Now().Unix()), 10008, 30_000_000, "")
 

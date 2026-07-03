@@ -72,6 +72,7 @@ func (rpc *RPCServer) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rpc.handleRequest)
 	mux.HandleFunc("/health", rpc.handleHealth)
+	mux.HandleFunc("/faucet", rpc.handleFaucet)
 
 	rpc.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", rpc.port),
@@ -94,6 +95,59 @@ func (rpc *RPCServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
 		"blocks": len(rpc.chain.Blocks),
+	})
+}
+
+// handleFaucet sends 100 WAY from treasury to a requesting address
+func (rpc *RPCServer) handleFaucet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != "POST" {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "POST required"})
+		return
+	}
+	var req struct {
+		Address string `json:"address"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Address == "" {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid request"})
+		return
+	}
+	addr := strings.ToLower(strings.TrimPrefix(req.Address, "0x"))
+	if len(addr) == 0 || len(addr) > 40 {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid address"})
+		return
+	}
+
+	rpc.mu.Lock()
+	defer rpc.mu.Unlock()
+
+	// Fund from the "funder" genesis account
+	funder := rpc.chain.State.GetAccount("funder")
+	if funder == nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "faucet account not found"})
+		return
+	}
+
+	// Debug: log funder balance
+	slog.Info("faucet", "funder_balance", funder.Balance.String(), "funder_addr", "funder")
+
+	// 10 WAY = 10 * 10^18 (18 decimals)
+	amount := new(big.Int).Mul(big.NewInt(10), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil))
+
+	if funder.Balance.Cmp(amount) < 0 {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": "faucet insufficient funds", "balance": funder.Balance.String()})
+		return
+	}
+
+	recipient := rpc.chain.State.GetOrCreateAccount(addr)
+	funder.Balance.Sub(funder.Balance, amount)
+	recipient.Balance.Add(recipient.Balance, amount)
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":  true,
+		"amount":   amount.String(),
+		"address":  "0x" + addr,
+		"currency": "WAY",
 	})
 }
 
