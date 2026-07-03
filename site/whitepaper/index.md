@@ -433,7 +433,29 @@ Each precompile uses **SHA256-based selectors** (not keccak256) and has a fixed 
 
 ---
 
-## 10. Network Status (Live)
+## 10. Three Parallel Lanes — Plug-and-Play for Any Use Case
+
+Most blockchains force every transaction through the same execution path. Public transactions, private data, and oracle attestations all compete for the same blockspace.
+
+WayChain runs **three parallel execution lanes:**
+
+| Lane | Type | Purpose | Privacy |
+|------|------|---------|---------|
+| **ConsensusLane** (0) | Public | Standard transactions, DeFi, governance, token transfers | Public — visible to all |
+| **OracleLane** (1) | Semi-public | Oracle attestations, professional badge work, price feeds | Public — but attestation-specific |
+| **PrivateLane** (2) | Encrypted | Healthcare records, corporate data, identity, legal docs | Encrypted mempool — only visible to involved parties |
+
+**Why this matters:**
+- A hospital can run private health records on PrivateLane while the same chain handles public DeFi on ConsensusLane
+- Oracle attestations don't compete with user transactions for block space
+- Private transactions are encrypted in the mempool — no frontrunning, no MEV, no data leakage
+- All three lanes share the same state and security — no separate L2, no sidechain, no bridge
+
+**WayChain is a plug-and-play blockchain for any use case.** Public, private, or oracle — all on one chain. No separate network needed. No custom deployment. Just choose your lane.
+
+---
+
+## 11. Network Status (Live)
 
 | Component | URL | Status |
 |-----------|-----|--------|
@@ -456,7 +478,7 @@ Each precompile uses **SHA256-based selectors** (not keccak256) and has a fixed 
 
 ---
 
-## 11. Risks & Honest Assessment
+## 12. Risks & Honest Assessment
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
@@ -472,7 +494,7 @@ Each precompile uses **SHA256-based selectors** (not keccak256) and has a fixed 
 
 ---
 
-## 12. Conclusion & Call to Action
+## 13. Conclusion & Call to Action
 
 WayChain is the first blockchain where identity — not capital — determines power. The system is live, processing transactions, and open to anyone.
 

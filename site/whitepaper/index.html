@@ -164,9 +164,10 @@ a:hover { color: var(--warm); }
   <a href="#7-dox-dev-identity-system">Dox_Dev Identity System</a>
   <a href="#8-governance-without-plutocracy">Governance Without Plutocracy</a>
   <a href="#9-precompile-architecture">Precompile Architecture</a>
-  <a href="#10-network-status-live">Network Status (Live)</a>
-  <a href="#11-risks-honest-assessment">Risks</a>
-  <a href="#12-conclusion-call-to-action">Conclusion</a>
+  <a href="#10-three-parallel-lanes-plug-and-play-for-any-use-case">Three Parallel Lanes — Plug-and-Pla</a>
+  <a href="#11-network-status-live">Network Status (Live)</a>
+  <a href="#12-risks-honest-assessment">Risks</a>
+  <a href="#13-conclusion-call-to-action">Conclusion</a>
 </div>
 
 <div class="whitepaper">
@@ -647,10 +648,41 @@ a:hover { color: var(--warm); }
         </div>
       </div>
     </div>
-    <div class="chapter" id="10-network-status-live">
+    <div class="chapter" id="10-three-parallel-lanes-plug-and-play-for-any-use-case">
       <div class="chapter-header" onclick="toggleChapter(this)">
         <div>
-          <h2>10. Network Status (Live)</h2>
+          <h2>10. Three Parallel Lanes — Plug-and-Play for Any Use Case</h2>
+          <div class="subtitle">Three Parallel Lanes — Plug-and-Pla</div>
+        </div>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="chapter-content">
+        <div class="content">
+<p>Most blockchains force every transaction through the same execution path. Public transactions, private data, and oracle attestations all compete for the same blockspace.</p>
+<p>WayChain runs <strong>three parallel execution lanes:</strong></p>
+<table>
+<tr><th>Lane</th><th>Type</th><th>Purpose</th><th>Privacy</th></tr>
+<tr><td><strong>ConsensusLane</strong> (0)</td><td>Public</td><td>Standard transactions, DeFi, governance, token transfers</td><td>Public — visible to all</td></tr>
+<tr><td><strong>OracleLane</strong> (1)</td><td>Semi-public</td><td>Oracle attestations, professional badge work, price feeds</td><td>Public — but attestation-specific</td></tr>
+<tr><td><strong>PrivateLane</strong> (2)</td><td>Encrypted</td><td>Healthcare records, corporate data, identity, legal docs</td><td>Encrypted mempool — only visible to involved parties</td></tr>
+</table>
+<p><strong>Why this matters:</strong></p>
+<ul>
+<li>A hospital can run private health records on PrivateLane while the same chain handles public DeFi on ConsensusLane</li>
+<li>Oracle attestations don't compete with user transactions for block space</li>
+<li>Private transactions are encrypted in the mempool — no frontrunning, no MEV, no data leakage</li>
+<li>All three lanes share the same state and security — no separate L2, no sidechain, no bridge</li>
+</ul>
+
+<p><strong>WayChain is a plug-and-play blockchain for any use case.</strong> Public, private, or oracle — all on one chain. No separate network needed. No custom deployment. Just choose your lane.</p>
+<hr>
+        </div>
+      </div>
+    </div>
+    <div class="chapter" id="11-network-status-live">
+      <div class="chapter-header" onclick="toggleChapter(this)">
+        <div>
+          <h2>11. Network Status (Live)</h2>
           <div class="subtitle">Network Status (Live)</div>
         </div>
         <span class="arrow">▼</span>
@@ -680,10 +712,10 @@ a:hover { color: var(--warm); }
         </div>
       </div>
     </div>
-    <div class="chapter" id="11-risks-honest-assessment">
+    <div class="chapter" id="12-risks-honest-assessment">
       <div class="chapter-header" onclick="toggleChapter(this)">
         <div>
-          <h2>11. Risks & Honest Assessment</h2>
+          <h2>12. Risks & Honest Assessment</h2>
           <div class="subtitle">Risks</div>
         </div>
         <span class="arrow">▼</span>
@@ -705,10 +737,10 @@ a:hover { color: var(--warm); }
         </div>
       </div>
     </div>
-    <div class="chapter" id="12-conclusion-call-to-action">
+    <div class="chapter" id="13-conclusion-call-to-action">
       <div class="chapter-header" onclick="toggleChapter(this)">
         <div>
-          <h2>12. Conclusion & Call to Action</h2>
+          <h2>13. Conclusion & Call to Action</h2>
           <div class="subtitle">Conclusion</div>
         </div>
         <span class="arrow">▼</span>
@@ -756,9 +788,10 @@ a:hover { color: var(--warm); }
   <a onclick="toggleSkipMenu()" href="#7-dox-dev-identity-system">Dox_Dev Identity System</a>
   <a onclick="toggleSkipMenu()" href="#8-governance-without-plutocracy">Governance Without Plutocracy</a>
   <a onclick="toggleSkipMenu()" href="#9-precompile-architecture">Precompile Architecture</a>
-  <a onclick="toggleSkipMenu()" href="#10-network-status-live">Network Status (Live)</a>
-  <a onclick="toggleSkipMenu()" href="#11-risks-honest-assessment">Risks</a>
-  <a onclick="toggleSkipMenu()" href="#12-conclusion-call-to-action">Conclusion</a>
+  <a onclick="toggleSkipMenu()" href="#10-three-parallel-lanes-plug-and-play-for-any-use-case">Three Parallel Lanes — Plug-and-Pla</a>
+  <a onclick="toggleSkipMenu()" href="#11-network-status-live">Network Status (Live)</a>
+  <a onclick="toggleSkipMenu()" href="#12-risks-honest-assessment">Risks</a>
+  <a onclick="toggleSkipMenu()" href="#13-conclusion-call-to-action">Conclusion</a>
 </div>
 
 <script>
