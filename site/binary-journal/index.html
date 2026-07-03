@@ -71,7 +71,7 @@ a:hover{color:var(--warm)}
 
 <div class="card">
   <h3>Submit a Truth</h3>
-  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Anchor a SHA256 hash on-chain. Your truth becomes immutable. Timestamped forever.</p>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Anchor a SHA256 hash on-chain. Becomes immutable. Timestamped forever.</p>
   <div class="input-group">
     <input type="text" id="truthAddr" placeholder="Your address (0x...)" value="0xabc">
   </div>
@@ -80,6 +80,53 @@ a:hover{color:var(--warm)}
   </div>
   <button class="btn" onclick="submitTruth()">⬡ Anchor This Truth</button>
   <div id="submitStatus" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>🔐 Dead Man's Switch — Private Inheritance</h3>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Set a trusted heir. If you stop proving you're alive, they inherit. No courts. No lawyers. No permission.</p>
+
+  <div style="font-size:.82em;line-height:1.8;margin-bottom:16px">
+    <p><strong>Light Truth (type 0):</strong> Public — anyone can see the switch exists. The heir can verify without your involvement.</p>
+    <p style="margin-top:8px"><strong>Dark Truth (type 1):</strong> Private — only you and your heir know. Encrypted until triggered.</p>
+    <p style="margin-top:8px;color:var(--amber)"><strong>Interval:</strong> 1 day to 1 year between heartbeats. Miss the window, the switch triggers.</p>
+  </div>
+
+  <div class="input-group">
+    <input type="text" id="dmsAddr" placeholder="Your address (0x...)" value="0xabc" style="flex:1">
+  </div>
+  <div class="input-group">
+    <input type="text" id="dmsHeir" placeholder="Heir address (0x...)" style="flex:1">
+  </div>
+  <div class="input-group">
+    <select id="dmsType" style="flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif">
+      <option value="0">Light Truth (public)</option>
+      <option value="1">Dark Truth (private, needs heir)</option>
+    </select>
+  </div>
+  <div class="input-group">
+    <select id="dmsInterval" style="flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif">
+      <option value="86400">1 day</option>
+      <option value="259200">3 days</option>
+      <option value="604800">1 week</option>
+      <option value="2592000">30 days</option>
+      <option value="7776000">90 days</option>
+      <option value="31536000">1 year</option>
+    </select>
+  </div>
+  <button class="btn" onclick="createDMS()">⬡ Create Dead Man's Switch</button>
+  <div id="dmsStatus" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>Check Claim Status</h3>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Enter a switch ID to check if it's claimable.</p>
+  <div class="input-group">
+    <input type="number" id="switchId" placeholder="Switch ID (0, 1, 2...)" min="0" style="flex:1">
+    <button onclick="checkSwitch()">Check</button>
+  </div>
+  <div id="switchInfo" style="font-size:.82em;color:var(--muted)"></div>
+  <div id="switchStatus" class="status-msg"></div>
 </div>
 
 <div class="card">
@@ -150,6 +197,56 @@ async function loadTruths() {
     }
     list.innerHTML = html;
     show(s,`${truths.length} truth(s) found`,'good');
+  } catch(e) { show(s,'Error: '+e.message,'bad'); }
+}
+
+// Dead Man's Switch — Precompile 0x15 selectors
+const DMS = {
+  createSwitch: '0x7f78edcf',  // createSwitch(uint8,address,uint64,bytes32)
+  heartbeat:    '0x7018b39e',  // heartbeat(uint64)
+  claim:        '0x40fadb8b',  // claim(uint64)
+  canClaim:     '0xa688a635',  // canClaim(uint64)
+  timeUntil:    '0xd75235c5',  // timeUntilClaimable(uint64)
+  getInfo:      '0x0034afaa',  // getSwitchInfo(uint64)
+  total:        '0x890219ed'   // totalSwitches()
+};
+
+async function createDMS() {
+  const addr = document.getElementById('dmsAddr').value.trim();
+  const heir = document.getElementById('dmsHeir').value.trim();
+  const type = document.getElementById('dmsType').value;
+  const interval = document.getElementById('dmsInterval').value;
+  const s = document.getElementById('dmsStatus');
+
+  if (!addr) { show(s,'Enter your address','bad'); return; }
+  if (type === '1' && !heir) { show(s,'Dark truth needs an heir address','bad'); return; }
+
+  show(s,'Use the wallet to submit this transaction. Open /wallet with your key and send a tx to precompile 0x15 with this data.','info');
+  // Build instruction string
+  const heirPad = heir ? heir.replace('0x','').padStart(64,'0') : '0'.repeat(64);
+  const intervalHex = BigInt(interval).toString(16).padStart(16,'0');
+  const data = DMS.createSwitch + type.padStart(2,'0') + heirPad + intervalHex + '0'.repeat(64);
+  s.innerHTML = `<b>Transaction data:</b><br><code style="font-size:.7em;word-break:break-all">${data}</code><br><br>Send to:<br><code>0x0000000000000000000000000000000000000015</code>`;
+  s.className = 'status-msg show info';
+}
+
+async function checkSwitch() {
+  const id = document.getElementById('switchId').value;
+  const info = document.getElementById('switchInfo');
+  const s = document.getElementById('switchStatus');
+  if (id === '') { show(s,'Enter a switch ID','bad'); return; }
+  show(s,'Checking...','info');
+  try {
+    const idHex = '0x' + BigInt(id).toString(16).padStart(64,'0');
+    const data = DMS.getInfo + idHex.slice(2);
+    const result = await fetch(RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',params:[{to:'0x0000000000000000000000000000000000000015',data},'latest'],id:1})
+    });
+    const r = await result.json();
+    if (r.error) { show(s,'Error: '+r.error.message,'bad'); return; }
+    info.innerHTML = `<p>Switch #${id} result: <code>${r.result}</code></p>`;
+    show(s,'Switch found','good');
   } catch(e) { show(s,'Error: '+e.message,'bad'); }
 }
 </script>
