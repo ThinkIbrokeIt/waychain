@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a2e"/>
+      <stop offset="60%" stop-color="#1a1a4e"/>
+      <stop offset="100%" stop-color="#1a2a3a"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#00d4ff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="domeGlow" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#ff6b35"/>
+      <stop offset="50%" stop-color="#ff3366"/>
+      <stop offset="100%" stop-color="#7b2ff7"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="beamGlow">
+      <feGaussianBlur stdDeviation="8"/>
+    </filter>
+    <filter id="starGlow">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+
+  <!-- Sky background -->
+  <rect width="400" height="500" fill="url(#sky)"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff" opacity="0.6" filter="url(#starGlow)">
+    <circle cx="50" cy="30" r="1.5"/>
+    <circle cx="120" cy="60" r="1"/>
+    <circle cx="300" cy="25" r="1.5"/>
+    <circle cx="350" cy="80" r="1"/>
+    <circle cx="80" cy="100" r="0.8"/>
+    <circle cx="320" cy="45" r="1.2"/>
+    <circle cx="260" cy="70" r="0.8"/>
+    <circle cx="45" cy="75" r="1"/>
+    <circle cx="370" cy="120" r="1"/>
+    <circle cx="30" cy="140" r="0.8"/>
+  </g>
+
+  <!-- Aurora/nebula bands -->
+  <ellipse cx="200" cy="60" rx="180" ry="40" fill="#7b2ff7" opacity="0.08"/>
+  <ellipse cx="180" cy="45" rx="120" ry="25" fill="#00d4ff" opacity="0.06"/>
+
+  <!-- Light beam (right side) -->
+  <polygon points="200,160 400,280 400,320 200,220" fill="url(#beam)" filter="url(#beamGlow)" opacity="0.6"/>
+  <polygon points="200,160 380,260 380,300 200,200" fill="#00d4ff" opacity="0.15"/>
+
+  <!-- Light beam (left side) -->
+  <polygon points="200,160 0,280 0,320 200,220" fill="url(#beam)" filter="url(#beamGlow)" opacity="0.4"/>
+
+  <!-- Tower base (Wardenclyffe-style tapered wooden lattice) -->
+  <polygon points="160,450 170,170 230,170 240,450" fill="#3a2a1a" stroke="#5a4a2a" stroke-width="1.5"/>
+  
+  <!-- Lattice cross-bracing -->
+  <line x1="165" y1="400" x2="235" y2="350" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="235" y1="400" x2="165" y2="350" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="167" y1="350" x2="233" y2="300" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="233" y1="350" x2="167" y2="300" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="169" y1="300" x2="231" y2="250" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="231" y1="300" x2="169" y2="250" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="170" y1="250" x2="230" y2="200" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+  <line x1="230" y1="250" x2="170" y2="200" stroke="#5a4a2a" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Lighthouse lantern room (glass) -->
+  <rect x="178" y="155" width="44" height="25" rx="3" fill="#1a3a4a" stroke="#00d4ff" stroke-width="1.5" opacity="0.8"/>
+  <line x1="200" y1="155" x2="200" y2="180" stroke="#00d4ff" stroke-width="0.8" opacity="0.5"/>
+  <line x1="188" y1="155" x2="188" y2="180" stroke="#00d4ff" stroke-width="0.8" opacity="0.3"/>
+  <line x1="212" y1="155" x2="212" y2="180" stroke="#00d4ff" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Wardenclyffe copper dome / mushroom top -->
+  <ellipse cx="200" cy="145" rx="45" ry="20" fill="url(#domeGlow)" filter="url(#glow)" opacity="0.9"/>
+  <ellipse cx="200" cy="145" rx="45" ry="20" fill="none" stroke="#ff6b35" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- Dome inner glow -->
+  <ellipse cx="200" cy="143" rx="25" ry="10" fill="#ff6b35" opacity="0.4" filter="url(#glow)"/>
+
+  <!-- Tesla coil sparks on dome -->
+  <g stroke="#00d4ff" stroke-width="1.5" fill="none" opacity="0.8" filter="url(#glow)">
+    <path d="M180,140 Q175,125 185,115"/>
+    <path d="M185,138 Q178,120 190,108 Q195,100 192,95"/>
+    <path d="M210,138 Q218,118 208,105"/>
+    <path d="M215,140 Q225,122 215,112"/>
+    <path d="M195,142 Q190,128 197,118"/>
+    <path d="M205,141 Q210,125 203,112"/>
+  </g>
+
+  <!-- Ground / cliff -->
+  <path d="M0,450 Q80,430 200,445 Q300,455 400,440 L400,500 L0,500 Z" fill="#1a2a1a"/>
+  <path d="M0,455 Q80,440 200,452 Q300,460 400,448 L400,500 L0,500 Z" fill="#0f1f0f" opacity="0.5"/>
+
+  <!-- Waves -->
+  <g fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.15">
+    <path d="M0,460 Q50,455 100,460 Q150,465 200,458 Q250,452 300,460 Q350,468 400,460"/>
+    <path d="M0,470 Q60,465 120,470 Q180,475 240,468 Q300,462 360,470 Q380,474 400,470"/>
+    <path d="M0,480 Q40,478 80,480 Q120,482 160,478 Q200,474 240,480 Q280,486 320,480 Q360,474 400,480"/>
+  </g>
+
+  <!-- Central light pulse -->
+  <circle cx="200" cy="165" r="8" fill="#00d4ff" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="200" cy="165" r="4" fill="#ffffff" opacity="0.8" filter="url(#glow)"/>
+
+  <!-- Particle effects along beam -->
+  <g fill="#00d4ff" opacity="0.6">
+    <circle cx="260" cy="195" r="1.5"/>
+    <circle cx="290" cy="210" r="1"/>
+    <circle cx="320" cy="225" r="1.2"/>
+    <circle cx="350" cy="240" r="0.8"/>
+    <circle cx="140" cy="195" r="1.2"/>
+    <circle cx="110" cy="210" r="1"/>
+    <circle cx="80" cy="225" r="0.8"/>
+  </g>
+</svg>
