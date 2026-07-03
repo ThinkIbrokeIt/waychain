@@ -19,6 +19,8 @@
     { "source": "/declaration", "destination": "/declaration/index.html" },
     { "source": "/declaration/", "destination": "/declaration/index.html" },
     { "source": "/wallet", "destination": "/wallet/index.html" },
-    { "source": "/wallet/", "destination": "/wallet/index.html" }
+    { "source": "/wallet/", "destination": "/wallet/index.html" },
+    { "source": "/journal", "destination": "/binary-journal/index.html" },
+    { "source": "/journal/", "destination": "/binary-journal/index.html" }
   ]
 }
