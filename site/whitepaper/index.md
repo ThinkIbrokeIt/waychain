@@ -83,7 +83,7 @@ These are applications that should be obvious for blockchain but **no chain has 
 - **Mineral rights on-chain** — real-world assets with environmental enforcement (MRT 0x20)
 - **Bitcoin-backed stablecoin** — not USDC, not ETH-backed, actually decentralized (1WAY)
 - **Professional oracle attestations** — experts paid directly by the protocol (Professional Badges)
-- **Court-ordered disclosure escrow** — identity that releases only on verified legal request
+- **Court-ordered disclosure escrow** — identity that releases only on verified legal request with on-chain approval via community vote
 - **Cross-chain deployer blacklist** — bad actors flagged on all chains
 
 WayChain was built specifically to serve these use cases. Not through economic tinkering, but through **identity as a first-class protocol primitive** combined with **professional verification**, **native oracles**, **Bitcoin-native stablecoins**, and **mineral rights tokenization**.
@@ -344,7 +344,7 @@ A common misconception: "If I have to verify my identity, I'm doxxed." This is n
 **What happens off-chain (curator side):**
 - A curator privately verifies your identity through a secure channel
 - The verification data (ID, video, etc.) is stored encrypted
-- Disclosure only happens on verified court order + public act (progressive hardening)
+- Disclosure only happens on verified court order with on-chain approval via community vote (progressive hardening)
 
 **If you are verified, disclosure is possible but rare. If you are NOT verified, no data exists — there is nothing to disclose.**
 
