@@ -6,7 +6,7 @@
   "tagline": "Actually Decentralized",
   "deployed_at": "2026-07-04",
   "whitepaper_sections": 22,
-  "live_features": 20,
+  "live_features": 22,
   "spec_features": 6,
   "precompiles": 20,
   "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
