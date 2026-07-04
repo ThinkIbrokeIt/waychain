@@ -1,21 +1,20 @@
 {
-  "version": "3.2.0",
+  "version": "3.2.1",
   "chain_id": 10008,
   "chain_id_hex": "0x2718",
   "name": "WayChain",
   "tagline": "Actually Decentralized",
-  "deployed_at": "2026-07-03",
+  "deployed_at": "2026-07-04",
   "whitepaper_sections": 22,
-  "live_features": 18,
+  "live_features": 20,
   "spec_features": 6,
   "precompiles": 20,
   "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
   "blueprint_files": 29,
   "blueprint_lines": 11947,
   "new_features": [
-    "Progressive Staking (anti-whale reward brackets)",
-    "Oracle VRF + Time Execution (scheduled triggers)",
-    "Mineral Rights Tokenization (MRT Registry 0x20)"
+    "Navigation links added for Declaration, Binary Journal, TrustlessLock, and DEX",
+    "Footer links updated for easy access to all WayChain frontends"
   ],
   "fixes": [
     "BIJO clarified as ecosystem reward token (not fuel token)",
@@ -23,6 +22,7 @@
     "State rent pricing updated to match 2026 cloud storage costs",
     "Whitepaper HTML restored (was broken/regressed in v3.1.1)",
     "Version consistency: all sources now say 3.1.2",
-    "CHANGELOG backfilled v3.0.2–v3.1.1"
+    "CHANGELOG backfilled v3.0.2–v3.1.1",
+    "Navigation links for Binary Journal, TrustlessLock, DEX, Declaration now visible in header and footer"
   ]
 }
