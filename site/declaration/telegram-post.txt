@@ -46,7 +46,7 @@ WHAT IS LIVE TODAY
 ✅ Dox_Dev Identity System — 3 levels
 ✅ Bitcoin SPV — verify BTC transactions on WayChain
 ✅ Open source — github.com/ThinkIbrokeIt/waychain
-🔧 1WAY Bitcoin-backed stablecoin — being deployed
+✅ 1WAY Bitcoin-backed stablecoin — complete, migrate to community vault when ready
 
 —
 
