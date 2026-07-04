@@ -1,5 +1,5 @@
 {
-  "version": "3.2.4",
+  "version": "3.2.5",
   "chain_id": 10008,
   "chain_id_hex": "0x2718",
   "name": "WayChain",
@@ -14,7 +14,8 @@
   "blueprint_lines": 11947,
   "new_features": [
     "Navigation links for Wallet, Declaration, Binary Journal, TrustlessLock, and DEX",
-    "/independence alias for Declaration page (Independence Day)"
+    "/independence alias for Declaration page (Independence Day)",
+    "Cross-links between all frontend pages"
   ],
   "fixes": [
     "BIJO clarified as ecosystem reward token (not fuel token)",
