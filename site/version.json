@@ -1,5 +1,5 @@
 {
-  "version": "3.2.1",
+  "version": "3.2.2",
   "chain_id": 10008,
   "chain_id_hex": "0x2718",
   "name": "WayChain",
@@ -13,8 +13,7 @@
   "blueprint_files": 29,
   "blueprint_lines": 11947,
   "new_features": [
-    "Navigation links added for Declaration, Binary Journal, TrustlessLock, and DEX",
-    "Footer links updated for easy access to all WayChain frontends"
+    "Navigation links for Wallet, Declaration, Binary Journal, TrustlessLock, and DEX"
   ],
   "fixes": [
     "BIJO clarified as ecosystem reward token (not fuel token)",
