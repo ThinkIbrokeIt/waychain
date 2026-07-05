@@ -18,26 +18,25 @@ waychain/
 │   ├── store/             ← BoltDB persistence (accounts, blocks, tx_index)
 │   └── AGENTS.md          ← Detailed consensus agent briefing
 ├── site/                  ← Frontend (Vercel-hosted at waychain.org)
-│   ├── index.html         ← Dashboard (homepage)
-│   ├── whitepaper/        ← Whitepaper (index.md + index.html)
+│   ├── index.html         ← Dashboard (homepage) — lighthouse hero image
+│   ├── assets/            ← Brand images, favicon, badge NFTs
+│   ├── wallet/            ← Web wallet (Ed25519 keygen, faucet, send)
+│   ├── badge/             ← Dox_Dev badge system (lookup, apply, curator)
+│   ├── binary-journal/    ← Truth anchoring + Dead Man's Switch
+│   ├── locks/             ← TrustlessLock UI (time/vesting locks)
+│   ├── dex/               ← Swap Route DEX interface
+│   ├── declaration/       ← July 4th Digital Independence declaration
+│   ├── whitepaper/        ← Whitepaper (index.md + index.html, 13 sections)
 │   ├── explorer/          ← Block explorer
-│   ├── badge/             ← Badge UI
+│   ├── docs/              ← Getting started + run-a-node guides
 │   ├── plan/              ← Launch plan page
 │   ├── vercel.json        ← Vercel deployment config
-│   ├── deploy.sh          ← Bump version + commit + deploy
 │   └── AGENTS.md          ← Detailed site agent briefing
 ├── contracts/             ← Solidity contracts (PulseChain-era, superseded)
 │   └── AGENTS.md          ← Detailed contracts agent briefing
-├── blueprint/             ← Full spec documents (29+ files, 10 directories)
-│   ├── 01-vision/         ← Use case audit, gap analysis
-│   ├── 06-stablecoins/    ← 1WAY (BTC-backed), 2WAY specs
-│   ├── 07-special-topics/ ← Mineral rights tokenization
-│   ├── 09-whitepaper/     ← Original WHITEPAPER.md
-│   └── AGENTS.md          ← Detailed blueprint agent briefing
-├── assets/                ← Logos, brand assets, dashboard HTML
-├── docs/                  ← Cross-reference docs, inventory, reality check
+├── blueprint/             ← Full spec documents (29+ files)
+├── assets/                ← Logos, brand assets
 ├── scripts/               ← Tx submission scripts, tunnel test
-├── nginx-config.conf      ← Nginx RPC proxy config
 └── version.json           ← Root-level version tracker
 ```
 
@@ -80,6 +79,16 @@ waychain/
 
 ---
 
+## Architecture Recommendation: SHA-256 / Keccak-256 Split — Implemented
+
+**Core consensus uses SHA-256** (block hashing, Merkle trees, P2P wire, tx hashes) — Go stdlib `crypto/sha256` for max throughput.
+
+**Smart contracts use Keccak-256 via precompile 0x21** — added at address `0x0000000000000000000000000000000000000021`. Call with arbitrary bytes, returns 32-byte Ethereum-compatible keccak256 hash. Gas: 30 + 6 per 32-byte word.
+
+This is the correct split: consensus stays fast with SHA-256, contracts get EVM tooling compatibility without touching any existing state.
+
+---
+
 ## Live Infrastructure
 
 | Component | URL / Access | Status |
@@ -96,7 +105,7 @@ waychain/
 ## Critical Pitfalls for Agents
 
 1. **Spec'd ≠ Built ≠ Live** — Always verify on-chain before claiming a feature works.
-2. **SHA256, not keccak256** — Selectors, storage keys, tx hashes all use SHA256.
+2. **SHA256 vs Keccak256** — Core consensus uses SHA256 (blocks, Merkle, P2P). Smart contracts use Keccak256 via precompile 0x21 (added July 2026). See "Architecture Recommendation" above.
 3. **Chain ID 10008** (0x2718), not 369 (PulseChain).
 4. **BIJO supply: 369M**, not 369B.
 5. **Precompiles are Go, not Solidity** — Contracts in `contracts/` are PulseChain-era and superseded.

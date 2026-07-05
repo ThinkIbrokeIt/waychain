@@ -21,15 +21,18 @@ if [ ! -d "$BACKUP_REPO/.git" ]; then
     echo "Backup repo initialized at $BACKUP_REPO" | tee -a "$LOG_FILE"
 fi
 
-# ─── 1. Chain state (BoltDB) — split into 50MB chunks for GitHub ───
+# ─── 1. Chain state (BoltDB) — incremental, stored locally ───
 CHAIN_DB="$HOME/.waychain/chain.db"
-CHAIN_BACKUP_DIR="$BACKUP_REPO/chain-db"
+LOCAL_DB_BACKUP="$BACKUP_DIR/chain-db"
 if [ -f "$CHAIN_DB" ]; then
-    mkdir -p "$CHAIN_BACKUP_DIR"
-    # Remove old parts, re-split fresh
-    rm -f "$CHAIN_BACKUP_DIR"/chain-part-*
-    split -b 50M "$CHAIN_DB" "$CHAIN_BACKUP_DIR/chain-part-"
-    echo "✅ Chain DB split into $(ls $CHAIN_BACKUP_DIR | wc -l) parts ($(du -h "$CHAIN_DB" | cut -f1))" | tee -a "$LOG_FILE"
+    mkdir -p "$LOCAL_DB_BACKUP"
+    # Only copy if DB has changed (compare mtime/size)
+    if [ ! -f "$LOCAL_DB_BACKUP/chain.db" ] || [ "$CHAIN_DB" -nt "$LOCAL_DB_BACKUP/chain.db" ]; then
+        cp -f "$CHAIN_DB" "$LOCAL_DB_BACKUP/chain.db"
+        echo "✅ Chain DB backed up locally ($(du -h "$CHAIN_DB" | cut -f1)) — not pushed to GitHub" | tee -a "$LOG_FILE"
+    else
+        echo "ℹ️  Chain DB unchanged — skipping local copy" | tee -a "$LOG_FILE"
+    fi
 else
     echo "⚠️  Chain DB not found at $CHAIN_DB" | tee -a "$LOG_FILE"
 fi
@@ -38,8 +41,8 @@ fi
 CLOUDFLARE_DIR="$HOME/.cloudflared"
 if [ -d "$CLOUDFLARE_DIR" ]; then
     mkdir -p "$BACKUP_REPO/cloudflared"
-    cp "$CLOUDFLARE_DIR"/*.json "$BACKUP_REPO/cloudflared/" 2>/dev/null
-    cp "$CLOUDFLARE_DIR"/config.yml "$BACKUP_REPO/cloudflared/" 2>/dev/null
+    cp -f "$CLOUDFLARE_DIR"/*.json "$BACKUP_REPO/cloudflared/" 2>/dev/null
+    cp -f "$CLOUDFLARE_DIR"/config.yml "$BACKUP_REPO/cloudflared/" 2>/dev/null
     # Don't backup cf_token or cert.pem in plain text
     echo "✅ Cloudflare config backed up" | tee -a "$LOG_FILE"
 else
@@ -49,7 +52,7 @@ fi
 # ─── 3. Agent-browser config ───
 if [ -f "$HOME/.agent-browser/config.json" ]; then
     mkdir -p "$BACKUP_REPO/agent-browser"
-    cp "$HOME/.agent-browser/config.json" "$BACKUP_REPO/agent-browser/"
+    cp -f "$HOME/.agent-browser/config.json" "$BACKUP_REPO/agent-browser/"
     echo "✅ agent-browser config backed up" | tee -a "$LOG_FILE"
 fi
 
@@ -59,17 +62,17 @@ if [ -d "$HERMES_DIR" ]; then
     mkdir -p "$BACKUP_REPO/hermes"
     # Copy skills (procedural knowledge)
     if [ -d "$HERMES_DIR/skills" ]; then
-        cp -r "$HERMES_DIR/skills" "$BACKUP_REPO/hermes/"
+        cp -rf "$HERMES_DIR/skills" "$BACKUP_REPO/hermes/"
         echo "✅ Hermes skills backed up ($(find "$HERMES_DIR/skills" -type f | wc -l) files)" | tee -a "$LOG_FILE"
     fi
     # Copy cron jobs config
     if [ -d "$HERMES_DIR/cron" ]; then
-        cp -r "$HERMES_DIR/cron" "$BACKUP_REPO/hermes/" 2>/dev/null
+        cp -rf "$HERMES_DIR/cron" "$BACKUP_REPO/hermes/" 2>/dev/null
         echo "✅ Hermes cron jobs backed up" | tee -a "$LOG_FILE"
     fi
     # Copy profiles (not secrets)
     if [ -d "$HERMES_DIR/profiles" ]; then
-        cp -r "$HERMES_DIR/profiles" "$BACKUP_REPO/hermes/" 2>/dev/null
+        cp -rf "$HERMES_DIR/profiles" "$BACKUP_REPO/hermes/" 2>/dev/null
         echo "✅ Hermes profiles backed up" | tee -a "$LOG_FILE"
     fi
 else
@@ -78,14 +81,14 @@ fi
 
 # ─── 5. Nginx config ───
 if [ -f /etc/nginx/sites-available/waychain ]; then
-    cp /etc/nginx/sites-available/waychain "$BACKUP_REPO/nginx-waychain.conf"
+    cp -f /etc/nginx/sites-available/waychain "$BACKUP_REPO/nginx-waychain.conf"
     echo "✅ Nginx config backed up" | tee -a "$LOG_FILE"
 fi
 
 # ─── 6. Systemd service files ───
 for svc in waychain-rpc-tunnel; do
     if [ -f "/etc/systemd/system/$svc.service" ]; then
-        cp "/etc/systemd/system/$svc.service" "$BACKUP_REPO/"
+        cp -f "/etc/systemd/system/$svc.service" "$BACKUP_REPO/"
         echo "✅ Systemd service $svc backed up" | tee -a "$LOG_FILE"
     fi
 done
@@ -100,7 +103,7 @@ fi
 # ─── 8. Daemon build binary ───
 DAEMON_BIN="$HOME/projects/waychain/consensus/waychain-consensus"
 if [ -f "$DAEMON_BIN" ]; then
-    cp "$DAEMON_BIN" "$BACKUP_REPO/waychain-daemon"
+    cp -f "$DAEMON_BIN" "$BACKUP_REPO/waychain-daemon"
     echo "✅ Daemon binary backed up ($(du -h "$DAEMON_BIN" | cut -f1))" | tee -a "$LOG_FILE"
 fi
 
@@ -115,6 +118,8 @@ fi
 } > "$BACKUP_REPO/backup-info.txt"
 
 # ─── Commit and push to GitHub backup repo ───
+# Push to a dated branch name to avoid force-push issues with stale LFS history
+BRANCH_NAME="backup-$(date +%Y%m%d)"
 cd "$BACKUP_REPO"
 git add -A
 if git diff --cached --quiet; then
@@ -123,7 +128,14 @@ else
     git commit -m "backup $TIMESTAMP"
     # Try to push to GitHub backup repo if remote exists
     if git remote -v | grep -q origin; then
-        git push origin master 2>&1 | tail -3 >> "$LOG_FILE" || echo "⚠️  Push failed (no network?)" | tee -a "$LOG_FILE"
+        # Push to dated branch (clean history, no large files)
+        if git rev-parse --verify origin/"$BRANCH_NAME" 2>/dev/null; then
+            # Branch exists — try fast-forward push
+            git push origin HEAD:"$BRANCH_NAME" 2>&1 | tail -3 >> "$LOG_FILE" || echo "⚠️  Push to $BRANCH_NAME failed" | tee -a "$LOG_FILE"
+        else
+            # New branch — create it
+            git push origin HEAD:"$BRANCH_NAME" 2>&1 | tail -3 >> "$LOG_FILE" || echo "⚠️  Push to new branch $BRANCH_NAME failed" | tee -a "$LOG_FILE"
+        fi
     else
         echo "ℹ️  No remote configured — backup saved locally only" | tee -a "$LOG_FILE"
     fi

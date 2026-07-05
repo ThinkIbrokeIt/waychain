@@ -70,7 +70,7 @@ Transaction.Lane determines which pool it enters and which EVM instance executes
 - **Class B (1)**: Custom bytecode — requires Level 3 (curator) or governance approval (enforced by `EnforceContractClass` in `evm/evm.go`)
 - Enforced in `EnforceContractClass(level, class)` and `CanDeployContract(level)`
 
-### Precompile Addresses (0x0C–0x20)
+### Precompile Addresses (0x0C–0x21)
 | Addr | Name | Purpose |
 |------|------|---------|
 | 0x0C | OracleAggregator | Aggregate multi-oracle attestations |
@@ -94,6 +94,7 @@ Transaction.Lane determines which pool it enters and which EVM instance executes
 | 0x1E | StateRent | Rent collection & eviction |
 | 0x1F | CrossChainAttestation | Cross-chain proof verification |
 | 0x20 | MineralRightsRegistry | Tokenized mineral rights |
+| <strong>0x21</strong> | <strong>Keccak256</strong> | <strong>Ethereum-compatible Keccak-256 hash. Call with arbitrary bytes → returns 32-byte hash. Use for EVM tooling compatibility (signatures, Merkle proofs, selectors). Gas: 30 + 6 per 32-byte word.</strong> |
 
 ### ABI Selectors
 WayChain uses **sha256(signature)[:4]** NOT keccak256. All selectors in `precompiles.go` are precomputed constants.
@@ -129,8 +130,25 @@ go vet ./...                  # Static analysis (may have false positives)
 
 ## Known Pitfalls & Gotchas
 
-### 1. SHA256 vs Keccak256
-**Everything uses SHA256** — contract addresses, storage keys, function selectors, tx hashes. Never use keccak256.
+### 1. SHA256 vs Keccak256 — Strategic Split
+
+**Core consensus uses SHA256** — block hashing, Merkle trees, P2P wire protocol, tx hashes. This gives maximum throughput with Go's `crypto/sha256` stdlib.
+
+**Smart contracts use Keccak-256 via precompile 0x21** — a dedicated Keccak-256 hash precompile was added at address 0x21 for contract developers. This:
+- Protects the application layer from length-extension vulnerabilities (SHA-256 is vulnerable to length-extension; Keccak-256 is not)
+- Maintains compatibility with standard EVM tooling (Hardhat, Foundry, ethers.js all assume keccak256 for selectors and events)
+- Allows Solidity developers to compute keccak256 hashes on-chain without modifying their existing tooling
+
+**Current state:** Consensus/block layer uses SHA256 everywhere (unchanged). Smart contracts can call precompile 0x21 to compute Keccak-256 hashes. This is the correct split — see the "Architecture Recommendation" section in the root AGENTS.md for the reasoning.
+
+**How contracts call it:**
+```solidity
+// Call precompile 0x21 (address 0x0000000000000000000000000000000000000021)
+(bool success, bytes memory hash) = address(0x21).call(data);
+// hash = keccak256(data), returns 32 bytes
+```
+
+**Gas:** 30 base + 6 per 32-byte word (matching Ethereum's precompile gas model).
 
 ### 2. Precompile Address Encoding
 Internal storage uses 40-char hex: `"0000000000000000000000000000000000000013"` for 0x13.

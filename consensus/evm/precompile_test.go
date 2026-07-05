@@ -168,13 +168,65 @@ func TestPrecompileNames(t *testing.T) {
 	}
 	// Check all are listed
 	count := 0
-	for addr := byte(0x0C); addr <= 0x20; addr++ {
+	for addr := byte(0x0C); addr <= 0x21; addr++ {
 		if _, ok := PrecompilesTable[addr]; ok {
 			count++
 		}
 	}
-	if count != 21 {
-		t.Fatalf("expected 21 precompiles, got %d", count)
+	if count != 22 {
+		t.Fatalf("expected 22 precompiles, got %d", count)
 	}
-	t.Logf("✅ All 21 precompiles registered:\n%s", names)
+	t.Logf("✅ All 22 precompiles registered:\n%s", names)
+}
+
+func TestPrecompileKeccak256(t *testing.T) {
+	// Test empty input
+	result, err := keccak256Precompile([]byte{}, "", nil, 0)
+	if err != nil {
+		t.Fatalf("empty input: %v", err)
+	}
+	if len(result) != 32 {
+		t.Fatalf("expected 32 bytes, got %d", len(result))
+	}
+	// keccak256("") = c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470
+	expected := "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+	got := fmt.Sprintf("%x", result)
+	if got != expected {
+		t.Fatalf("empty hash mismatch: expected %s, got %s", expected, got)
+	}
+	t.Logf("✅ keccak256(\"\") = %s", got)
+
+	// Test "hello" input
+	result, err = keccak256Precompile([]byte("hello"), "", nil, 0)
+	if err != nil {
+		t.Fatalf("hello input: %v", err)
+	}
+	// keccak256("hello") = 1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8
+	expected = "1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8"
+	got = fmt.Sprintf("%x", result)
+	if got != expected {
+		t.Fatalf("hello hash mismatch: expected %s, got %s", expected, got)
+	}
+	t.Logf("✅ keccak256(\"hello\") = %s", got)
+
+	// Test longer input
+	input := []byte("WayChain uses Keccak256 for smart contract hashing")
+	result, err = keccak256Precompile(input, "", nil, 0)
+	if err != nil {
+		t.Fatalf("long input: %v", err)
+	}
+	if len(result) != 32 {
+		t.Fatalf("expected 32 bytes for long input, got %d", len(result))
+	}
+	t.Logf("✅ keccak256(\"WayChain...\") = %x", result)
+
+	// Verify it's in the precompile table
+	pc, ok := PrecompilesTable[0x21]
+	if !ok {
+		t.Fatal("0x21 Keccak256 not registered in PrecompilesTable")
+	}
+	if pc.Name != "Keccak256" {
+		t.Fatalf("expected name Keccak256, got %s", pc.Name)
+	}
+	t.Logf("✅ Precompile 0x21 registered: %s (gas: %d)", pc.Name, pc.Gas)
 }

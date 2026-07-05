@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+
+	"golang.org/x/crypto/sha3"
 )
 
 // Precompile is a native function baked into the EVM at a fixed address
@@ -145,11 +147,17 @@ var PrecompilesTable = map[byte]*Precompile{
 		Gas:     8000,
 		Fn:      mineralRightsPrecompile,
 	},
+	0x21: {
+		Address: 0x21,
+		Name:    "Keccak256",
+		Gas:     30,
+		Fn:      keccak256Precompile,
+	},
 }
 
 // IsPrecompile returns true if the address is a precompile
 func IsPrecompile(addr byte) bool {
-	return addr >= 0x0C && addr <= 0x20
+	return addr >= 0x0C && addr <= 0x21
 }
 
 // ExecutePrecompile runs a precompile and returns the result
@@ -412,6 +420,17 @@ func PrecompileNames() string {
 
 func PrecompileAddrHex(addr byte) string {
 	return fmt.Sprintf("000000000000000000000000000000000000%02x", addr)
+}
+
+// ── 0x21: Keccak256 ──
+// Input: [data(variable)]
+// Output: [hash(32)]
+// Computes the Keccak-256 (SHA3-256) hash of the input data.
+// Gas: 30 base + 6 per 32-byte word (matching Ethereum's SHA256 precompute pattern)
+func keccak256Precompile(input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, error) {
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(input)
+	return hash.Sum(nil), nil
 }
 
 // ── Storage key helpers ──

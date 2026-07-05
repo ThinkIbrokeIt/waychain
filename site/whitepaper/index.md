@@ -403,7 +403,7 @@ This is the opposite of Ethereum, where larger stakes earn proportionally more. 
 
 ## 9. Precompile Architecture
 
-WayChain has **20 native precompiles** (0x0C-0x20):
+WayChain has **21 native precompiles** (0x0C-0x21):
 
 | Addr | Name | Purpose |
 |------|------|---------|
@@ -428,6 +428,7 @@ WayChain has **20 native precompiles** (0x0C-0x20):
 | 0x1E | StateRent | Rent collection and eviction |
 | 0x1F | CrossChainAttestation | Cross-chain proof verification |
 | 0x20 | MineralRightsRegistry | Tokenized mineral rights |
+| 0x21 | Keccak256 | Ethereum-compatible Keccak-256 hash for smart contracts |
 
 Each precompile uses **SHA256-based selectors** (not keccak256) and has a fixed gas cost.
 
@@ -472,7 +473,7 @@ WayChain runs **three parallel execution lanes:**
 | Block time | 1 second |
 | Finality | Instant (single block) |
 | Validators | 3 (expandable to 200) |
-| Precompiles | 20 (0x0C-0x20) |
+| Precompiles | 21 (0x0C-0x21) |
 | Live features | 20 |
 | Spec'd features | 6 |
 

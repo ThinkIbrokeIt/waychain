@@ -618,7 +618,7 @@ a:hover { color: var(--warm); }
       </div>
       <div class="chapter-content">
         <div class="content">
-<p>WayChain has <strong>20 native precompiles</strong> (0x0C-0x20):</p>
+<p>WayChain has <strong>21 native precompiles</strong> (0x0C-0x21):</p>
 <table>
 <tr><th>Addr</th><th>Name</th><th>Purpose</th></tr>
 <tr><td>0x0C</td><td>OracleAggregator</td><td>Multi-oracle price aggregation</td></tr>
@@ -642,6 +642,7 @@ a:hover { color: var(--warm); }
 <tr><td>0x1E</td><td>StateRent</td><td>Rent collection and eviction</td></tr>
 <tr><td>0x1F</td><td>CrossChainAttestation</td><td>Cross-chain proof verification</td></tr>
 <tr><td>0x20</td><td>MineralRightsRegistry</td><td>Tokenized mineral rights</td></tr>
+<tr><td><strong>0x21</strong></td><td><strong>Keccak256</strong></td><td><strong>Ethereum-compatible Keccak-256 hash for smart contracts</strong></td></tr>
 </table>
 <p>Each precompile uses <strong>SHA256-based selectors</strong> (not keccak256) and has a fixed gas cost.</p>
 <hr>
@@ -704,7 +705,7 @@ a:hover { color: var(--warm); }
 <tr><td>Block time</td><td>1 second</td></tr>
 <tr><th>Finality</th><th>Instant (single block)</th></tr>
 <tr><td>Validators</td><td>3 (expandable to 200)</td></tr>
-<tr><td>Precompiles</td><td>20 (0x0C-0x20)</td></tr>
+<tr><td>Precompiles</td><td>21 (0x0C-0x21)</td></tr>
 <tr><td>Live features</td><td>20</td></tr>
 <tr><td>Spec'd features</td><td>6</td></tr>
 </table>
