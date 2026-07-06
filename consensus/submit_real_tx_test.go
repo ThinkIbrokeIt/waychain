@@ -2,31 +2,56 @@ package main
 
 import (
 	"crypto/ed25519"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"net/http"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/wink/waychain-consensus/evm"
 )
 
-// TestSubmitDevTx submits a transaction from the dev key
-func TestSubmitDevTx(t *testing.T) {
-	// Use the dev key from the running node
-	fromAddr := "3faf5f01b28dbe96c5a51cf691fda2df0bf0cc830dfbb081e6c7badc71addb7a"
-	privKeyHex := "848bc494a16d7a9bd11b6c5433be5dfa558a87df1f5f7efc4de1783fe973eeff3faf5f01b28dbe96c5a51cf691fda2df0bf0cc830dfbb081e6c7badc71addb7a"
-	
-	privBytes, _ := hex.DecodeString(privKeyHex)
-	priv := ed25519.PrivateKey(privBytes)
-	
-	// Use current nonce (6 after previous tx)
-	nonce := uint64(6)
-	
+// TestFullTxPipeline tests the full transaction pipeline:
+// RPC eth_sendRawTransaction → Pool → Block Production → eth_getTransactionByHash → eth_getTransactionReceipt
+func TestFullTxPipeline(t *testing.T) {
+	chain := NewChain()
+
+	// Create and fund an account
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fromAddr := hex.EncodeToString(pub)
+
+	// Fund it
+	acc := chain.State.GetOrCreateAccount(fromAddr)
+	acc.Balance.SetUint64(1_000_000)
+	acc.Nonce = 0
+	acc.DoxDevLevel = 3
+
+	// Create an RPC server for this chain (in-memory, no HTTP server needed for this test)
+	// We'll test the RPC method logic directly by calling handleMethod
+	rpc := NewRPCServer(chain, 9545)
+
+	// Get current nonce (should be 0)
+	nonceResult, err := rpc.handleMethod("eth_getTransactionCount", jsonRaw(`["0x`+fromAddr+`"]`))
+	if err != nil {
+		t.Fatalf("Failed to get nonce: %v", err)
+	}
+	nonceHex := nonceResult.(string)
+	nonce := uint64(0)
+	fmt.Sscanf(nonceHex, "0x%x", &nonce)
+	t.Logf("Current nonce: %d", nonce)
+
+	// Check balance
+	balResult, err := rpc.handleMethod("eth_getBalance", jsonRaw(`["0x`+fromAddr+`"]`))
+	if err != nil {
+		t.Fatalf("Failed to get balance: %v", err)
+	}
+	t.Logf("Balance: %s", balResult.(string))
+
 	// Build transaction
 	tx := Transaction{
 		Nonce:    nonce,
@@ -37,73 +62,75 @@ func TestSubmitDevTx(t *testing.T) {
 		GasPrice: 1,
 		Lane:     evm.ConsensusLane,
 	}
-	
+
 	// Compute hash
 	hashInput := fmt.Sprintf("%d:%s:%s:%s:%d:%d:%d:%x:%x",
 		tx.Nonce, tx.From, tx.To, tx.Value.String(), tx.GasLimit, tx.Lane, len(tx.Data), tx.Data, tx.EncryptedData)
 	tx.Hash = sha256.Sum256([]byte(hashInput))
-	
+
 	// Sign
 	tx.Signature = ed25519.Sign(priv, tx.Hash[:])
-	
+
 	// Serialize
 	ser := SerializeTxHex(&tx)
-	
 	t.Logf("Serialized TX: %s", ser)
-	
-	// Submit via RPC
-	url := "http://localhost:9545"
-	payload := fmt.Sprintf(`{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0x%s"],"id":1}`, ser)
-	
-	resp, err := http.Post(url, "application/json", strings.NewReader(payload))
+
+	// Submit via RPC (this calls handleMethod which is what eth_sendRawTransaction does)
+	txHashResult, err := rpc.handleMethod("eth_sendRawTransaction", jsonRaw(`["0x`+ser+`"]`))
 	if err != nil {
 		t.Fatalf("Submit error: %v", err)
 	}
-	defer resp.Body.Close()
-	
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	
-	if errVal, ok := result["error"]; ok && errVal != nil {
-		t.Fatalf("Submit error: %v", errVal)
-	}
-	
-	txHash := result["result"].(string)
+	txHash := txHashResult.(string)
 	t.Logf("TX hash: %s", txHash)
-	
-	// Wait for mining with retry
-	maxRetries := 10
-	var txResult map[string]interface{}
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(1 * time.Second)
-		txResult = rpcCall("eth_getTransactionByHash", []interface{}{txHash})
-		if txResult["result"] != nil {
-			break
-		}
-		t.Logf("Waiting for tx to be indexed... attempt %d/%d", i+1, maxRetries)
+
+	// Verify it's in the pool
+	if len(chain.Pool.Consensus) != 1 {
+		t.Fatalf("Expected 1 tx in pool, got %d", len(chain.Pool.Consensus))
 	}
-	
-	if txResult["result"] == nil {
-		t.Fatal("Transaction not found after mining")
+	t.Logf("✅ Transaction added to pool")
+
+	// Produce a block
+	vs := NewValidatorSet()
+	vs.Add(NewValidatorID(0x01), 5000)
+	proposer := vs.SelectProposer(1)
+	block := chain.ProduceBlock(proposer)
+
+	if len(block.Transactions) != 1 {
+		t.Fatalf("Expected 1 tx in block, got %d", len(block.Transactions))
 	}
-	t.Logf("✅ Transaction mined!")
-	
-	receiptResult := rpcCall("eth_getTransactionReceipt", []interface{}{txHash})
-	t.Logf("✅ Receipt: %+v", receiptResult["result"])
+	t.Logf("✅ Transaction mined in block #%d", block.Height)
+
+	// Verify tx by hash
+	txByHashResult, err := rpc.handleMethod("eth_getTransactionByHash", jsonRaw(`["`+txHash+`"]`))
+	if err != nil {
+		t.Fatalf("Failed to get tx by hash: %v", err)
+	}
+	if txByHashResult == nil {
+		t.Fatal("Transaction not found by hash")
+	}
+	t.Logf("✅ Transaction found by hash: %+v", txByHashResult)
+
+	// Verify receipt
+	receiptResult, err := rpc.handleMethod("eth_getTransactionReceipt", jsonRaw(`["`+txHash+`"]`))
+	if err != nil {
+		t.Fatalf("Failed to get receipt: %v", err)
+	}
+	if receiptResult == nil {
+		t.Fatal("Receipt not found")
+	}
+	t.Logf("✅ Receipt: %+v", receiptResult)
+
+	// Verify receipt fields
+	receipt := receiptResult.(map[string]interface{})
+	if receipt["status"] != "0x1" {
+		t.Fatalf("Expected status 0x1, got %v", receipt["status"])
+	}
+	if receipt["blockNumber"] != "0x1" {
+		t.Fatalf("Expected blockNumber 0x1, got %v", receipt["blockNumber"])
+	}
+	t.Logf("✅ All receipt fields correct")
 }
 
-func rpcCall(method string, params ...interface{}) map[string]interface{} {
-	url := "http://localhost:9545"
-	payload := map[string]interface{}{"jsonrpc": "2.0", "method": method, "params": params, "id": 1}
-	data, _ := json.Marshal(payload)
-	
-	resp, err := http.Post(url, "application/json", strings.NewReader(string(data)))
-	if err != nil {
-		return map[string]interface{}{"error": err.Error()}
-	}
-	defer resp.Body.Close()
-	
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	return result
+func jsonRaw(s string) json.RawMessage {
+	return json.RawMessage(s)
 }

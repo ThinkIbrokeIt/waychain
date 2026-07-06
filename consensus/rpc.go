@@ -496,12 +496,12 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		}
 
 		rpc.mu.RLock()
-		// Search in-memory blocks first
-		for blockIdx, block := range rpc.chain.Blocks {
+		// Search in-memory blocks with-in-memory blocks first
+		for _, block := range rpc.chain.Blocks {
 			for _, tx := range block.Transactions {
 				txHex := hex.EncodeToString(tx.Hash[:])
 				if strings.EqualFold(txHex, searchHash) {
-					receipt := buildReceipt(tx, blockIdx, block.Hash)
+					receipt := buildReceipt(tx, int(block.Height), block.Hash)
 					rpc.mu.RUnlock()
 					return receipt, nil
 				}

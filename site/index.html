@@ -32,7 +32,7 @@ p{margin-bottom:12px}
 .page{display:none}
 .page.active{display:block}
 
-.hero{position:relative;text-align:center;padding:100px 24px 80px;background:linear-gradient(180deg,#1a1a2e 0%,var(--slate) 100%);overflow:hidden}
+.hero{position:relative;text-align:center;padding:100px 24px 40px;background:linear-gradient(180deg,rgba(184,115,51,.18) 0%,rgba(184,115,51,.08) 35%,var(--slate) 100%);overflow:hidden}
 .hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(184,115,51,.06) 0%,transparent 60%);pointer-events:none}
 .hero-logo{margin-bottom:24px;position:relative}
 .hero h1{font-family:'Playfair Display',Georgia,serif;font-size:4em;color:var(--warm);line-height:1;margin-bottom:12px;letter-spacing:3px}
@@ -222,11 +222,24 @@ p{margin-bottom:12px}
 </nav>
 
 <div class="page active" id="home">
-  <section class="hero" style="padding:0;background:none;overflow:hidden">
-    <div style="position:relative;width:100%">
-      <img src="/assets/waychain-hero.jpg" alt="WayChain — Illuminate. Navigate. Arrive." style="width:100%;height:auto;display:block;max-width:1200px;margin:0 auto">
+  <section class="hero">
+    <div class="hero-logo">
+      <svg viewBox="0 0 120 120" width="100" height="100" fill="none">
+        <circle cx="60" cy="60" r="56" stroke="#B87333" stroke-width="1.5" fill="none"/>
+        <path d="M52 24 L68 24 L72 76 L48 76 Z" fill="#FFF8F0" stroke="#B87333" stroke-width="1"/>
+        <rect x="50" y="16" width="20" height="10" rx="2" fill="#B87333"/>
+        <path d="M48 16 L60 6 L72 16 Z" fill="#B87333"/>
+        <path d="M60 20 L96 12 L96 18 L60 24 Z" fill="#B87333" opacity="0.12"/>
+        <path d="M60 20 L24 12 L24 18 L60 24 Z" fill="#B87333" opacity="0.12"/>
+        <rect x="44" y="76" width="32" height="6" rx="1" fill="#B87333"/>
+        <line x1="22" y1="88" x2="98" y2="88" stroke="#B87333" stroke-width="2"/>
+      </svg>
     </div>
-    <div class="stats-bar" style="margin-top:0;padding:24px 24px;background:var(--slate)">
+    <div class="hero-ctas">
+      <a href="/explorer" class="btn-copper">Explore the Chain</a>
+      <a href="#protocol" class="btn-outline" data-page="protocol">Read the Protocol</a>
+    </div>
+    <div class="stats-bar">
       <div class="stat"><div class="stat-val">20</div><div class="stat-lbl">Live Features</div></div>
       <div class="stat"><div class="stat-val">1s</div><div class="stat-lbl">Block Time</div></div>
       <div class="stat"><div class="stat-val">200</div><div class="stat-lbl">Validators</div></div>
