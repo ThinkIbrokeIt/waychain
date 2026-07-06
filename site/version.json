@@ -1,5 +1,5 @@
 {
-  "version": "3.3.1",
+  "version": "4.1.0",
   "chain_id": 10008,
   "chain_id_hex": "0x2718",
   "name": "WayChain",
@@ -13,6 +13,8 @@
   "blueprint_files": 29,
   "blueprint_lines": 11947,
   "new_features": [
+    "Hero cleanup: removed h1/tagline/mission, added cinematic copper gradient",
+    "Content-Security-Policy headers for eval() compatibility",
     "Navigation links for Wallet, Declaration, Binary Journal, TrustlessLock, and DEX",
     "/independence alias for Declaration page (Independence Day)",
     "Cross-links between all frontend pages",
@@ -23,7 +25,7 @@
     "BIJO supply corrected: 369B → 369M (matches on-chain precompile)",
     "State rent pricing updated to match 2026 cloud storage costs",
     "Whitepaper HTML restored (was broken/regressed in v3.1.1)",
-    "Version consistency: all sources now say 3.1.2",
+    "Version consistency: all sources now say 4.0.0",
     "CHANGELOG backfilled v3.0.2–v3.1.1",
     "Navigation links for Binary Journal, TrustlessLock, DEX, Declaration now visible in header and footer"
   ]
