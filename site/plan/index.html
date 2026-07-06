@@ -15,7 +15,8 @@ body { font-family: 'Courier New', monospace; background: var(--bg); color: var(
 .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
-.header { border-bottom: 1px solid var(--border); padding: 20px 0; margin-bottom: 30px; }
+.header { border-bottom: 1px solid var(--border); padding: 20px 0; margin-bottom: 30px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.header-logo-img{height:40px;width:auto;display:block}
 .header h1 { color: var(--accent); font-size: 1.4em; }
 .nav { margin-top: 8px; }
 .nav a { font-size: 0.8em; color: var(--fg2); margin-right: 20px; text-transform: uppercase; letter-spacing: 1px; }
@@ -41,6 +42,7 @@ li { margin: 4px 0; font-size: 0.9em; }
 <body>
 <div class="container">
 <div class="header">
+<img src="/assets/waylogo.png" alt="WayChain" class="header-logo-img">
 <h1>⬡ WayChain Launch Plan</h1>
 <div class="nav">
 <a href="https://waychain.org">Dashboard</a>
