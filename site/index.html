@@ -54,6 +54,9 @@ p{margin-bottom:12px}
 .stat-val{font-family:'Playfair Display',Georgia,serif;font-size:1.8em;color:var(--copper);line-height:1.2}
 .stat-lbl{font-size:.6em;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
 
+.section-decor{width:100%;max-width:800px;margin:0 auto 40px;display:block}
+.section-decor img{width:100%;height:auto;display:block}
+
 .section{padding:70px 24px;border-top:1px solid var(--border)}
 .section h2{font-size:2em;color:var(--warm);text-align:center;margin-bottom:4px}
 .section h2 em{font-style:normal;color:var(--copper)}
@@ -255,8 +258,9 @@ p{margin-bottom:12px}
     <h2>18 Features Live</h2>
     <div class="subtitle">Every feature verified on-chain. Click any chip for details.</div>
     <div class="features-grid" id="featuresGrid"></div>
-  </section>
-  <div class="modal-overlay" id="featureModal"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><h3 id="modalTitle"></h3><p id="modalDesc"></p><div class="addr" id="modalAddr"></div><a class="link" id="modalLink" href="#">Read in whitepaper →</a></div></div>
+      <img src="/assets/waydecor.png" alt="WayChain" class="section-decor">
+    </section>
+    <div class="modal-overlay" id="featureModal"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><h3 id="modalTitle"></h3><p id="modalDesc"></p><div class="addr" id="modalAddr"></div><a class="link" id="modalLink" href="#">Read in whitepaper →</a></div></div>
 
   <section class="logo-banner">
     <div class="logo-banner-text">WAYCHAIN</div>
