@@ -34,7 +34,7 @@ p{margin-bottom:12px}
 
 .hero{position:relative;text-align:center;overflow:hidden}
 .hero-img{width:100%;height:auto;display:block;max-width:1200px;margin:0 auto}
-.hero-overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 24px;background:linear-gradient(180deg,rgba(184,115,51,.18) 0%,rgba(184,115,51,.08) 35%,rgba(42,42,42,.95) 100%)}
+.hero-actions{padding:40px 24px;text-align:center;background:var(--slate);border-top:1px solid var(--border)}
 .hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(184,115,51,.06) 0%,transparent 60%);pointer-events:none}
 .hero-logo{margin-bottom:24px;position:relative}
 .hero h1{font-family:'Playfair Display',Georgia,serif;font-size:4em;color:var(--warm);line-height:1;margin-bottom:12px;letter-spacing:3px}
@@ -226,19 +226,19 @@ p{margin-bottom:12px}
 <div class="page active" id="home">
   <section class="hero">
     <img src="/assets/waychain-hero.jpg" alt="WayChain — Illuminate. Navigate. Arrive." class="hero-img">
-    <div class="hero-overlay">
-      <div class="hero-ctas">
-        <a href="/explorer" class="btn-copper">Explore the Chain</a>
-        <a href="#protocol" class="btn-outline" data-page="protocol">Read the Protocol</a>
-      </div>
-      <div class="stats-bar">
-        <div class="stat"><div class="stat-val">20</div><div class="stat-lbl">Live Features</div></div>
-        <div class="stat"><div class="stat-val">1s</div><div class="stat-lbl">Block Time</div></div>
-        <div class="stat"><div class="stat-val">200</div><div class="stat-lbl">Validators</div></div>
-        <div class="stat"><div class="stat-val">10008</div><div class="stat-lbl">Chain ID</div></div>
-      </div>
-    </div>
   </section>
+  <div class="hero-actions">
+    <div class="hero-ctas">
+      <a href="/explorer" class="btn-copper">Explore the Chain</a>
+      <a href="#protocol" class="btn-outline" data-page="protocol">Read the Protocol</a>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-val">20</div><div class="stat-lbl">Live Features</div></div>
+      <div class="stat"><div class="stat-val">1s</div><div class="stat-lbl">Block Time</div></div>
+      <div class="stat"><div class="stat-val">200</div><div class="stat-lbl">Validators</div></div>
+      <div class="stat"><div class="stat-val">10008</div><div class="stat-lbl">Chain ID</div></div>
+    </div>
+  </div>
 
   <section class="section">
     <h2>Built to Guide. <em>Not to Control.</em></h2>
