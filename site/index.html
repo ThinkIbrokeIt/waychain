@@ -417,27 +417,19 @@ function showPage(id){pages.forEach(p=>{document.getElementById(p).classList.tog
 document.querySelectorAll('[data-page]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();showPage(el.dataset.page)})});
 
 const FEATURES=[
-  {name:"Chain ID 10008",status:"live",addr:"0x2718",desc:"Independent L1 chain with custom consensus. Not a fork, not an L2.",link:"/whitepaper/#abstract"},
-  {name:"1-Second Block Time",status:"live",addr:"—",desc:"Blocks produced every 1 second.",link:"/whitepaper/#philosophy"},
-  {name:"Instant Finality",status:"live",addr:"—",desc:"Single-block BFT. Transactions are final immediately.",link:"/whitepaper/#philosophy"},
   {name:"Dox_Dev Badges",status:"live",addr:"0x13",desc:"Soulbound identity badges gate contract deployment, validator admission, oracle participation, and governance voting.",link:"/whitepaper/#philosophy"},
-  {name:"Deploy Gate (3 layers)",status:"live",addr:"—",desc:"RPC + Block Production + EVM opcode. Three layers of protection.",link:"/whitepaper/#philosophy"},
-  {name:"Fixed Fees",status:"live",addr:"—",desc:"0.001 / 0.005 / 0.01 WAY. Never auctioned.",link:"/whitepaper/#architecture"},
-  {name:"Sqrt-Weighted Lottery",status:"live",addr:"—",desc:"Validator selection uses sqrt-weighting to prevent plutocracy.",link:"/whitepaper/#philosophy"},
-  {name:"Rate Limiting",status:"live",addr:"—",desc:"100 req/sec/IP with token bucket.",link:"/whitepaper/#status"},
-  {name:"WebSocket Subscriptions",status:"live",addr:"—",desc:"eth_subscribe newHeads for real-time block notifications.",link:"/whitepaper/#status"},
-  {name:"P2P Block/Tx Broadcast",status:"live",addr:"—",desc:"BroadcastBlock() + BroadcastTransaction() for efficient propagation.",link:"/whitepaper/#architecture"},
-  {name:"Bitcoin SPV",status:"live",addr:"0x16",desc:"Bitcoin SPV verification via BitcoinRegistry.",link:"/whitepaper/#architecture"},
-  {name:"Account Recovery",status:"live",addr:"0x11",desc:"3-guardian recovery. Guardians can restore access without central authority.",link:"/whitepaper/#architecture"},
   {name:"Binary Journal (BIJO)",status:"live",addr:"0x14",desc:"Immutable truth anchoring. Attest hashes on-chain. Permanent, censorship-resistant.",link:"/whitepaper/#architecture"},
   {name:"Dead Man's Switch",status:"live",addr:"0x15",desc:"Inheritance protocol. Set heirs, heartbeat periodically, release keys when heartbeat stops.",link:"/whitepaper/#overview"},
   {name:"Progressive Staking",status:"live",addr:"0x21-0x25",desc:"5-tier marginal APY: 15% / 8% / 4% / 2% / 1%. Anti-whale by design.",link:"/whitepaper/#philosophy"},
-  {name:"Oracle VRF + Time",status:"live",addr:"0x0D",desc:"Scheduled oracle triggers with RANDOM opcode (0xC4). 13 tests passing.",link:"/whitepaper/#architecture"},
   {name:"Mineral Rights (MRT)",status:"live",addr:"0x20",desc:"Tokenize mineral reserves. Full lifecycle: register → verify → approve → issue → monitor → transfer. 12 tests passing.",link:"/whitepaper/#overview"},
-  {name:"State Rent",status:"building",addr:"0x12",desc:"State rent enforcement with 60% burn. Precompile exists, enforcement coming in Phase 7.",link:"/whitepaper/#status"},
+  {name:"Oracle VRF + Time",status:"live",addr:"0x0D",desc:"Scheduled oracle triggers with RANDOM opcode (0xC4). 13 tests passing.",link:"/whitepaper/#architecture"},
 ];
 const grid=document.getElementById('featuresGrid');
 FEATURES.forEach(f=>{const c=document.createElement('div');c.className='chip';c.innerHTML=`<div class="chip-name">${f.name}</div><span class="chip-badge badge-${f.status}">${f.status==='live'?'Live':'Building'}</span>${f.addr!=='—'?`<div class="chip-addr">${f.addr}</div>`:''}`;c.onclick=()=>openModal(f);grid.appendChild(c)});
+const viewAll=document.createElement('div');
+viewAll.style.cssText='text-align:center;margin-top:24px';
+viewAll.innerHTML=`<a href="/whitepaper/#architecture" class="link" style="font-size:.85em;color:var(--copper);font-weight:600">View All 20 Features →</a>`;
+grid.parentNode.appendChild(viewAll);
 function openModal(f){document.getElementById('modalTitle').textContent=f.name;document.getElementById('modalDesc').textContent=f.desc;document.getElementById('modalAddr').textContent=f.addr!=='—'?`Precompile: ${f.addr}`:'';document.getElementById('modalLink').href=f.link;document.getElementById('featureModal').classList.add('open')}
 function closeModal(){document.getElementById('featureModal').classList.remove('open')}
 document.getElementById('featureModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
