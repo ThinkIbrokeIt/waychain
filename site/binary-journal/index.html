@@ -16,8 +16,9 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
 a{color:var(--copper);text-decoration:none}
 a:hover{color:var(--warm)}
 .nav{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
-.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.2em;color:var(--warm);letter-spacing:1px}
-.nav-logo span{color:var(--copper)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-img{height:48px;width:auto;display:block}
+.nav-logo-text{font-family:'Playfair Display',Georgia,serif;font-size:1.4em;color:var(--warm);letter-spacing:1px}
 .nav-links{display:flex;gap:4px}
 .nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px}
 .nav-links a:hover{color:var(--warm);background:var(--slate2)}
@@ -53,7 +54,10 @@ a:hover{color:var(--warm)}
 <body>
 
 <nav class="nav">
-  <div class="nav-logo"><span>⬡</span> Binary Journal</div>
+  <div class="nav-logo">
+    <img src="/assets/waylogo.png" alt="WayChain" class="nav-logo-img">
+    <div class="nav-logo-text">Binary Journal</div>
+  </div>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/wallet">Wallet</a>

@@ -39,6 +39,8 @@ h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
   margin-left: 20px; color: var(--fg2);
 }
 .header .nav a:hover { color: var(--accent); }
+.header-logo{display:flex;align-items:center;gap:10px}
+.header-logo-img{height:40px;width:auto;display:block}
 
 /* Stats bar */
 .stats-bar {
@@ -144,7 +146,10 @@ tr:hover td { background: var(--bg3); }
 
   <!-- Header -->
   <div class="header">
-    <h1>⬡ WayChain Explorer</h1>
+    <div class="header-logo">
+      <img src="/assets/waylogo.png" alt="WayChain" class="header-logo-img">
+      <h1>⬡ WayChain Explorer</h1>
+    </div>
     <div class="nav">
       <span id="statusSpan"><span class="status-dot offline" id="statusDot"></span><span id="statusText">Connecting...</span></span>
       <a href="https://waychain.org">Dashboard</a>

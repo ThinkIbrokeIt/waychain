@@ -15,8 +15,9 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
 a{color:var(--copper);text-decoration:none}
 a:hover{color:var(--warm)}
 .nav{position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:var(--slate);border-bottom:1px solid var(--border);margin-bottom:24px}
-.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.1em;color:var(--warm);letter-spacing:1px}
-.nav-logo span{color:var(--copper)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-img{height:48px;width:auto;display:block}
+.nav-logo-text{font-family:'Playfair Display',Georgia,serif;font-size:1.4em;color:var(--warm);letter-spacing:1px}
 .nav-links{display:flex;gap:16px}
 .nav-links a{font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
 .nav-links a:hover{color:var(--warm)}
@@ -43,7 +44,10 @@ h1{font-size:2.2em;color:var(--warm);margin-bottom:4px}
 <body>
 
 <nav class="nav">
-  <div class="nav-logo"><span>⬡</span> WayChain DEX</div>
+  <div class="nav-logo">
+    <img src="/assets/waylogo.png" alt="WayChain" class="nav-logo-img">
+    <div class="nav-logo-text">WayChain DEX</div>
+  </div>
   <div class="nav-links">
     <a href="/">Home</a>
     <a href="/wallet">Wallet</a>
