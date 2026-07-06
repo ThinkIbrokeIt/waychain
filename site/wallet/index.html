@@ -48,9 +48,24 @@
       border: 1px solid var(--border);
     }
     header {
-      background: linear-gradient(135deg, var(--copper), var(--amber));
+      background: url('/assets/waychain-hero.jpg') center/cover no-repeat;
+      position: relative;
       padding: 24px;
       text-align: center;
+      color: var(--warm);
+    }
+    header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.4);
+    }
+    header > * {
+      position: relative;
+      z-index: 1;
     }
     header img {
       height: 48px;
