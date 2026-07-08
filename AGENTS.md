@@ -95,10 +95,12 @@ This is the correct split: consensus stays fast with SHA-256, contracts get EVM 
 |-----------|-------------|--------|
 | WayChain daemon | `localhost:9545` (VPS) | ✅ Running (height ~794k+) |
 | RPC (public) | `https://api.waychain.org` | ✅ Via Cloudflare tunnel (systemd) |
-| Frontend | `https://waychain.org` | ✅ Vercel v4.0.0 |
+| Frontend | `https://waychain.org` | ✅ Vercel v4.1.21 |
 | Tunnel | `cloudflared tunnel run waychain-rpc` | ✅ systemd, auto-restart |
 | Nginx | `localhost/rpc` → daemon | ✅ RPC proxy only |
-| GitHub | `ThinkIbrokeIt/waychain` | ✅ Monorepo |
+| GitHub (monorepo) | `ThinkIbrokeIt/waychain` | ✅ |
+| GitHub (frontend) | `ThinkIbrokeIt/waychain-site` | ✅ Single source of truth |
+| **Frontend repo** | **`waychain/site/` is a symlink → `waychain-site/`** | **⛔ Never edit waychain/site/ directly** |
 
 ---
 
