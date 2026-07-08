@@ -11,4 +11,4 @@ consensus/waychain-test
 
 # Environment
 .env
-.env.*
+.env.*site/
