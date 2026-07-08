@@ -56,6 +56,8 @@ waychain/
 | 1WAY stablecoin spec | `blueprint/06-stablecoins/1WAY_STABLECOIN_SPEC.md` |
 | Mineral rights spec | `blueprint/07-special-topics/NEW_CHAIN_MINERAL_RIGHTS_TOKENIZATION.md` |
 | Original vision | `blueprint/01-vision/NEW_CHAIN_VISION.md` |
+| **Client releases** | **`github.com/ThinkIbrokeIt/waychain-client` — binary releases for node operators** |
+| **Install client** | **`curl -sSL https://raw.githubusercontent.com/ThinkIbrokeIt/waychain-client/main/scripts/install.sh \| bash`** |
 
 ---
 
