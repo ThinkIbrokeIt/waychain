@@ -1,0 +1,259 @@
+// WayChain Explorer — Phase 2 frontend (clean client over the EXPL-8 API).
+//
+// Truth-first: every number comes from /api/*. Nothing is hardcoded.
+// If a field is missing from the API, it renders as "—" (never a fake).
+// API surface (see explorer/api/server.go):
+//   GET /api/stats                 -> {blocks, transactions, addresses, pending}
+//   GET /api/blocks?limit=&offset= -> [BlockRow]
+//   GET /api/block/:n              -> {block, transactions}
+//   GET /api/tx/:hash             -> {tx, logs}
+//   GET /api/address/:addr        -> {address, balance, txCount, txs}
+//   GET /api/search?q=            -> {type, result}
+//   GET /api/logs?address=&topic0= -> [LogRow]
+//
+// API_BASE is configurable for cross-origin deployment (static site on Vercel
+// calling the API service). Default: same-origin "/api". Override with
+// ?api=https://explorer-api.waychain.org or set window.EXPLORER_API_BASE.
+
+const params = new URLSearchParams(window.location.search);
+const API_BASE = window.EXPLORER_API_BASE
+  || params.get('api')
+  || '/api';
+
+const REFRESH_MS = 8000;
+const BLOCKS_TO_SHOW = 20;
+
+// ── helpers ──
+function $(id) { return document.getElementById(id); }
+
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+
+async function api(path) {
+  const res = await fetch(API_BASE + path, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+function hexToNum(h) {
+  if (h === null || h === undefined) return 0;
+  if (typeof h === 'number') return h;
+  const s = String(h).startsWith('0x') ? String(h).slice(2) : String(h);
+  if (!s) return 0;
+  const n = parseInt(s, 16);
+  return isNaN(n) ? 0 : n;
+}
+
+// Convert a hex value (in smallest unit) to a human WAY string.
+// WayChain native unit: 1 WAY = 1e18 (same as ETH-style 18-decimals per the
+// node's big.Int text encoding). We show fractional only when meaningful.
+function toWAY(hexVal) {
+  const s = String(hexVal || '0x0').startsWith('0x') ? String(hexVal).slice(2) : String(hexVal);
+  if (!s) return '0';
+  // value is hex of a big.Int; parse as BigInt for precision.
+  let bi;
+  try { bi = BigInt('0x' + s); } catch { return '0'; }
+  const WAY = 1000000000000000000n;
+  const whole = bi / WAY;
+  const frac = bi % WAY;
+  if (frac === 0n) return whole.toString();
+  // up to 6 decimal places
+  let f = frac.toString().padStart(18, '0').slice(0, 6).replace(/0+$/, '');
+  return f ? whole.toString() + '.' + f : whole.toString();
+}
+
+function ago(unixSec) {
+  const sec = Math.floor(Date.now() / 1000 - unixSec);
+  if (!isFinite(sec) || sec < 0) return '—';
+  if (sec < 5) return 'just now';
+  if (sec < 60) return sec + 's ago';
+  if (sec < 3600) return Math.floor(sec / 60) + 'm ago';
+  if (sec < 86400) return Math.floor(sec / 3600) + 'h ago';
+  return Math.floor(sec / 86400) + 'd ago';
+}
+
+function short(h, len = 10) {
+  if (!h) return '—';
+  const s = h.replace('0x', '');
+  if (s.length <= len * 2) return h;
+  return '0x' + s.slice(0, len) + '…' + s.slice(-len);
+}
+
+function log(msg, cls = 'info') {
+  const box = $('log');
+  const d = el('div', cls, `[${new Date().toLocaleTimeString()}] ${msg}`);
+  box.prepend(d);
+  while (box.children.length > 60) box.removeChild(box.lastChild);
+}
+
+function setStatus(online) {
+  $('statusDot').className = 'status-dot ' + (online ? 'online' : 'offline');
+  $('statusText').textContent = online ? 'Connected' : 'Offline';
+}
+
+// ── rendering ──
+function renderStats(s) {
+  $('statBlocks').textContent = (s.blocks ?? 0).toLocaleString();
+  $('statTxs').textContent = (s.transactions ?? 0).toLocaleString();
+  $('statAddrs').textContent = (s.addresses ?? 0).toLocaleString();
+  $('statPending').textContent = (s.pending ?? 0).toLocaleString();
+}
+
+function renderBlocks(blocks) {
+  const tb = $('blocksTable');
+  tb.innerHTML = '';
+  if (!blocks || blocks.length === 0) {
+    tb.innerHTML = '<tr><td colspan="5" style="color:var(--fg2);text-align:center">No blocks indexed yet</td></tr>';
+    return;
+  }
+  blocks.forEach(b => {
+    const tr = el('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => showBlock(b.Height);
+    tr.innerHTML = `
+      <td><a>${b.Height?.toLocaleString() ?? '—'}</a></td>
+      <td class="hash">${short(b.Hash, 10)}</td>
+      <td>${b.Proposer || '—'}</td>
+      <td>${b.TxCount ?? 0}</td>
+      <td style="color:var(--fg2)">${ago(hexToNum(b.Timestamp))}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function showBlock(n) {
+  api('/block/' + n).then(d => {
+    const b = d.block;
+    if (!b) { openDetail('Block #' + n, '<div class="red">Not found</div>'); return; }
+    const txs = d.transactions || [];
+    let txHtml = '<div style="color:var(--fg2);font-size:.75em">No transactions in this block</div>';
+    if (txs.length) {
+      txHtml = '<table><thead><tr><th>Hash</th><th>From</th><th>To</th><th>Value</th></tr></thead><tbody>';
+      txs.forEach(t => {
+        txHtml += `<tr onclick="showTx('${t.Hash}')" style="cursor:pointer">
+          <td class="hash clickable">${short(t.Hash, 10)}</td>
+          <td class="addr">${short(t.From, 8)}</td>
+          <td class="addr">${short(t.To, 8) || '—'}</td>
+          <td>${toWAY(t.Value)} WAY</td></tr>`;
+      });
+      txHtml += '</tbody></table>';
+    }
+    openDetail('⧫ Block #' + b.Height?.toLocaleString(), `
+      <div class="detail">
+        <div class="row"><div class="label">Height</div><div class="value">${b.Height?.toLocaleString()}</div></div>
+        <div class="row"><div class="label">Hash</div><div class="value hash-value">${b.Hash || '—'}</div></div>
+        <div class="row"><div class="label">Parent</div><div class="value hash-value">${b.Parent || '—'}</div></div>
+        <div class="row"><div class="label">Proposer</div><div class="value">${b.Proposer || '—'}</div></div>
+        <div class="row"><div class="label">Time</div><div class="value">${ago(hexToNum(b.Timestamp))}</div></div>
+        <div class="row"><div class="label">Txs</div><div class="value">${b.TxCount ?? 0}</div></div>
+      </div>
+      <h3 style="margin-top:15px">Transactions</h3>
+      ${txHtml}`);
+  }).catch(e => openDetail('Block #' + n, `<div class="red">${e.message}</div>`));
+}
+
+function showTx(hash) {
+  api('/tx/' + encodeURIComponent(hash)).then(d => {
+    const t = d.tx;
+    if (!t) { openDetail('Transaction', '<div class="red">Not found</div>'); return; }
+    const fee = (BigInt(hexToNum(t.GasUsed)) * BigInt(hexToNum(t.GasPrice))).toString();
+    let feeStr = '—';
+    try { feeStr = toWAY('0x' + BigInt(fee).toString(16)) + ' WAY'; } catch {}
+    const logs = d.logs || [];
+    let logHtml = '<div style="color:var(--fg2);font-size:.75em">No logs</div>';
+    if (logs.length) {
+      logHtml = '<table><thead><tr><th>Address</th><th>Topics</th><th>Data</th></tr></thead><tbody>';
+      logs.forEach(l => {
+        logHtml += `<tr><td class="addr">${short(l.Address, 8)}</td>
+          <td class="addr">${(l.Topics || []).map(x => short(x, 6)).join('<br>')}</td>
+          <td class="addr">${short(l.Data, 6)}</td></tr>`;
+      });
+      logHtml += '</tbody></table>';
+    }
+    openDetail('⧫ Transaction', `
+      <div class="detail">
+        <div class="row"><div class="label">Hash</div><div class="value hash-value">${t.Hash}</div></div>
+        <div class="row"><div class="label">From</div><div class="value hash-value">${t.From}</div></div>
+        <div class="row"><div class="label">To</div><div class="value hash-value">${t.To || '<span class="yellow">Contract Creation</span>'}</div></div>
+        <div class="row"><div class="label">Value</div><div class="value">${toWAY(t.Value)} WAY</div></div>
+        <div class="row"><div class="label">Nonce</div><div class="value">${t.Nonce ?? '—'}</div></div>
+        <div class="row"><div class="label">Gas Used</div><div class="value">${(t.GasUsed ?? 0).toLocaleString()}</div></div>
+        <div class="row"><div class="label">Gas Price</div><div class="value">${t.GasPrice ?? '—'}</div></div>
+        <div class="row"><div class="label">Fee (native)</div><div class="value">${feeStr}</div></div>
+        <div class="row"><div class="label">Fiat</div><div class="value">—</div></div>
+      </div>
+      <h3 style="margin-top:15px">Logs</h3>${logHtml}`);
+  }).catch(e => openDetail('Transaction', `<div class="red">${e.message}</div>`));
+}
+
+function showAddress(addr) {
+  api('/address/' + encodeURIComponent(addr)).then(d => {
+    const bal = d.balance || '0x0';
+    const balNum = hexToNum(bal);
+    const isZero = balNum === 0;
+    const rows = (d.txs || []).map(t => `
+      <tr onclick="showTx('${t.Hash}')" style="cursor:pointer">
+        <td class="hash clickable">${short(t.Hash, 10)}</td>
+        <td class="addr">${short(t.From, 8)}</td>
+        <td class="addr">${short(t.To, 8) || '—'}</td>
+        <td>${toWAY(t.Value)} WAY</td>
+        <td style="color:var(--fg2)">${ago(hexToNum(t.Timestamp))}</td>
+      </tr>`).join('');
+    const txHtml = rows || '<div style="color:var(--fg2);font-size:.75em">No transactions</div>';
+    openDetail('⧫ Account', `
+      <div class="detail">
+        <div class="row"><div class="label">Address</div><div class="value hash-value">${addr}</div></div>
+        <div class="row"><div class="label">Balance</div><div class="value">${toWAY(bal)} WAY${isZero ? ' <span style="color:var(--fg2)">(no activity / zero)</span>' : ''}</div></div>
+        <div class="row"><div class="label">Tx Count</div><div class="value">${d.txCount ?? 0}</div></div>
+      </div>
+      <h3 style="margin-top:15px">Transactions</h3>
+      <table><thead><tr><th>Hash</th><th>From</th><th>To</th><th>Value</th><th>Time</th></tr></thead><tbody>${txHtml}</tbody></table>`);
+  }).catch(e => openDetail('Account', `<div class="red">${e.message}</div>`));
+}
+
+function openDetail(title, html) {
+  $('detailView').style.display = 'block';
+  $('detailTitle').textContent = title;
+  $('detailContent').innerHTML = html;
+  window.scrollTo({ top: $('detailView').offsetTop - 20, behavior: 'smooth' });
+}
+
+// ── search ──
+function doSearch() {
+  const q = $('searchInput').value.trim();
+  if (!q) return;
+  api('/search?q=' + encodeURIComponent(q)).then(d => {
+    if (d.type === 'block') return showBlock(d.result.Height);
+    if (d.type === 'tx') return showTx(d.result.Hash);
+    if (d.type === 'address') return showAddress(q);
+    openDetail('Search', `<div class="red">No match for "${q}"</div>`);
+  }).catch(e => openDetail('Search', `<div class="red">${e.message}</div>`));
+}
+
+// ── poll loop ──
+async function refresh() {
+  try {
+    const [stats, blocks] = await Promise.all([
+      api('/stats'),
+      api('/blocks?limit=' + BLOCKS_TO_SHOW + '&offset=0'),
+    ]);
+    renderStats(stats);
+    renderBlocks(blocks);
+    setStatus(true);
+  } catch (e) {
+    setStatus(false);
+    log('refresh failed: ' + e.message, 'err');
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  $('searchBtn').onclick = doSearch;
+  $('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  $('clearBtn').onclick = () => { $('searchInput').value = ''; $('detailView').style.display = 'none'; };
+  log('Explorer initialized → ' + API_BASE);
+  refresh();
+  setInterval(refresh, REFRESH_MS);
+});
