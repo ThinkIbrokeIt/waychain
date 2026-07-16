@@ -48,6 +48,16 @@
       if (!r || typeof r !== 'object') throw new Error('no bridgeStats');
       return { committed: hexToNum(r.committed), withdrawn: hexToNum(r.withdrawn) };
     },
+    // Quest / TaskRegistry live reads (0x23). Use way_* RPCs (public RPC blocks
+    // eth_call to precompiles). Keeps web + mobile in sync (no silent drift).
+    questStatus: async (taskIdHex, claimantHex) => {
+      const r = await call('way_taskStatus', [taskIdHex, claimantHex]);
+      return typeof r === 'string' ? r : 'none';
+    },
+    questPoolRemaining: async () => {
+      const r = await call('way_questPoolRemaining', []);
+      return hexToNum(r);
+    },
 
     // ── Per-precompile call layer (issue #11) ──
     // READ for all 27 precompiles via eth_call + the shared registry.

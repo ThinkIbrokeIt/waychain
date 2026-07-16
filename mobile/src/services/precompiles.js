@@ -272,6 +272,10 @@ export const PRECOMPILES = {
       { name: 'taskClaim', sel: 'a1b2c3d4', sig: 'taskClaim(bytes32)', kind: 'write' },
       { name: 'taskVerify', sel: 'b2c3d4e5', sig: 'taskVerify(bytes32,address)', kind: 'write' },
       { name: 'taskStatus', sel: 'c3d4e5f6', sig: 'taskStatus(bytes32)', kind: 'read' },
+      { name: 'taskStatusOf', sel: 'b5c0a0cf', sig: 'taskStatusOf(bytes32,address)', kind: 'read' },
+      { name: 'getTaskReward', sel: 'e32481a4', sig: 'getTaskReward(bytes32)', kind: 'read' },
+      { name: 'questPoolRemaining', sel: 'df95446f', sig: 'questPoolRemaining()', kind: 'read' },
+      { name: 'questFund', sel: 'cea1b2c3', sig: 'questFund(uint256)', kind: 'write' },
     ],
   },
   '0x24': {

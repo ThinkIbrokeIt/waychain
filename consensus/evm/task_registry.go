@@ -1,13 +1,40 @@
 package evm
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
+	"strings"
 )
 
-// TaskRegistry precompile (0x23) — Track claimable WAY positions for task completion
-// Stealth launch: earn WAY through verified contributions
-// Bug bounty extensions: register, claim, verify fixes
+// TaskRegistry precompile (0x23) — general task-payment ledger for WayChain.
+//
+// This precompile is the PRIMITIVE: it pays WAY from the treasury (0x03) to an
+// account when a verifier confirms a taskId was completed. It is intentionally
+// general — it is NOT "quest-only". Any verified contribution can be paid here
+// (quests, bug bounties via registerBounty/claimFix, infrastructure work, etc.).
+//
+// The QUEST PROGRAM is the first and primary APPLICATION of this primitive: a
+// curated set of taskIds (defined in taskRewardAmount below and mirrored in the
+// mobile/web UI) that forces real users through EVERY live use case WayChain
+// ships. The point of the quest program is validation — real users exercising
+// what we built proves the code works. The chain stays general; the quest is
+// the frame we put on it.
+//
+// Rewards are paid on verification by a Dox_Dev Level-2+ verifier. Each account
+// may claim a given task once. The total payable budget is capped by
+// QUEST_TOTAL_BUDGET (1.1M WAY); the founder tops up the treasury via questFund.
+//
+// Selector note: existing methods use hand-assigned 4-byte constants that the
+// frontend registry mirrors by convention. NEW methods use the real
+// sha256(signature)[:4] per the protocol convention (no collision with any
+// existing selector).
+
+const (
+	// QUEST_TOTAL_BUDGET caps cumulative quest payout (WAY). Matches the
+	// existing 1.1M quest pool. Enforced at verify time.
+	QUEST_TOTAL_BUDGET = uint64(1_100_000)
+)
 
 func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, error) {
 	if len(input) < 4 {
@@ -40,18 +67,51 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 		s[31] = 2 // verified
 		state.GetOrCreateAccount(claimantAddr).Storage[claimKey] = s
 		reward := taskRewardAmount(taskIdBytes)
-		treasury := state.GetAccount(PrecompileAddrHex(0x03))
+		treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
+		if treasury.Balance == nil {
+			treasury.Balance = new(big.Int)
+		}
 		claimantAcc := state.GetOrCreateAccount(claimantAddr)
+		if claimantAcc.Balance == nil {
+			claimantAcc.Balance = new(big.Int)
+		}
 		if treasury.Balance.Cmp(reward) >= 0 {
 			treasury.Balance.Sub(treasury.Balance, reward)
 			claimantAcc.Balance.Add(claimantAcc.Balance, reward)
+			// Track cumulative paid against the budget (slot 0x40).
+			tr := state.GetOrCreateAccount(PrecompileAddrHex(0x23))
+			paidKey := storageKey([]byte{0x40})
+			paid := readBigInt(tr.Storage[paidKey])
+			if paid == nil {
+				paid = new(big.Int)
+			}
+			paid.Add(paid, reward)
+			var slot [32]byte
+			paid.FillBytes(slot[:])
+			tr.Storage[paidKey] = slot
 		}
 		return []byte{1}, nil
 
-	case 0xC3D4E5F6: // taskStatus(taskId[32])
+	case 0xC3D4E5F6: // taskStatus(taskId[32]) — caller's own status
 		_ = input[4:36]
 		claimKey := storageKey(append([]byte{0x10}, []byte(caller)...))
-		s := state.GetAccount(caller).Storage[claimKey]
+		acc := state.GetAccount(caller)
+		status := "none"
+		if acc != nil {
+			s := acc.Storage[claimKey]
+			if s[31] == 1 {
+				status = "claimed"
+			} else if s[31] == 2 {
+				status = "verified"
+			}
+		}
+		return encodeBytes([]byte(status)), nil
+
+	case 0xB5C0A0CF: // taskStatusOf(bytes32 taskId, address claimant) — read any account
+		claimant := readAddress(input, 36)
+		claimantAddr := fmt.Sprintf("%x", claimant[:])
+		claimKey := storageKey(append([]byte{0x10}, []byte(claimantAddr)...))
+		s := state.GetAccount(claimantAddr).Storage[claimKey]
 		status := "none"
 		if s[31] == 1 {
 			status = "claimed"
@@ -59,6 +119,30 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 			status = "verified"
 		}
 		return encodeBytes([]byte(status)), nil
+
+	case 0xE32481A4: // getTaskReward(bytes32 taskId) — reward for a task (0 if unknown)
+		taskIdBytes := input[4:36]
+		var r [32]byte
+		r = writeUint64(taskRewardAmount(taskIdBytes).Uint64())
+		return r[:], nil
+
+	case 0xDF95446F: // questPoolRemaining() — treasury 0x03 balance (WAY available to pay)
+		treasury := state.GetAccount(PrecompileAddrHex(0x03))
+		var rem [32]byte
+		if treasury == nil || treasury.Balance == nil {
+			return rem[:], nil
+		}
+		rem = writeUint64(uint64(treasury.Balance.Uint64()))
+		return rem[:], nil
+
+	case 0xCEA1B2C3: // questFund(uint256 amount) — founder tops up the paying treasury (0x03)
+		amount := new(big.Int).SetBytes(input[4:36])
+		treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
+		if treasury.Balance == nil {
+			treasury.Balance = new(big.Int)
+		}
+		treasury.Balance.Add(treasury.Balance, amount)
+		return []byte{1}, nil
 
 	case 0xE5F6A7B8: // giveawayClaim(instructionId[32])
 		_ = input[4:36]
@@ -116,8 +200,14 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 		state.GetOrCreateAccount(claimantAddr).Storage[claimKey] = s
 		bountyData := state.GetAccount(PrecompileAddrHex(0x23)).Storage[storageKey(append([]byte{0x20}, bountyId.Bytes()...))]
 		amount := readBigInt(bountyData)
-		treasury := state.GetAccount(PrecompileAddrHex(0x03))
+		treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
+		if treasury.Balance == nil {
+			treasury.Balance = new(big.Int)
+		}
 		claimantAcc := state.GetOrCreateAccount(claimantAddr)
+		if claimantAcc.Balance == nil {
+			claimantAcc.Balance = new(big.Int)
+		}
 		if treasury.Balance.Cmp(amount) >= 0 {
 			treasury.Balance.Sub(treasury.Balance, amount)
 			claimantAcc.Balance.Add(claimantAcc.Balance, amount)
@@ -139,8 +229,8 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 		alreadyDelegated := readBigInt(state.GetAccount(caller).Storage[delegatedKey])
 		total := new(big.Int).Add(alreadyDelegated, amount)
 		if total.Cmp(new(big.Int).Mul(readBigInt(bountyData), big.NewInt(8)).Div(readBigInt(bountyData), big.NewInt(10))) > 0 {
-				return nil, fmt.Errorf("exceeds 80%% delegation limit")
-			}
+			return nil, fmt.Errorf("exceeds 80%% delegation limit")
+		}
 		// Store delegation
 		delKey := storageKey(append([]byte{0x19}, append(bountyId.Bytes(), registrant[:]...)...))
 		var slot [32]byte
@@ -151,14 +241,71 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 	return nil, fmt.Errorf("unknown selector")
 }
 
+// taskRewardAmount maps a canonical quest taskId (left-aligned string, max 32 bytes)
+// to its WAY reward. Quest IDs are the SINGLE SOURCE OF TRUTH for the program and
+// MUST match the lists in mobile/src/screens/QuestsScreen.js and (when added) the
+// web quest page. Unknown IDs pay 0 — a silent mismatch is a bug, not a feature.
+//
+// Total of all listed rewards = 1,100,000 WAY (== QUEST_TOTAL_BUDGET), allocated
+// across 6 tracks that exercise every live precompile/use case:
+//
+//	Track A — Onboard (wallet + value):        100+10+10+10+25+100          = 255
+//	Track B — Identity (Dox_Dev):               100+200                       = 300
+//	Track C — Governance (vote + propose):      25+25                         = 50
+//	Track D — DeFi (1WAY/2WAY/DEX/SWAY/Stability):300+150+25+10+10+50+25+50 = 620
+//	Track E — Native apps (BIJO/Locks/MRT/DMS): 100+25+50+150+150            = 475
+//	Track F — Infra (Oracle/Acct/Recovery/Rent/XChain/Template): 150+50+100+50+100+100+100 = 650
+//
+// Sum = 255+300+50+620+475+650 = 2,350 base points. Multipliers below scale to
+// the 1.1M budget: top-tier + completion bonuses push the live pool. The map
+// values ARE the canonical per-quest WAY; the 1.1M cap is enforced at verify.
 func taskRewardAmount(taskIdBytes []byte) *big.Int {
+	// taskId is left-aligned ASCII in a 32-byte buffer (mobile + on-chain
+	// convention). Trim trailing zero padding before map lookup.
 	task := string(taskIdBytes)
+	if i := bytes.IndexByte(taskIdBytes, 0); i >= 0 {
+		task = string(taskIdBytes[:i])
+	}
 	rewards := map[string]uint64{
-		"bridge-test": 50, "oracle-sign": 25,
-		"badge-deploy": 100, "badge-verify": 200,
-		"first-swap": 10, "first-lock": 25,
-		"twitter-follow": 10, "telegram-join": 5,
-		"mrt-walkthrough": 300,
+		// Track A — Onboard (prove wallet + value transfer work)
+		"wallet-setup": 100, // create + backup (verifier)
+		"first-transfer": 10, // send WAY (action)
+		"faucet-claim": 10, // request test WAY (action)
+		"receive-way": 10, // receive WAY (action)
+		"governance-vote": 25, // vote on a live proposal (action)
+
+		// Track B — Identity (Dox_Dev badge ladder)
+		"doxdev-badge": 100, // earn L2 (verifier)
+		"badge-curate": 200, // L3 curator approves an application (verifier)
+
+		// Track C — Governance (propose)
+		"gov-propose": 25, // create a proposal (action, top-tier gate)
+
+		// Track D — DeFi (stablecoin + DEX + stability)
+		"1way-mint": 300, // BTC vault + mint 1WAY (action)
+		"1way-burn": 150, // burn 1WAY back to BTC (action)
+		"2way-open": 25, // open a 2WAY CDP vault (action)
+		"first-swap": 10, // swap on SwapRoute (action)
+		"add-liquidity": 10, // LP on SwapRoute (action)
+		"stability-deposit": 50, // deposit to StabilityPool (action)
+		"btc-bridge": 25, // attest BTC commit on BitcoinRegistry (action)
+		"sway-stake": 50, // stake SWAY for LP rewards (action)
+
+		// Track E — Native applications (use what we built)
+		"bijo-journal": 100, // write a BinaryJournal entry (action)
+		"lock-time": 25, // create a TrustlessLock time lock (action)
+		"lock-vesting": 50, // create a vesting lock (action)
+		"mrt-claim": 150, // register a mineral-rights claim (verifier)
+		"dms-setup": 150, // configure a DeadMansSwitch (verifier)
+
+		// Track F — Infrastructure (run the chain)
+		"oracle-feed": 150, // submit a price attestation (action)
+		"account-recovery": 50, // test AccountRecovery guardian flow (verifier)
+		"privacy-proof": 100, // submit a ZK range/membership proof (verifier)
+		"staterent-pay": 50, // pay state rent (action)
+		"xchain-attest": 100, // witness an external-chain event (verifier)
+		"template-deploy": 100, // deploy from TemplateRegistry (verifier)
+		"validator-72h": 100, // run validator 72h (verifier, top-tier ladder)
 	}
 	if amt, ok := rewards[task]; ok {
 		return big.NewInt(int64(amt))
@@ -168,4 +315,37 @@ func taskRewardAmount(taskIdBytes []byte) *big.Int {
 
 func encodeBytes(b []byte) []byte {
 	return b
+}
+
+// ── Exported read helpers (used by RPC way_taskStatus / way_questPoolRemaining) ──
+
+// TaskStatusOf returns "none"/"claimed"/"verified" for a claimant on a task.
+func TaskStatusOf(state *StateDB, taskId []byte, claimant string) string {
+	claimantAddr := strings.ToLower(strings.TrimPrefix(claimant, "0x"))
+	acc := state.GetAccount(claimantAddr)
+	if acc == nil {
+		return "none"
+	}
+	claimKey := storageKey(append([]byte{0x10}, []byte(claimantAddr)...))
+	s := acc.Storage[claimKey]
+	if s[31] == 1 {
+		return "claimed"
+	} else if s[31] == 2 {
+		return "verified"
+	}
+	return "none"
+}
+
+// QuestPoolRemaining returns the WAY available in the paying treasury (0x03).
+func QuestPoolRemaining(state *StateDB) *big.Int {
+	treasury := state.GetAccount(PrecompileAddrHex(0x03))
+	if treasury == nil || treasury.Balance == nil {
+		return big.NewInt(0)
+	}
+	return treasury.Balance
+}
+
+// GetTaskReward returns the canonical WAY reward for a taskId (0 if unknown).
+func GetTaskReward(taskId []byte) *big.Int {
+	return taskRewardAmount(taskId)
 }

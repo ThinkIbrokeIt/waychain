@@ -25,15 +25,45 @@ const DISCORD_URL = 'https://discord.gg/waychain'; // TODO: set real invite
 //        'verifier' = Dox_Dev L2+ must confirm (Discord) before payout.
 // route: optional screen to open for the action (instead of generic claim).
 const QUESTS = [
-  { id: 'wallet-setup',    title: 'Wallet Setup + Backup', reward: 100, proof: 'verifier', desc: 'Create a wallet and prove you can restore from your recovery phrase.' },
-  { id: 'first-transfer',  title: 'First WAY Transfer',    reward: 10,  proof: 'action',   desc: 'Send WAY to another address. Proves value transfer + gas.' },
-  { id: 'governance-vote', title: 'Governance Vote',       reward: 25,  proof: 'action',   desc: 'Vote on a live proposal. Proves governance works.' },
-  { id: 'gov-propose',     title: 'Launch a Proposal',     reward: 25,  proof: 'action',   desc: 'Create a governance proposal for an improvement. (Top-tier gate.)' },
-  { id: 'quest-feedback',  title: 'Quest Feedback',        reward: 50,  proof: 'verifier', desc: 'Write detailed feedback on any use case you tested.' },
-  { id: 'doxdev-badge',    title: 'Earn Dox_Dev Badge (L2)', reward: 100, proof: 'verifier', desc: 'Get verified Dox_Dev Level 2 — unlocks vaults + oracles.' },
-  { id: '1way-mint',       title: 'Mint 1WAY',             reward: 300, proof: 'action', route: 'Stablecoin', desc: 'Create a vault, deposit BTC, mint 1WAY. Gets value onto WayChain.' },
-  { id: 'oracle-setup',    title: 'Oracle Setup',          reward: 150, proof: 'action',   desc: 'Apply for oracle badge + submit a price attestation.' },
-  { id: 'validator-setup', title: 'Validator Setup (72h)', reward: 500, proof: 'verifier', desc: 'Run a validator with 0 downtime for 72h. Top-tier ladder step.' },
+  // Track A — Onboard (prove wallet + value transfer)
+  { id: 'wallet-setup',    title: 'Wallet Setup + Backup',     reward: 100, proof: 'verifier', desc: 'Create a wallet and prove you can restore from your recovery phrase.' },
+  { id: 'first-transfer',  title: 'First WAY Transfer',         reward: 10,  proof: 'action',   desc: 'Send WAY to another address. Proves value transfer + gas.' },
+  { id: 'faucet-claim',    title: 'Claim Test WAY (Faucet)',   reward: 10,  proof: 'action',   desc: 'Request 10 WAY from the faucet. Proves onboarding works.' },
+  { id: 'receive-way',     title: 'Receive WAY',                reward: 10,  proof: 'action',   desc: 'Receive WAY into your wallet. Proves inbound value.' },
+  { id: 'governance-vote', title: 'Governance Vote',            reward: 25,  proof: 'action',   route: 'Governance', desc: 'Vote on a live proposal. Proves governance works.' },
+
+  // Track B — Identity (Dox_Dev badge ladder)
+  { id: 'doxdev-badge',    title: 'Earn Dox_Dev Badge (L2)',    reward: 100, proof: 'verifier', route: 'Identity', desc: 'Get verified Dox_Dev Level 2 — unlocks vaults + oracles.' },
+  { id: 'badge-curate',    title: 'Curate a Dox_Dev Badge (L3)', reward: 200, proof: 'verifier', route: 'Identity', desc: 'Reach L3 and approve a badge application. Proves curation.' },
+
+  // Track C — Governance (propose)
+  { id: 'gov-propose',     title: 'Launch a Proposal',          reward: 25,  proof: 'action',   route: 'Governance', desc: 'Create a governance proposal for an improvement. (Top-tier gate.)' },
+
+  // Track D — DeFi (stablecoin + DEX + stability)
+  { id: '1way-mint',       title: 'Mint 1WAY (BTC Vault)',      reward: 300, proof: 'action',   route: 'Stablecoin', desc: 'Create a vault, deposit BTC, mint 1WAY. Gets value onto WayChain.' },
+  { id: '1way-burn',       title: 'Burn 1WAY → BTC',            reward: 150, proof: 'action',   route: 'Stablecoin', desc: 'Burn 1WAY back to BTC. Proves the peg unwinds.' },
+  { id: '2way-open',       title: 'Open a 2WAY Vault',          reward: 25,  proof: 'action',   desc: 'Open a CDP vault on the two-way peg. Proves DeFi lending.' },
+  { id: 'first-swap',      title: 'First DEX Swap',             reward: 10,  proof: 'action',   route: 'DEX', desc: 'Swap tokens on SwapRoute. Proves the DEX.' },
+  { id: 'add-liquidity',   title: 'Provide Liquidity',          reward: 10,  proof: 'action',   route: 'DEX', desc: 'LP on SwapRoute. Proves AMM liquidity.' },
+  { id: 'stability-deposit', title: 'Stability Pool Deposit',   reward: 50,  proof: 'action',   desc: 'Deposit to the StabilityPool. Proves stability mechanics.' },
+  { id: 'btc-bridge',      title: 'BTC Bridge Attest',          reward: 25,  proof: 'action',   desc: 'Attest a BTC commit on BitcoinRegistry. Proves the bridge.' },
+  { id: 'sway-stake',      title: 'Stake SWAY',                 reward: 50,  proof: 'action',   desc: 'Stake SWAY for LP rewards. Proves the incentive token.' },
+
+  // Track E — Native applications (use what we built)
+  { id: 'bijo-journal',    title: 'Write a BinaryJournal',      reward: 100, proof: 'action',   route: 'EnergyTide', desc: 'Write an entry to the BIJO journal. Proves the journal.' },
+  { id: 'lock-time',       title: 'Create a Time Lock',         reward: 25,  proof: 'action',   route: 'Locks', desc: 'Lock value on a timelock via TrustlessLock. Proves anti-rug.' },
+  { id: 'lock-vesting',    title: 'Create a Vesting Lock',      reward: 50,  proof: 'action',   route: 'Locks', desc: 'Vesting lock via TrustlessLock. Proves vesting.' },
+  { id: 'mrt-claim',       title: 'Register Mineral Rights',    reward: 150, proof: 'verifier', desc: 'Register an MRT claim. Proves mineral-rights tokenization.' },
+  { id: 'dms-setup',       title: 'Set Up DeadMansSwitch',      reward: 150, proof: 'verifier', desc: 'Configure an inactivity switch. Proves inherited-asset logic.' },
+
+  // Track F — Infrastructure (run the chain)
+  { id: 'oracle-feed',     title: 'Submit Oracle Feed',         reward: 150, proof: 'action',   desc: 'Apply for oracle badge + submit a price attestation.' },
+  { id: 'account-recovery', title: 'Test Account Recovery',     reward: 50,  proof: 'verifier', desc: 'Exercise the guardian recovery flow. Proves AccountManager.' },
+  { id: 'privacy-proof',   title: 'Submit ZK Proof',            reward: 100, proof: 'verifier', desc: 'Submit a privacy range/membership proof. Proves ZK precompile.' },
+  { id: 'staterent-pay',   title: 'Pay State Rent',             reward: 50,  proof: 'action',   desc: 'Pay state rent on an account. Proves the rent model.' },
+  { id: 'xchain-attest',   title: 'Witness Cross-Chain Event',  reward: 100, proof: 'verifier', desc: 'Witness an external-chain event. Proves CrossChainAttestation.' },
+  { id: 'template-deploy', title: 'Deploy from Template',       reward: 100, proof: 'verifier', desc: 'Deploy a contract from TemplateRegistry. Proves templates.' },
+  { id: 'validator-72h',   title: 'Validator 72h Uptime',       reward: 100, proof: 'verifier', desc: 'Run a validator with 0 downtime for 72h. Top-tier ladder step.' },
 ];
 
 // Encode a taskId string as a 32-byte (64-hex) word, LEFT-padded — matches Go:
@@ -53,6 +83,7 @@ export default function QuestsScreen({ navigation }) {
   const nav = useNavigation();
   const [account, setAccount] = useState(null);
   const [statuses, setStatuses] = useState({});
+  const [pool, setPool] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,20 +93,24 @@ export default function QuestsScreen({ navigation }) {
   }, []);
 
   const refresh = useCallback(async () => {
+    if (!account) { setLoading(false); return; }
     setLoading(true);
+    const claimant = '0x' + account.publicKey.replace(/^0x/, '');
     const next = {};
-    for (const q of QUESTS) {
+    let total = 0;
+    await Promise.all(QUESTS.map(async (q) => {
       try {
-        const raw = await waychainRPC.precompileCall('0x23', 'taskStatus', encodeTaskId(q.id));
-        const s = typeof raw === 'string' ? raw.replace(/^0x/, '') : '';
+        const s = await waychainRPC.questStatus(encodeTaskId(q.id), claimant);
         next[q.id] = s === 'claimed' ? 'claimed' : s === 'verified' ? 'verified' : 'none';
       } catch {
         next[q.id] = 'none';
       }
-    }
+    }));
+    try { total = await waychainRPC.questPoolRemaining(); } catch { total = null; }
     setStatuses(next);
+    setPool(total);
     setLoading(false);
-  }, []);
+  }, [account]);
 
   useEffect(() => { loadAccount(); }, [loadAccount]);
   useEffect(() => { if (account) refresh(); else setLoading(false); }, [account, refresh]);
@@ -129,6 +164,9 @@ export default function QuestsScreen({ navigation }) {
         <Text style={styles.heroNote}>
           Test WayChain flows, give dev feedback, earn WAY from the airdrop pool. Verified by Dox_Dev L2+.
         </Text>
+        <Text style={styles.heroPool}>
+          {pool == null ? 'Pool: —' : `Reward pool: ${pool.toLocaleString()} WAY remaining`}
+        </Text>
       </View>
 
       {!account ? (
@@ -180,6 +218,7 @@ const styles = StyleSheet.create({
   heroVal: { fontFamily: FONTS.display, fontSize: 34, color: COLORS.copper, marginTop: 6 },
   heroSub: { fontFamily: FONTS.body, fontSize: 16, color: COLORS.muted },
   heroNote: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 18 },
+  heroPool: { fontFamily: FONTS.medium, fontSize: 12, color: COLORS.amber, marginTop: 8, textAlign: 'center' },
   warnBox: { backgroundColor: 'rgba(229,57,53,0.10)', borderRadius: 12, padding: 16, marginTop: 16, borderWidth: 1, borderColor: COLORS.red, alignItems: 'center' },
   warnText: { fontFamily: FONTS.body, fontSize: 13, color: '#FF8A80', textAlign: 'center', marginBottom: 12 },
   warnBtn: { marginTop: 4 },
