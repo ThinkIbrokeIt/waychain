@@ -233,6 +233,56 @@ function doSearch() {
   }).catch(e => openDetail('Search', `<div class="red">${e.message}</div>`));
 }
 
+// ── logs browser (Phase 3) ──
+let logPage = 0;
+const LOGS_PER_PAGE = 25;
+
+function loadLogs() {
+  const addr = $('logAddr').value.trim();
+  const topic0 = $('logTopic').value.trim();
+  const from = $('logFrom').value.trim();
+  const to = $('logTo').value.trim();
+  const q = new URLSearchParams();
+  if (addr) q.set('address', addr);
+  if (topic0) q.set('topic0', topic0);
+  if (from) q.set('fromBlock', from);
+  if (to) q.set('toBlock', to);
+  q.set('limit', String(LOGS_PER_PAGE + 1)); // fetch one extra to detect "more"
+  q.set('offset', String(logPage * LOGS_PER_PAGE));
+  api('/logs?' + q.toString()).then(logs => {
+    const tb = $('logsTable');
+    tb.innerHTML = '';
+    if (!logs || logs.length === 0) {
+      tb.innerHTML = '<tr><td colspan="5" style="color:var(--fg2);text-align:center">No logs match this filter</td></tr>';
+      $('logMore').style.display = 'none';
+      $('logPrev').disabled = logPage === 0;
+      return;
+    }
+    const hasMore = logs.length > LOGS_PER_PAGE;
+    const rows = hasMore ? logs.slice(0, LOGS_PER_PAGE) : logs;
+    rows.forEach(l => {
+      const tr = el('tr');
+      tr.innerHTML = `
+        <td class="addr">${short(l.Address, 8)}</td>
+        <td class="addr">${(l.Topics || []).map(x => short(x, 6)).join('<br>')}</td>
+        <td class="addr">${short(l.Data, 6)}</td>
+        <td><a onclick="showBlock(${l.Block})" style="cursor:pointer">${l.Block?.toLocaleString()}</a></td>
+        <td style="color:var(--fg2)">${short(l.TxHash, 8)}</td>`;
+      tb.appendChild(tr);
+    });
+    $('logPrev').disabled = logPage === 0;
+    $('logMore').style.display = hasMore ? 'inline-block' : 'none';
+    $('logPageLabel').textContent = 'Page ' + (logPage + 1);
+  }).catch(e => {
+    $('logsTable').innerHTML = `<tr><td colspan="5" class="red">${e.message}</td></tr>`;
+  });
+}
+
+window.loadLogs = loadLogs;
+window.logPrev = () => { if (logPage > 0) { logPage--; loadLogs(); } };
+window.logNext = () => { logPage++; loadLogs(); };
+window.logReset = () => { logPage = 0; loadLogs(); };
+
 // ── poll loop ──
 async function refresh() {
   try {
@@ -253,7 +303,11 @@ window.addEventListener('DOMContentLoaded', () => {
   $('searchBtn').onclick = doSearch;
   $('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
   $('clearBtn').onclick = () => { $('searchInput').value = ''; $('detailView').style.display = 'none'; };
+  $('logSearchBtn').onclick = () => { logPage = 0; loadLogs(); };
+  $('logAddr').addEventListener('keydown', e => { if (e.key === 'Enter') { logPage = 0; loadLogs(); } });
+  $('logTopic').addEventListener('keydown', e => { if (e.key === 'Enter') { logPage = 0; loadLogs(); } });
   log('Explorer initialized → ' + API_BASE);
   refresh();
+  loadLogs();
   setInterval(refresh, REFRESH_MS);
 });
