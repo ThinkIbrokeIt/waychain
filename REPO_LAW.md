@@ -1,8 +1,18 @@
-# WAYCHAIN REPO LAW
-**Status:** BINDING · **Authority:** Founder directive (stated ≥3 times) · **Effective:** 2026-07-15  
-**Tracked by:** ThinkIbrokeIt/waychain#1
+# ⚠ STATUS NOTICE — THIS COMBINE IS PROVISIONAL, NOT YET LAW
 
-This is not guidance. This is **law**. Agents and humans who violate it create the drift that has destroyed progress.
+Reconciled: 2026-07-15 (post-Grok audit). Read before obeying anything below.
+
+- The combine branch `feat/one-tree-repo-law` (commit 157bf0d, 238 files) is **local-only — never pushed**. `git ls-remote` shows origin still has only `master@b46ebd7`.
+- Therefore this file is **NOT yet operative law**. The satellites `waychain-consensus` / `waychain-site` / `waychain-mobile` remain the working canonical (per their own AGENTS.md + issue #23).
+- **Unresolved contradiction:** Article II below calls the satellites "READ-ONLY MIRROR/ARCHIVE", but `waychain-consensus/AGENTS.md` calls the monorepo copy "NOT SoT". Two voices = silent drift. The founder must pick ONE authority before any agent obeys this as law.
+- **Until then:** do NOT edit satellites as "illegal"; do NOT treat the monorepo as "the single source of truth". Work in the satellites (canonical). Use `protocol-manifest.json` + `audit-consistency.sh` as the machine SoT guard. Treat this monorepo as an UNFINISHED draft.
+
+---
+
+# WAYCHAIN REPO LAW (DRAFT — pending push + founder authority decision)
+**Status:** PROVISIONAL · **Tracked by:** ThinkIbrokeIt/waychain#1
+
+This is not yet operative law. It becomes law only after the combine branch is pushed, merged, and the Article-II contradiction with `waychain-consensus/AGENTS.md` is resolved by the founder.
 
 ---
 

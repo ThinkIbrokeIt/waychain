@@ -4,7 +4,7 @@
 >
 > Working tree: `/home/wink/projects/waychain` · Remote: `ThinkIbrokeIt/waychain`
 >
-> **Do not edit** `waychain-consensus` / `waychain-site` / `waychain-mobile` / sibling clones for product work. Those are READ-ONLY jail mirrors after the combine (issue #1).
+> **PROVISIONAL — not yet law.** This monorepo is an UNPUSHED combine draft (branch `feat/one-tree-repo-law`, local-only). The satellites `waychain-consensus` / `waychain-site` / `waychain-mobile` are still the working canonical. Do NOT treat them as read-only mirrors yet — see the STATUS notice at the top of `REPO_LAW.md`. Work in the satellites until the combine is pushed AND a founder authority decision is recorded.
 
 ---
 
