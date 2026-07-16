@@ -4,7 +4,7 @@
 >
 > Working tree: `/home/wink/projects/waychain` · Remote: `ThinkIbrokeIt/waychain`
 >
-> **PROVISIONAL — not yet law.** This monorepo is an UNPUSHED combine draft (branch `feat/one-tree-repo-law`, local-only). The satellites `waychain-consensus` / `waychain-site` / `waychain-mobile` are still the working canonical. Do NOT treat them as read-only mirrors yet — see the STATUS notice at the top of `REPO_LAW.md`. Work in the satellites until the combine is pushed AND a founder authority decision is recorded.
+> **This monorepo IS the single source of truth** (founder decision 2026-07-15, branch `feat/one-tree-repo-law`). The former satellites are archived read-only mirrors — do not edit them. For active product work, edit only under this tree.
 
 ---
 
