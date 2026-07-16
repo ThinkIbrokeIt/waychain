@@ -48,6 +48,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/search", s.handleSearch)
 	mux.HandleFunc("/api/stats", s.handleStats)
 	mux.HandleFunc("/api/logs", s.handleLogs)
+	mux.HandleFunc("/api/precompiles", s.handlePrecompiles)
+	mux.HandleFunc("/api/precompile/", s.handlePrecompile)
 	mux.HandleFunc("/api/ws", s.handleWS)
 	return mux
 }
