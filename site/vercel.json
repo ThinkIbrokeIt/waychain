@@ -13,6 +13,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://api.waychain.org/api/:path*" },
     { "source": "/version.json", "destination": "/version.json" },
     { "source": "/whitepaper", "destination": "/whitepaper/index.html" },
     { "source": "/whitepaper/", "destination": "/whitepaper/index.html" },
