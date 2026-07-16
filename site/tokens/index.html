@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WayChain · Token Precompiles</title>
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    body{font-family:Inter,system-ui,sans-serif;background:var(--parchment,#FFF8F0);color:#2A2A2A;margin:0}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+    h1{font-size:28px;color:#B87333;margin-bottom:4px}
+    .sub{color:#666;margin-bottom:24px}
+    .card{background:#fff;border:1px solid #e7ddd0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(42,42,42,.05)}
+    .tok{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+    .tok h2{font-size:19px;margin:0;color:#2A2A2A}
+    .addr{font-family:monospace;font-size:12px;color:#999}
+    .row{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
+    .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999}
+    .stat .v{font-size:18px;font-weight:600;color:#B87333;font-family:monospace}
+    button{background:#B87333;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+    button:disabled{background:#ccc;cursor:not-allowed}
+    input{font-family:monospace;padding:7px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;width:280px}
+    .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
+    .gate{font-size:13px;color:#666;margin-top:10px}
+    #wallet-widget{margin-bottom:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Token Precompiles</h1>
+    <div class="sub">Reads are LIVE from the WayChain node. Writes go through the web signer (confirm-gate + ephemeral key). Note: token <code>transfer</code> is not a top-level write on WayChain — see per-token notes.</div>
+
+    <div id="wallet-widget"></div>
+
+    <!-- BIJO 0x14 -->
+    <div class="card">
+      <div class="tok"><h2>BIJO · BinaryJournal</h2><span class="addr">0x0000…0014</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Your Balance</div><div class="v" id="bijo-bal">—</div></div>
+        <div class="stat"><div class="k">Total Supply</div><div class="v" id="bijo-supply">—</div></div>
+        <div class="stat"><div class="k">Transfers</div><div class="v" id="bijo-tx">—</div></div>
+      </div>
+      <div class="note">BIJO <code>transfer</code> is NOT a top-level write — it requires EVM contract routing (caller context), which isn't deployed yet. The real user-governance write is <code>enableTransfers</code> (flips the network transfer flag).</div>
+      <div class="gate">
+        <button id="bijo-enable" disabled onclick="enableBijo()">Enable Transfers (connect)</button>
+      </div>
+    </div>
+
+    <!-- WayStablecoin 1WAY 0x22 -->
+    <div class="card">
+      <div class="tok"><h2>1WAY · WayStablecoin</h2><span class="addr">0x0000…0022</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Total Supply</div><div class="v" id="way-supply">—</div></div>
+        <div class="stat"><div class="k">Your Vault</div><div class="v" id="way-vault">—</div></div>
+      </div>
+      <div class="note">Pegged to BTC via the TwoWayVault bridge. <code>createVault</code> is the entry write — requires Dox_Dev Level 2+ (verified in chain source).</div>
+      <div class="gate">
+        <input id="way-vid" placeholder="vault ID (32-byte hex)" style="width:360px">
+        <button id="way-create" disabled onclick="createVault()">Create Vault (connect)</button>
+      </div>
+    </div>
+
+    <!-- SWAY 0x24 -->
+    <div class="card">
+      <div class="tok"><h2>SWAY · Stability/Staking</h2><span class="addr">0x0000…0024</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Your Balance</div><div class="v" id="sway-bal">—</div></div>
+        <div class="stat"><div class="k">Total Supply</div><div class="v" id="sway-supply">—</div></div>
+      </div>
+      <div class="note">SWAY has no <code>transfer</code> precompile — balances move via <code>burn</code> (your own) and DEX/2WAY <code>mint</code>. You can burn your SWAY below.</div>
+      <div class="gate">
+        <input id="sway-amt" placeholder="amount (SWAY)" style="width:220px">
+        <button id="sway-burn" disabled onclick="burnSway()">Burn (connect)</button>
+      </div>
+    </div>
+
+    <!-- SwapRoute 0x25 -->
+    <div class="card">
+      <div class="tok"><h2>SwapRoute · DEX</h2><span class="addr">0x0000…0025</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Pair Exists</div><div class="v" id="swap-pair">—</div></div>
+        <div class="stat"><div class="k">Reserves</div><div class="v" id="swap-reserves">—</div></div>
+      </div>
+      <div class="note">Swaps require a connected wallet signer (web signer port pending).</div>
+    </div>
+  </div>
+
+  <!-- shared modules (issue #9/#10/#11) -->
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+  <script src="/js/precompiles.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/rpc.js"></script>
+  <script src="/js/abi.js"></script>
+  <script src="/js/wallet-ui.js"></script>
+
+  <script>
+    const P = window.WayChainPrecompiles;
+    const RPC = window.WayChainRPC;
+    const ABI = window.WayChainABI;
+    const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
+    const fmt = (wei, dec = 18) => { try { const v = BigInt(wei || '0x0'); const d = 10n ** BigInt(dec); return (v / d).toString(); } catch { return String(wei); } };
+
+    async function readAll(addr) {
+      if (!addr) return;
+      // BIJO totalSupply + transfersEnabled
+      try {
+        const sup = await RPC.precompileCall('0x14', 'totalSupply', '');
+        document.getElementById('bijo-supply').textContent = fmt(sup);
+        const en = await RPC.precompileCall('0x14', 'transfersEnabled', '');
+        document.getElementById('bijo-tx').textContent = (en && BigInt(en || '0x0') !== 0n) ? 'on' : 'off';
+      } catch (e) { document.getElementById('bijo-supply').textContent = 'err'; }
+      // 1WAY totalSupply + getUserVault
+      try {
+        const sup = await RPC.precompileCall('0x22', 'getTotalSupply', '');
+        document.getElementById('way-supply').textContent = fmt(sup);
+        const vault = await RPC.precompileCall('0x22', 'getUserVault', '');
+        document.getElementById('way-vault').textContent = vault && vault !== '0x' ? 'vault set' : 'none';
+      } catch (e) { document.getElementById('way-supply').textContent = 'err'; }
+      // SWAY balanceOf + totalSupply
+      try {
+        const bal = await RPC.precompileCall('0x24', 'getBalance', ABI.rawAddress20(addr));
+        document.getElementById('sway-bal').textContent = fmt(bal);
+        const sup = await RPC.precompileCall('0x24', 'getTotalSupply', '');
+        document.getElementById('sway-supply').textContent = fmt(sup);
+      } catch (e) { document.getElementById('sway-bal').textContent = 'err'; }
+      // SwapRoute getPair + getReserves
+      try {
+        const pair = await RPC.precompileCall('0x25', 'getPair', '');
+        document.getElementById('swap-pair').textContent = (pair && pair !== '0x') ? 'yes' : 'no';
+        const res = await RPC.precompileCall('0x25', 'getReserves', '');
+        document.getElementById('swap-reserves').textContent = (res && res !== '0x') ? 'set' : 'empty';
+      } catch (e) { document.getElementById('swap-pair').textContent = 'err'; }
+    }
+
+    // ── Real token writes (verified vs evm/*.go; transfer is NOT a top-level write) ──
+    async function ensureUnlocked() {
+      if (!window.waychainAccount) { alert('Connect wallet first'); return false; }
+      if (!window.WayChainWallet.isUnlocked()) {
+        try { await window.WayChainWallet.unlock(); } catch (e) { alert('Unlock failed: ' + e.message); return false; }
+      }
+      return true;
+    }
+    async function enableBijo() {
+      if (!(await ensureUnlocked())) return;
+      try {
+        const r = await RPC.precompileCall('0x14', 'enableTransfers', '', { write: true });
+        alert('Transfers enabled. Tx: ' + (r && r.txHash ? r.txHash.slice(0, 20) + '…' : 'ok'));
+        readAll(window.waychainAccount.address);
+      } catch (e) { alert('Enable failed: ' + e.message); }
+    }
+    async function createVault() {
+      if (!(await ensureUnlocked())) return;
+      const vid = document.getElementById('way-vid').value.trim().replace(/^0x/, '');
+      if (vid.length !== 64) return alert('Enter a 32-byte vault ID');
+      try {
+        const r = await RPC.precompileCall('0x22', 'createVault', ABI.pad32(vid), { write: true });
+        alert('Vault created. Tx: ' + (r && r.txHash ? r.txHash.slice(0, 20) + '…' : 'ok'));
+        readAll(window.waychainAccount.address);
+      } catch (e) { alert('Create vault failed: ' + e.message); }
+    }
+    async function burnSway() {
+      if (!(await ensureUnlocked())) return;
+      const amt = document.getElementById('sway-amt').value.trim();
+      if (!amt || Number(amt) <= 0) return alert('Enter an amount');
+      try {
+        const a = window.waychainAccount;
+        const wei = BigInt(Math.floor(Number(amt) * 1e18)).toString(16);
+        const args = ABI.rawAddress20(a.address) + ABI.encodeUint256('0x' + wei);
+        const r = await RPC.precompileCall('0x24', 'burn', args, { write: true });
+        alert('SWAY burned. Tx: ' + (r && r.txHash ? r.txHash.slice(0, 20) + '…' : 'ok'));
+        readAll(a.address);
+      } catch (e) { alert('Burn failed: ' + e.message); }
+    }
+
+    // Re-read whenever the wallet connects; enable write buttons.
+    const origConnect = window.WayChainWallet && window.WayChainWallet.connect;
+    if (origConnect) {
+      window.WayChainWallet.connect = async function () {
+        const acc = await origConnect.apply(this, arguments);
+        ['bijo-enable', 'way-create', 'sway-burn'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) { el.disabled = false; el.textContent = el.textContent.replace(' (connect)', ''); }
+        });
+        await readAll(acc.address);
+        return acc;
+      };
+    }
+    // Also read if already connected on load.
+    window.addEventListener('load', () => {
+      const a = window.waychainAccount && window.waychainAccount.address;
+      if (a) readAll(a);
+    });
+  </script>
+</body>
+</html>

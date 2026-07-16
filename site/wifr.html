@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIFR — WayChain Is Free Receipt</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { 
+  background: var(--slate); 
+  color: var(--warm); 
+  padding: 40px 20px;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.receipt { 
+  background: #1e1e1e;
+  border: 1px solid var(--copper);
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+.receipt::before {
+  content: "";
+  position: absolute;
+  top: 10px; right: 10px; bottom: 10px; left: 10px;
+  border: 1px dashed var(--amber);
+  border-radius: 4px;
+  opacity: 0.3;
+}
+.title { 
+  color: var(--copper); 
+  font-size: 1.5em; 
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+.subtitle { color: #9A9A9A; font-size: 14px; margin-bottom: 20px; }
+.receipt-img { max-width:100%;border-radius:4px;margin-bottom:15px; }
+.amount { 
+  font-size: 2em;
+  color: var(--green);
+  font-weight: 700;
+  margin: 15px 0;
+}
+.badge { 
+  background: var(--amber);
+  color: var(--slate);
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.btn { 
+  background: var(--copper);
+  color: var(--slate);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin: 10px 5px;
+  display: inline-block;
+  text-decoration: none;
+}
+.btn.outline {
+  background: transparent;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+}
+.btn.gauntlet {
+  background: var(--green);
+  color: var(--slate);
+}
+.highlight {
+  background: #1a1a1a;
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 25px 0;
+  text-align: center;
+}
+.highlight h3 { color: var(--amber); margin-bottom: 10px; }
+.legend { 
+  background: #1e1e1e;
+  border: 2px solid var(--green);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+}
+.legend h3 { color: var(--green); margin-bottom: 10px; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <div class="receipt">
+    <img src="/assets/wifr-receipt.png" alt="WIFR Receipt" style="max-width:100%;border-radius:4px;margin-bottom:15px">
+    <div class="amount">$WIFR</div>
+    <div style="margin-top:15px">
+      <span class="badge">LOCKED 1M WAY</span>
+    </div>
+    <a href="/wifr/bridge" class="btn">Burn & Claim</a>
+    <a href="/wifr/quests" class="btn outline">View Quests</a>
+  </div>
+
+  <div class="legend">
+    <h3>🥇 The Certification Gauntlet</h3>
+    <p>3 tiers. Soulbound badges. First 20 Grandmasters: 5,000 WAY + revenue share.</p>
+    <a href="/gauntlet" class="btn gauntlet">Enter Gauntlet</a>
+  </div>
+  
+  <p style="text-align:center;margin-top:30px;font-size:12px;color:#9A9A9A">
+    Reward pool values are resolved by the live WayChain runtime.<br>
+    Verify current state on RPC before treating totals as static.
+  </p>
+</div>
+</body>
+</html>

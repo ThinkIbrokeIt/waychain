@@ -4,10 +4,23 @@
 WayChain is a Layer 1 blockchain built in Go with a custom EVM execution layer. It implements:
 - **Consensus**: Custom BFT-style consensus with validator rotation
 - **EVM**: Full bytecode interpreter with WayChain-native opcodes (0xF0-0xFF)
-- **Precompiles**: 20 protocol precompiles at addresses 0x0C–0x20 (Oracle, Dox_Dev, BIJO, DMS, Bitcoin Registry, Storage Endowment, TwoWayVault, StabilityPool, TrustlessLock, AccountManager, Privacy, Governance, StateRent, CrossChainAttestation, MineralRights)
+- **Precompiles**: 27 protocol precompiles at addresses 0x0C–0x26 (Oracle, Dox_Dev, BIJO, DMS, Bitcoin Registry, Storage Endowment, TwoWayVault, StabilityPool, TrustlessLock, AccountManager, Privacy, Governance, StateRent, CrossChainAttestation, MineralRights, WIFR Gauntlet, 1WAY stablecoin, TaskRegistry, SWAY, SwapRoute, TemplateRegistry)
 - **Storage**: BoltDB (bbolt) persistent state with transaction indexing
 - **RPC**: JSON-RPC over HTTP + WebSocket (eth_* + way_* methods)
 - **P2P**: libp2p-based gossip for block/tx propagation
+
+## Source of Truth (issue #23)
+| Layer | Canonical | Not SoT |
+|---|---|---|
+| Protocol code | **this repo `master`** + `protocol-manifest.json` | monorepo `waychain/consensus`, chat, stale audits |
+| Live deploy | **AWS 3.89.116.45** `/usr/local/bin/waychain` sha256 | "merged on GitHub" alone |
+| Site | `ThinkIbrokeIt/waychain-site` `main` | master lag / monorepo site copy |
+| Mobile | `ThinkIbrokeIt/waychain-mobile` `main` | unsigned ad-hoc builds |
+| Work tracking | GitHub Issues + PRs | head memory |
+
+`protocol-manifest.json` is generated from `evm/precompiles.go`. CI runs `scripts/audit-consistency.sh` on every PR. Drift = red.
+
+**Address model (live-proven):** EOA account key / `tx.from` / `way_getBalance` = **full 64-hex** ed25519 pubkey. 20-byte form is **display only**. Precompile calldata address args = raw 20-byte. Selectors = `sha256(sig)[:4]` (not keccak). **0x21 = WIFRGantletRewards** (not Keccak256).
 
 ## Tech Stack
 - **Language**: Go 1.26.4
@@ -26,7 +39,7 @@ WayChain is a Layer 1 blockchain built in Go with a custom EVM execution layer. 
 ├── store/store.go              # BoltDB persistence (accounts, blocks, tx_index, meta)
 ├── evm/
 │   ├── interpreter.go          # EVM bytecode interpreter + WayChain native opcodes
-│   ├── precompiles.go          # 20 precompiles (0x0C–0x20) + ABI selectors
+│   ├── precompiles.go          # 27 precompiles (0x0C–0x26) + ABI selectors
 │   ├── governance.go           # Governance precompile (0x1D) + curator no-gatekeeping
 │   ├── state_rent.go           # State rent calculation + payment
 │   ├── oracle_scheduler.go     # Time-based oracle task scheduling
@@ -70,14 +83,14 @@ Transaction.Lane determines which pool it enters and which EVM instance executes
 - **Class B (1)**: Custom bytecode — requires Level 3 (curator) or governance approval (enforced by `EnforceContractClass` in `evm/evm.go`)
 - Enforced in `EnforceContractClass(level, class)` and `CanDeployContract(level)`
 
-### Precompile Addresses (0x0C–0x21)
+### Precompile Addresses (0x0C–0x26)
 | Addr | Name | Purpose |
 |------|------|---------|
 | 0x0C | OracleAggregator | Aggregate multi-oracle attestations |
 | 0x0D | OracleScheduler | Schedule recurring oracle tasks |
 | 0x0E | OracleVerifier | Verify single oracle attestation |
 | 0x0F | TLSVerifier | Verify TLS notary proofs |
-| 0x10 | BLSVerify | BLS12-381 signature verification |
+| 0x10 | AggregateSignatureVerify | ed25519 aggregate signature verification (chain identity scheme) |
 | 0x11 | AccountRecovery | Guardian-based recovery (3-of-5) |
 | 0x12 | StateRentCalc | Calculate rent due |
 | 0x13 | DoxDevBadge | Identity/developer verification |
@@ -94,7 +107,12 @@ Transaction.Lane determines which pool it enters and which EVM instance executes
 | 0x1E | StateRent | Rent collection & eviction |
 | 0x1F | CrossChainAttestation | Cross-chain proof verification |
 | 0x20 | MineralRightsRegistry | Tokenized mineral rights |
-| <strong>0x21</strong> | <strong>Keccak256</strong> | <strong>Ethereum-compatible Keccak-256 hash. Call with arbitrary bytes → returns 32-byte hash. Use for EVM tooling compatibility (signatures, Merkle proofs, selectors). Gas: 30 + 6 per 32-byte word.</strong> |
+| 0x21 | WIFRGantletRewards | WIFR gauntlet pioneer rewards |
+| 0x22 | WayStablecoin (1WAY) | Bitcoin-backed stablecoin: BTC locked → 1WAY minted |
+| 0x23 | TaskRegistry | Decentralized task registry |
+| 0x24 | SwayToken (SWAY) | DEX LP incentive token |
+| 0x25 | SwapRoute | DEX swap + LP rewards |
+| 0x26 | TemplateRegistry | Contract template registry |
 
 ### ABI Selectors
 WayChain uses **sha256(signature)[:4]** NOT keccak256. All selectors in `precompiles.go` are precomputed constants.
@@ -130,25 +148,8 @@ go vet ./...                  # Static analysis (may have false positives)
 
 ## Known Pitfalls & Gotchas
 
-### 1. SHA256 vs Keccak256 — Strategic Split
-
-**Core consensus uses SHA256** — block hashing, Merkle trees, P2P wire protocol, tx hashes. This gives maximum throughput with Go's `crypto/sha256` stdlib.
-
-**Smart contracts use Keccak-256 via precompile 0x21** — a dedicated Keccak-256 hash precompile was added at address 0x21 for contract developers. This:
-- Protects the application layer from length-extension vulnerabilities (SHA-256 is vulnerable to length-extension; Keccak-256 is not)
-- Maintains compatibility with standard EVM tooling (Hardhat, Foundry, ethers.js all assume keccak256 for selectors and events)
-- Allows Solidity developers to compute keccak256 hashes on-chain without modifying their existing tooling
-
-**Current state:** Consensus/block layer uses SHA256 everywhere (unchanged). Smart contracts can call precompile 0x21 to compute Keccak-256 hashes. This is the correct split — see the "Architecture Recommendation" section in the root AGENTS.md for the reasoning.
-
-**How contracts call it:**
-```solidity
-// Call precompile 0x21 (address 0x0000000000000000000000000000000000000021)
-(bool success, bytes memory hash) = address(0x21).call(data);
-// hash = keccak256(data), returns 32 bytes
-```
-
-**Gas:** 30 base + 6 per 32-byte word (matching Ethereum's precompile gas model).
+### 1. SHA256 vs Keccak256
+**Everything uses SHA256** — contract addresses, storage keys, function selectors, tx hashes. Never use keccak256.
 
 ### 2. Precompile Address Encoding
 Internal storage uses 40-char hex: `"0000000000000000000000000000000000000013"` for 0x13.
@@ -204,7 +205,7 @@ Curator applications: any Level 2+ can apply; community elects via quadratic vot
 ### Critical Files to Read First
 1. `chain.go` — Core loop, block production, tx pool, staking
 2. `evm/interpreter.go` — Opcodes, precompile CALL handling, native ops
-3. `evm/precompiles.go` — All 20 precompiles, selectors, storage helpers
+3. `evm/precompiles.go` — All 27 precompiles, selectors, storage helpers
 4. `evm/governance.go` — Governance logic, curator no-gatekeeping
 5. `rpc.go` — JSON-RPC methods, tx submission, P2P broadcast (eth_sendRawTransaction, eth_getTransactionByHash, eth_getTransactionReceipt now fixed)
 6. `store/store.go` — Persistence, serialization, tx indexing (transaction data now persistently stored)

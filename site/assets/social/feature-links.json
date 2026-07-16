@@ -1,0 +1,39 @@
+{
+  "featureLinks": {
+    "one-human-one-vote": {
+      "label": "One Human, One Vote",
+      "whitepaperAnchor": "#8-governance-without-plutocracy",
+      "description": "200 Dox_Dev verified humans, 200 validators, equal voting power"
+    },
+    "self-sovereign": {
+      "label": "Self-Sovereign", 
+      "whitepaperAnchor": "#5-1way-trustless-bitcoin-backed-stablecoin",
+      "description": "Bitcoin-backed stablecoin (1WAY), native oracle attestations, Dead Man's Switch"
+    },
+    "anti-extractive": {
+      "label": "Anti-Extractive",
+      "whitepaperAnchor": "#abstract",
+      "description": "Fixed gas fees, state rent with 60% burn, sqrt-weighted proposer lottery, no MEV"
+    },
+    "bitcoin-stablecoin": {
+      "label": "Bitcoin → 1WAY",
+      "whitepaperAnchor": "#5-1way-trustless-bitcoin-backed-stablecoin",
+      "description": "Native BTC deposits to Treasury mint 1WAY stablecoin"
+    },
+    "gold-claims": {
+      "label": "Gold Claims",
+      "whitepaperAnchor": "#4-mineral-rights-tokenization-mrt-precompile-0x20",
+      "description": "Verified commodity claims paid in 1WAY via Oracle Aggregator"
+    },
+    "community-work": {
+      "label": "Community Work",
+      "whitepaperAnchor": "#2-professional-oracle-badges-the-core-innovation",
+      "description": "Earn WAY tokens through Dox_Dev verified contributions"
+    },
+    "dex-swap": {
+      "label": "DEX Swap",
+      "whitepaperAnchor": "#abstract",
+      "description": "WAY to 1WAY conversion with no MEV"
+    }
+  }
+}

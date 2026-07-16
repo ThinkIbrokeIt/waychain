@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain Bridge — AirBridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cosmic:#0A0F1A;--nebula:#1A2238;--void:#0F172A;
+  --star:#F1F5F9;--dusk:#CBD5E1;--aurora:#818CF8;
+  --comet:#FB7185;--nebula-edge:#334155;--launch:#6366F1;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',-apple-system,sans-serif;
+  background:radial-gradient(ellipse at top,#0A0F1A 0%,#0F172A 100%);
+  color:var(--star);line-height:1.7;min-height:100vh;
+}
+h1,h2,h3{font-family:'Space Grotesk',-apple-system,sans-serif}
+a{color:var(--aurora);text-decoration:none}
+a:hover{color:var(--comet)}
+.nav{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 0;position:sticky;top:0;z-index:100;
+  background:rgba(10,15,26,.8);backdrop-filter:blur(20px);
+}
+.nav-logo{display:flex;align-items:center;gap:8px}
+.nav-logo-img{height:32px;width:auto}
+.nav-logo-text{
+  font-family:'Space Grotesk',-apple-system,sans-serif;
+  font-size:1.1em;color:var(--aurora);
+}
+.nav-links{display:flex;gap:12px}
+.nav-links a{
+  font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:1px;
+  color:var(--dusk);padding:4px 8px;border-radius:4px;
+}
+.nav-links a:hover{color:var(--star);background:var(--nebula-edge)}
+.hero{
+  text-align:center;padding:50px 20px 30px;
+  background:linear-gradient(180deg,rgba(129,140,248,.1) 0%,transparent 100%);
+}
+.hero h1{
+  font-size:2.2em;color:var(--star);margin-bottom:6px;letter-spacing:1px;
+}
+.hero .tagline{
+  font-size:.8em;color:var(--aurora);letter-spacing:4px;text-transform:uppercase;
+  margin-bottom:12px;
+}
+.hero p{color:var(--dusk);font-size:.85em;max-width:480px;margin:0 auto}
+.container{max-width:700px;margin:0 auto;padding:24px}
+.card{
+  background:rgba(26,34,56,.5);border:1px solid var(--nebula-edge);
+  border-radius:12px;padding:24px;margin:20px 0;backdrop-filter:blur(10px);
+}
+.card h3{
+  color:var(--aurora);font-size:.85em;margin-bottom:16px;
+  font-weight:600;text-transform:uppercase;letter-spacing:1px;
+}
+.wallet-bar{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;
+}
+.wallet-bar .btn{
+  background:var(--launch);color:var(--star);font-weight:600;
+  padding:8px 16px;border:none;border-radius:8px;font-size:.75em;cursor:pointer;
+}
+.wallet-bar .btn:hover{background:var(--comet)}
+.wallet-addr{
+  font-family:'SF Mono',monospace;font-size:.7em;color:var(--aurora);
+}
+.input-row{display:flex;gap:8px;margin-bottom:12px}
+.input-row input,.input-row select{
+  flex:1;background:rgba(15,23,42,.8);border:1px solid var(--nebula-edge);
+  color:var(--star);padding:12px 16px;border-radius:8px;font-size:.85em;outline:none;
+}
+.input-row input:focus{border-color:var(--aurora)}
+.btn{
+  background:var(--aurora);color:var(--cosmic);font-weight:700;
+  padding:14px 28px;border:none;border-radius:8px;font-size:.85em;cursor:pointer;
+  transition:all .2s;display:block;width:100%;
+}
+.btn:hover{background:var(--comet);transform:translateY(-2px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{
+  background:var(--launch);color:var(--star);width:auto;font-size:.7em;padding:8px 16px;
+}
+.status{
+  padding:14px 18px;border-radius:8px;margin:10px 0;font-size:.78em;display:none;
+}
+.status.show{display:block}
+.status.good{background:rgba(76,175,80,.15);border:1px solid #4CAF50;color:#4CAF50}
+.status.bad{background:rgba(251,113,133,.15);border:1px solid var(--comet);color:var(--comet)}
+.status.info{background:rgba(99,102,241,.1);border:1px solid var(--aurora);color:var(--aurora)}
+.reward-row{
+  display:flex;justify-content:space-between;margin:8px 0;font-size:.85em;
+}
+.reward-label{color:var(--dusk)}
+.reward-value{color:var(--comet)}
+.footer{
+  text-align:center;padding:40px 24px;color:var(--dusk);font-size:.72em;
+  border-top:1px solid var(--nebula-edge);margin-top:40px;
+}
+@media(max-width:768px){.hero h1{font-size:1.8em}.input-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-logo">
+    <img src="/assets/waylogo.png" alt="WayChain" class="nav-logo-img">
+    <div class="nav-logo-text">WayChain Bridge</div>
+  </div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/wallet">Wallet</a>
+    <a href="/dex">DEX</a>
+    <a href="/locks">Locks</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>WayChain Bridge</h1>
+  <div class="tagline">Stablecoin • WayChain 0x22</div>
+  <p>Bridge external stablecoins to 1WAY. 2WAY is the stability layer: LPs deposit, minters route fees, and early rewards go to WAY + SWAY.</p>
+</div>
+
+<div class="container">
+
+  <!-- Wallet Connect -->
+  <div class="wallet-bar">
+    <span id="wallet-display" style="display:none" class="wallet-addr">
+      Connected: <code id="bridge-wallet"></code>
+    </span>
+    <button class="btn" style="width:auto;font-size:.7em;padding:6px 14px" onclick="connectWallet()">Connect Wallet</button>
+  </div>
+
+  <!-- Stablecoin Bridge -->
+  <div class="card">
+    <h3>🌉 Bridge to 1WAY</h3>
+    <p style="font-size:.8em;color:var(--dusk);margin-bottom:14px">Cross-chain stablecoins → 1WAY (precompile 0x22). Attestation required.</p>
+    <div class="input-row"><input type="text" id="stableAmt" placeholder="USDT/USDC amount" value="1000"></div>
+    <button class="btn" onclick="bridgeStable()">Launch Bridge</button>
+    <div id="bridgeStatus" class="status"></div>
+  </div>
+
+  <!-- Stake for 2WAY -->
+  <div class="card">
+    <h3>🪙 Stake for 2WAY</h3>
+    <p style="font-size:.8em;color:var(--dusk);margin-bottom:14px">Mint 2WAY against stablecoin collateral (precompile 0x18). Minting routes protocol fees into the LP reward layer. Early rewards: WAY + SWAY.</p>
+    <div class="input-row"><input type="text" id="stakeAmt" placeholder="1WAY amount to stake" value="500"></div>
+    <button class="btn" onclick="stake2way()">Launch Stake</button>
+    <div id="stakeStatus" class="status"></div>
+  </div>
+
+  <!-- Rewards -->
+  <div class="card">
+    <h3>🎁 Rewards Dashboard</h3>
+    <div class="reward-row">
+      <span class="reward-label">WAY Rewards</span>
+      <span id="wayRewards" class="reward-value">—</span>
+    </div>
+    <div class="reward-row">
+      <span class="reward-label">SWAY Rewards</span>
+      <span id="swayRewards" class="reward-value">—</span>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-secondary" onclick="claimAll()">Claim All Rewards</button>
+    </div>
+    <div id="claimStatus" class="status" style="margin-top:10px"></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  WayChain Bridge • 1WAY Stablecoin (0x22) + 2WAY CDP (0x18). Chain ID 10008.
+</div>
+
+<script>
+function connectWallet(){
+  if(!window.WayChainWallet){window.location.href='/wallet';return;}
+  WayChainWallet.connect().then(acc=>{
+    document.getElementById('wallet-display').style.display='inline';
+    document.getElementById('bridge-wallet').textContent=acc.address;
+  }).catch(()=>window.location.href='/wallet');
+}
+}
+function show(el,msg,type){
+  el.className='status show '+type;
+  el.textContent=msg;
+}
+function bridgeStable(){
+  const s=document.getElementById('bridgeStatus');
+  show(s,'Launch bridge: approve USDT → call mintStablecoin(0x22) via /wallet.','info');
+}
+function stake2way(){
+  const s=document.getElementById('stakeStatus');
+  show(s,'Launch stake: call stakeAndMint(0x18) via /wallet.','info');
+}
+function claimAll(){
+  const s=document.getElementById('claimStatus');
+  show(s,'Claim tx ready. Use /wallet to submit.','good');
+}
+document.addEventListener('DOMContentLoaded',connectWallet);
+</script>
+<!-- Real wallet + RPC (issue #10) -->
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+<script src="/js/precompiles.js"></script>
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+</body>
+</html>

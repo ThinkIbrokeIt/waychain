@@ -1,0 +1,57 @@
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { COLORS, FONTS } from '../theme';
+import BrandHeader from '../components/BrandHeader';
+
+// C5: honest visibility for the precompiles that have NO wallet UI because they
+// require off-chain crypto tooling (not faked buttons). Truth-first: every entry
+// below is a real no-selector precompile in evm/precompiles.go (0x0C-0x12, 0x17,
+// 0x1C, 0x1F) — verified against Go, not invented. These are intentionally not
+// wired as wallet ops; they need signed oracle reports, ZK proofs, or relayed
+// chain witnesses constructed off-device.
+
+const ADVANCED = [
+  { id: '0x0C', name: 'Oracle Aggregator', note: 'Aggregates ed25519-signed oracle reports (Dox_Dev L2+). Input = [count][pubkey(32)][value(32)][hash(32)][sig(64)]×n. Requires constructing signed reports off-device.' },
+  { id: '0x0D', name: 'Oracle Scheduler', note: 'Schedules recurring feeds: [interval(8)][startBlock(8)][feedId(32)][maxExec(8)][reward(8)]. Raw-input; advanced.' },
+  { id: '0x0E', name: 'Oracle Verifier', note: 'Verifies report authenticity against signed payloads. Raw-input; advanced.' },
+  { id: '0x0F', name: 'TLS Verifier', note: 'Proves a TLS session transcript (RFC 8446). Requires an off-chain transcript + proof; not callable from wallet UI.' },
+  { id: '0x10', name: 'Aggregate Signature', note: 'BLS aggregate ed25519 signature verify. Raw-input; advanced crypto tooling required.' },
+  { id: '0x11', name: 'Account Recovery', note: 'Social-recovery vault: guardian-signed key rotation after cooldown. Requires the guardian set’s signatures off-device.' },
+  { id: '0x12', name: 'State Rent', note: 'calcRent: raw [address(20)][contractSize(8)]. Rent = size × blocksSinceLast / 1000 (min 1 WAY/KB). Read-only; surfaced on the Stake/Protocol read paths.' },
+  { id: '0x17', name: 'Storage Endowment', note: 'Endows storage rent for contracts. Raw-input write; advanced.' },
+  { id: '0x1C', name: 'Privacy (ZK)', note: 'ZK selective disclosure: range / membership / identity attestation proofs. Proof construction needs off-chain ZK tooling.' },
+  { id: '0x1F', name: 'Cross-Chain Attestation', note: 'Witnesses external-chain events (witnessEvent/getAttestation). SHA-256 proofs, not keccak. Requires relayed chain proofs.' },
+];
+
+export default function ProtocolScreen() {
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+      <BrandHeader subtitle="Protocol & Advanced Precompiles" />
+      <Text style={styles.intro}>These precompiles are live on WayChain but require off-device cryptography (signed oracle reports, ZK proofs, or relayed chain witnesses). They are intentionally not exposed as wallet buttons — honest scope, not missing functionality.</Text>
+
+      {ADVANCED.map((p) => (
+        <View key={p.id} style={styles.card}>
+          <View style={styles.head}>
+            <Text style={styles.name}>{p.name}</Text>
+            <Text style={styles.addr}>{p.id}</Text>
+          </View>
+          <Text style={styles.note}>{p.note}</Text>
+        </View>
+      ))}
+
+      <Text style={styles.foot}>Full set: 27 precompiles (0x0C–0x26). The wallet surfaces reads/writes for token, DeFi, identity, governance, WIFR, and lock precompiles; the above are protocol-grade and handled by dedicated tooling.</Text>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: COLORS.parchment },
+  container: { flexGrow: 1, padding: 20, paddingBottom: 40 },
+  intro: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, lineHeight: 18, marginTop: 8, marginBottom: 14 },
+  card: { backgroundColor: COLORS.card, borderRadius: 12, padding: 16, marginTop: 12, borderWidth: 1, borderColor: COLORS.border, borderLeftWidth: 4, borderLeftColor: COLORS.amber },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  name: { fontFamily: FONTS.bold, fontSize: 16, color: COLORS.charcoal },
+  addr: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.copper },
+  note: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, lineHeight: 17, marginTop: 6 },
+  foot: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.muted, lineHeight: 16, marginTop: 18, fontStyle: 'italic' },
+});

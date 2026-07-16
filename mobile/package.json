@@ -1,0 +1,40 @@
+{
+  "name": "waychain-mobile",
+  "version": "0.1.0",
+  "description": "WayChain mobile wallet with Energy Tide journaling",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "test": "node test/precompiles.test.mjs && node test/precompile-call.test.mjs && node test/precompile-selectors.test.mjs && node test/balance-64hex.test.mjs"
+  },
+  "dependencies": {
+    "@expo-google-fonts/inter": "^0.2.3",
+    "@expo-google-fonts/playfair-display": "^0.2.3",
+    "@expo/metro-runtime": "~5.0.5",
+    "@noble/ed25519": "^2.3.0",
+    "@noble/hashes": "^1.8.0",
+    "@react-navigation/bottom-tabs": "^7.18.8",
+    "@react-navigation/native": "^7.0.0",
+    "@react-navigation/stack": "^7.0.0",
+    "@scure/bip32": "^1.7.0",
+    "@scure/bip39": "^1.6.0",
+    "expo": "~53.0.27",
+    "expo-crypto": "~15.0.0",
+    "expo-local-authentication": "^15.0.2",
+    "expo-secure-store": "~14.2.4",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.6",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-qrcode-svg": "^6.3.21",
+    "react-native-reanimated": "^3.1.2",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1",
+    "react-native-svg": "^15.15.5",
+    "react-native-web": "^0.20.0"
+  }
+}

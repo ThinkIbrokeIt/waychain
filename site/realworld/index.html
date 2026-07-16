@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WayChain · Assets & Utility</title>
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    body{font-family:Inter,system-ui,sans-serif;background:var(--parchment,#FFF8F0);color:#2A2A2A;margin:0}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+    h1{font-size:28px;color:#B87333;margin-bottom:4px}
+    .sub{color:#666;margin-bottom:24px}
+    .card{background:#fff;border:1px solid #e7ddd0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(42,42,42,.05)}
+    .tok{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+    .tok h2{font-size:19px;margin:0}
+    .addr{font-family:monospace;font-size:12px;color:#999}
+    .row{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
+    .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999}
+    .stat .v{font-size:18px;font-weight:600;color:#B87333;font-family:monospace}
+    input{font-family:monospace;padding:7px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;width:320px}
+    button{background:#B87333;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+    button:disabled{background:#ccc;cursor:not-allowed}
+    .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
+    .gate{font-size:13px;color:#666;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    #wallet-widget{margin-bottom:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Assets &amp; Utility</h1>
+    <div class="sub">Real-world asset rights, the BTC bridge that mints 1WAY, dead-man switches, and storage endowment.</div>
+
+    <div id="wallet-widget"></div>
+
+    <!-- BitcoinRegistry 0x16 — the 1WAY mint source -->
+    <div class="card">
+      <div class="tok"><h2>Bitcoin Registry</h2><span class="addr">0x0000…0016</span></div>
+      <div class="note">This is where <strong>1WAY (the BTC-pegged stablecoin) is minted</strong>. Lock BTC → attest commitment → 1WAY is issued. (The Vault at 0x18 mints 2WAY, not 1WAY.)</div>
+      <div class="row">
+        <div class="stat"><div class="k">Total BTC Committed</div><div class="v" id="btc-committed">—</div></div>
+        <div class="stat"><div class="k">Total Withdrawn</div><div class="v" id="btc-withdrawn">—</div></div>
+        <div class="stat"><div class="k">Your BTC Balance</div><div class="v" id="btc-bal">—</div></div>
+      </div>
+      <div class="gate">
+        <button id="btc-attest" disabled onclick="btcAttest()">Attest BTC Commitment (connect)</button>
+      </div>
+    </div>
+
+    <!-- MineralRights 0x20 -->
+    <div class="card">
+      <div class="tok"><h2>Mineral Rights (MRT)</h2><span class="addr">0x0000…0020</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Claim Status</div><div class="v" id="mrt-claim">—</div></div>
+        <div class="stat"><div class="k">Your Tokens</div><div class="v" id="mrt-tokens">—</div></div>
+      </div>
+      <div class="gate">
+        <input id="mrt-id" placeholder="claim ID (32-byte hex)" style="width:360px">
+        <button id="mrt-get" onclick="mrtLookup()">Look Up</button>
+      </div>
+    </div>
+
+    <!-- DeadMansSwitch 0x15 -->
+    <div class="card">
+      <div class="tok"><h2>Dead Man's Switch</h2><span class="addr">0x0000…0015</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Total Switches</div><div class="v" id="dms-total">—</div></div>
+        <div class="stat"><div class="k">Switch Info</div><div class="v" id="dms-info">—</div></div>
+      </div>
+      <div class="gate">
+        <input id="dms-id" placeholder="switch ID (uint64)" style="width:200px">
+        <button id="dms-get" onclick="dmsLookup()">Look Up</button>
+      </div>
+    </div>
+
+    <!-- StorageEndowment 0x17 (no-selector) -->
+    <div class="card">
+      <div class="tok"><h2>Storage Endowment</h2><span class="addr">0x0000…0017</span></div>
+      <div class="sub" style="margin-top:6px">Pays ongoing storage rent from a locked endowment. This is a no-selector precompile (raw signed-input layout). Read/endow are write-gated behind a connected wallet.</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+  <script src="/js/precompiles.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/rpc.js"></script>
+  <script src="/js/abi.js"></script>
+  <script src="/js/wallet-ui.js"></script>
+
+  <script>
+    const RPC = window.WayChainRPC;
+    const ABI = window.WayChainABI;
+    const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
+
+    async function readAssets(addr) {
+      if (!addr) return;
+      try {
+        const c = await RPC.precompileCall('0x16', 'getTotalCommitted', '');
+        document.getElementById('btc-committed').textContent = hexToNum(c);
+        const w = await RPC.precompileCall('0x16', 'getTotalWithdrawn', '');
+        document.getElementById('btc-withdrawn').textContent = hexToNum(w);
+        const b = await RPC.precompileCall('0x16', 'getBalance', ABI.encodeAddress(addr));
+        document.getElementById('btc-bal').textContent = hexToNum(b);
+      } catch (e) { document.getElementById('btc-committed').textContent = 'err'; }
+      try {
+        const t = await RPC.precompileCall('0x15', 'totalSwitches', '');
+        document.getElementById('dms-total').textContent = hexToNum(t);
+      } catch (e) { document.getElementById('dms-total').textContent = 'err'; }
+    }
+
+    async function mrtLookup() {
+      const id = document.getElementById('mrt-id').value.trim().replace(/^0x/, '');
+      if (id.length !== 64) return alert('Enter a 32-byte claim ID');
+      const arg = ABI.pad32(id);
+      try {
+        const c = await RPC.precompileCall('0x20', 'getClaim', arg);
+        document.getElementById('mrt-claim').textContent = (c && c !== '0x') ? 'exists' : 'none';
+      } catch (e) { alert('MRT read failed: ' + e.message); }
+      const a = window.waychainAccount && window.waychainAccount.address;
+      if (a) {
+        try {
+          const t = await RPC.precompileCall('0x20', 'getTokens', arg + ABI.encodeAddress(a));
+          document.getElementById('mrt-tokens').textContent = hexToNum(t);
+        } catch (e) {}
+      }
+    }
+
+    async function dmsLookup() {
+      const id = document.getElementById('dms-id').value.trim();
+      if (!id) return alert('Enter a switch ID');
+      const arg = ABI.encodeUint256(id);
+      try {
+        const i = await RPC.precompileCall('0x15', 'getSwitchInfo', arg);
+        document.getElementById('dms-info').textContent = (i && i !== '0x') ? 'set' : 'none';
+      } catch (e) { alert('DMS read failed: ' + e.message); }
+    }
+
+    async function btcAttest() {
+      const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
+      try { await RPC.precompileCall('0x16', 'attestCommitment', '', { write: true }); }
+      catch (e) { alert('Web write not implemented yet (signer port pending): ' + e.message); }
+    }
+
+    const origConnect = window.WayChainWallet && window.WayChainWallet.connect;
+    if (origConnect) {
+      window.WayChainWallet.connect = async function () {
+        const acc = await origConnect.apply(this, arguments);
+        document.getElementById('btc-attest').disabled = false;
+        document.getElementById('btc-attest').textContent = 'Attest BTC Commitment';
+        await readAssets(acc.address);
+        return acc;
+      };
+    }
+    window.addEventListener('load', () => {
+      const a = window.waychainAccount && window.waychainAccount.address;
+      if (a) readAssets(a);
+    });
+  </script>
+</body>
+</html>

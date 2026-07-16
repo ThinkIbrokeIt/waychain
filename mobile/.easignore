@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+*.log
+dist/
+web-build/
+android/
+ios/
+.git/
+*.jks

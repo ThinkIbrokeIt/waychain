@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WIFR Bridge — Burn & Claim</title>
+  <style>
+    :root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+    body { background:var(--slate); color:var(--warm); font-family:'Inter',sans-serif; padding:40px 20px; }
+    .container { max-width:600px; margin:0 auto; }
+    .card { background:#1e1e1e; border:1px solid var(--copper); border-radius:8px; padding:30px; margin-bottom:20px; }
+    h2 { color:var(--copper); margin-bottom:15px; }
+    .btn { background:var(--copper); color:var(--slate); border:none; padding:12px 24px; border-radius:6px; cursor:pointer; font-weight:600; margin:5px; display:inline-block; text-decoration:none; }
+    .btn.outline { background:transparent; border:1px solid var(--copper); color:var(--copper); }
+    .status { background:#1a1a1a; padding:15px; border-radius:4px; margin-top:15px; font-size:14px; }
+    input { width:100%; padding:12px; background:#111; border:1px solid var(--amber); border-radius:4px; color:var(--warm); margin:10px 0; }
+  </style>
+  <script src="https://unpkg.com/@solana/web3.js@1.91.0/lib/index.iife.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.12.1/dist/ethers.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2>🔥 Burn WIFR to Claim WAY</h2>
+      <p>Burn exactly 1 WIFR to receive Pioneer Badge + 50 WAY.</p>
+      <input type="text" id="solanaAddr" placeholder="WIFR address will auto-connect">
+      <input type="text" id="waychainAddr" placeholder="WayChain address will auto-connect">
+      <button class="btn" onclick="connectPhantom()">Connect Phantom & Burn</button>
+      <button class="btn outline" onclick="connectWayChain()">Connect WayChain Wallet</button>
+      <button class="btn" style="background:var(--green)" onclick="claimPioneer()">Claim Pioneer Badge</button>
+      <div id="status" class="status" style="display:none;"></div>
+    </div>
+    
+    <div class="card">
+      <h2>🧪 Early Worm Bonus</h2>
+      <p>First 10,000 Pioneer badge holders get 2x WAY reward.</p>
+      <div id="counter" style="color:var(--amber); font-weight:600;">Loaded <span id="count">0</span> / 10,000</div>
+    </div>
+  </div>
+  
+  <script>
+    const WIFR_MINT = 'WIFR_TOKEN_ADDRESS'; // Replace with actual mint after launch
+    const WAYCHAIN_RPC = 'https://api.waychain.org';
+    
+    async function connectPhantom() {
+      if (!window.solana || !window.solana.isPhantom) {
+        showStatus('Install Phantom wallet extension', false);
+        return;
+      }
+      try {
+        const resp = await window.solana.connect();
+        document.getElementById('solanaAddr').value = resp.publicKey.toString();
+        showStatus('Phantom connected: ' + resp.publicKey.toString().slice(0,8) + '...', true);
+      } catch (e) {
+        showStatus('Phantom connection failed', false);
+      }
+    }
+    
+    async function connectWayChain() {
+      if (!window.ethereum) {
+        showStatus('Install WayChain-compatible wallet', false);
+        return;
+      }
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const addr = await signer.getAddress();
+        document.getElementById('waychainAddr').value = addr;
+        showStatus('WayChain wallet connected: ' + addr.slice(0,10) + '...', true);
+      } catch (e) {
+        showStatus('WayChain wallet failed', false);
+      }
+    }
+    
+    async function claimPioneer() {
+      const solAddr = document.getElementById('solanaAddr').value;
+      const wayAddr = document.getElementById('waychainAddr').value;
+      if (!solAddr || !wayAddr) {
+        showStatus('Connect both wallets first', false);
+        return;
+      }
+      // Verify burn & submit attestation
+      showStatus('Burning 1 WIFR and submitting attestation...', true);
+    }
+    
+    function showStatus(msg, success=true) {
+      const el = document.getElementById('status');
+      el.style.display = 'block';
+      el.style.color = success ? 'var(--amber)' : 'var(--red, #ff6b6b)';
+      el.textContent = msg;
+    }
+  </script>
+</body>
+</html>

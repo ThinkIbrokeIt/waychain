@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>WayChain Economic Loop - Social Media Asset</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --slate2:#1E1E1E; --copper:#B87333; --amber:#FFBF00; --gold:#FFD700; }
+body { background:var(--slate); font-family: Inter, sans-serif; color:var(--warm); margin:0; padding:40px 20px; }
+.diagram { max-width:800px; margin:0 auto; }
+.title { text-align:center; font-size:28px; font-weight:700; margin-bottom:30px; font-family: 'Playfair Display', serif; }
+.subtitle { text-align:center; font-size:14px; color:#9A9A9A; margin-bottom:30px; }
+svg { width:100%; height:auto; }
+.node { fill:rgba(42,42,42,0.8); stroke-width:2; }
+.node-btc { stroke:#FFBF00; }
+.node-way { stroke:#B87333; }
+.node-way1 { stroke:#FFD700; }
+.node-gold { stroke:#FFD700; }
+.node-dex { stroke:#B87333; }
+.node-text { fill:var(--warm); font-size:16px; font-weight:700; text-anchor:middle; }
+.node-label { fill:#9A9A9A; font-size:12px; text-anchor:middle; }
+.arrow { stroke:#B87333; stroke-width:2; marker-end:url(#arrowhead); }
+.flow-label { fill:#9A9A9A; font-size:10px; font-style:italic; }
+.legend { fill:#9A9A9A; font-size:11px; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="diagram">
+<h1 class="title">WayChain Economic Loop</h1>
+<p class="subtitle">A closed system: Bitcoin → 1WAY → Gold Claims → WAY → DEX → 1WAY</p>
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+<polygon points="0 0, 10 3.5, 0 7" fill="#B87333"/>
+</marker>
+</defs>
+<g transform="translate(400,300)">
+<!-- Node positions in a circle -->
+<g class="node-group">
+<!-- Bitcoin at top -->
+<rect x="320" y="40" width="160" height="60" rx="30" class="node node-btc"/>
+<text x="400" y="75" class="node-text">₿ BITCOIN</text>
+<text x="400" y="90" class="node-label">Native BTC</text>
+<!-- Treasury 1WAY at right -->
+<rect x="540" y="220" width="160" height="60" rx="30" class="node node-way1"/>
+<text x="620" y="255" class="node-text">1WAY</text>
+<text x="620" y="270" class="node-label">BTC-backed stablecoin</text>
+<!-- Gold Claims at bottom -->
+<rect x="320" y="420" width="160" height="60" rx="30" class="node node-gold"/>
+<text x="400" y="455" class="node-text">GOLD CLAIMS</text>
+<text x="400" y="470" class="node-label">Mineral rights</text>
+<!-- WAY token at left -->
+<rect x="140" y="220" width="160" height="60" rx="30" class="node node-way"/>
+<text x="220" y="255" class="node-text">WAY</text>
+<text x="220" y="270" class="node-label">Gas/Earn token</text>
+<!-- DEX at center -->
+<rect x="280" y="190" width="120" height="60" rx="30" class="node node-dex"/>
+<text x="340" y="225" class="node-text">DEX</text>
+<text x="340" y="240" class="node-label">Swap exchange</text>
+</g>
+<!-- Arrows connecting the cycle -->
+<g class="arrows">
+<path d="M400,100 C450,180 520,180 580,220" class="arrow" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+<path d="M620,250 C540,310 540,310 410,410" class="arrow" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+<path d="M400,470 C330,390 260,390 200,250" class="arrow" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+<path d="M200,250 C240,230 290,230 320,220" class="arrow" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+<path d="M330,200 C350,170 390,170 400,90" class="arrow" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+</g>
+<!-- Flow labels -->
+<g class="labels">
+<text x="480" y="160" class="flow-label">MINT via Treasury</text>
+<text x="500" y="340" class="flow-label">PAYMENT for Claims</text>
+<text x="280" y="350" class="flow-label">EARN via Work</text>
+<text x="220" y="230" class="flow-label">SWAP via DEX</text>
+<text x="380" y="120" class="flow-label">BURN/Redeem</text>
+</g>
+<!-- Center badge -->
+<text x="400" y="300" text-anchor="middle" font-size="48" fill="var(--copper)">△</text>
+<text x="400" y="320" text-anchor="middle" font-size="8" fill="#9A9A9A">BREAKER</text>
+</g>
+</svg>
+</div>
+</body>
+</html>

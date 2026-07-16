@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+*.log
+dist/
+web-build/
+android/
+ios/
+
+# screenshots
+*.png
+!assets/*.png
+
+# stray debug/UI-dump files
+pixelcheck.js
+tabcheck.js
+ui_*.xml

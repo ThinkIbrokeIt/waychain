@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WAYCHAIN — Illuminate. Navigate. Arrive.</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:16px}
+h1,h2,h3,h4{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);text-decoration:none;transition:color .2s}
+a:hover{color:var(--warm)}
+p{margin-bottom:12px}
+.container{max-width:1000px;margin:0 auto;padding:0 24px}
+
+.nav{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-img{height:48px;width:auto;display:block}
+.nav-logo-text{font-family:'Playfair Display',Georgia,serif;font-size:1.4em;color:var(--warm);letter-spacing:1px}
+.nav-logo-text span{color:var(--copper)}
+.nav-links{display:flex;gap:2px;flex-wrap:wrap}
+.nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px;transition:all .2s}
+.nav-links a:hover{color:var(--warm);background:var(--slate2)}
+.nav-links a.active{color:var(--slate);background:var(--copper)}
+.nav-cta{background:rgba(184,115,51,.12)!important;color:var(--copper)!important}
+.nav-toggle{display:none;background:none;border:1px solid var(--border);border-radius:6px;color:var(--warm);font-size:1.4em;line-height:1;padding:6px 10px;cursor:pointer}
+.nav-toggle:focus{outline:2px solid var(--copper);outline-offset:2px}
+
+.page{display:none}
+.page.active{display:block}
+
+.hero{position:relative;text-align:center;overflow:hidden}
+.hero-img{width:100%;height:auto;display:block;max-width:1200px;margin:0 auto}
+.hero-actions{padding:40px 24px;text-align:center;background:var(--slate);border-top:1px solid var(--border)}
+.hero::before{content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(184,115,51,.06) 0%,transparent 60%);pointer-events:none}
+.hero-logo{margin-bottom:24px;position:relative}
+.hero h1{font-family:'Playfair Display',Georgia,serif;font-size:4em;color:var(--warm);line-height:1;margin-bottom:12px;letter-spacing:3px}
+.hero .tagline{font-size:.85em;color:var(--copper);letter-spacing:5px;text-transform:uppercase;margin-bottom:16px;position:relative}
+.hero .divider{width:50px;height:1px;background:var(--copper);margin:0 auto 16px;position:relative}
+.hero .mission{color:var(--muted);font-size:.95em;max-width:450px;margin:0 auto 32px;position:relative}
+.hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative}
+
+.btn-copper{background:var(--copper);color:var(--warm);font-weight:700;padding:14px 28px;border-radius:50px;font-size:.85em;letter-spacing:.5px;transition:all .2s;border:none;cursor:pointer;text-decoration:none;display:inline-block}
+.btn-copper:hover{background:#a0642a;color:var(--warm);transform:translateY(-1px)}
+.btn-outline{border:1px solid rgba(255,248,240,.2);color:var(--warm);padding:14px 28px;border-radius:50px;font-size:.85em;letter-spacing:.5px;transition:all .2s;background:transparent;cursor:pointer;text-decoration:none;display:inline-block}
+.btn-outline:hover{border-color:var(--copper);color:var(--copper)}
+
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:0;max-width:600px;margin:0 auto;border-top:1px solid rgba(255,248,240,.08);padding-top:20px}
+.stat{text-align:center;padding:0 12px;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-val{font-family:'Playfair Display',Georgia,serif;font-size:1.8em;color:var(--copper);line-height:1.2}
+.stat-lbl{font-size:.6em;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+
+.section-decor{width:100%;max-width:800px;margin:0 auto 60px;display:block}
+.section-decor img{width:100%;height:auto;display:block}
+
+.section{padding:70px 24px;border-top:1px solid var(--border)}
+.section h2{font-size:2em;color:var(--warm);text-align:center;margin-bottom:4px}
+.section h2 em{font-style:normal;color:var(--copper)}
+.section .subtitle{text-align:center;color:var(--muted);font-size:.9em;margin-bottom:40px}
+
+.values-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;max-width:900px;margin:0 auto}
+.value-card{background:var(--slate2);border:1px solid var(--border);border-radius:10px;padding:24px 16px;text-align:center;transition:all .3s}
+.value-card:hover{border-color:var(--copper);transform:translateY(-3px)}
+.value-icon{font-size:1.8em;margin-bottom:8px}
+.value-card h3{font-size:.9em;color:var(--warm);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.value-card p{font-size:.78em;color:var(--muted);line-height:1.5;margin-bottom:0}
+
+.tiers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:0 auto}
+.tier-card{background:var(--slate2);border:1px solid var(--border);border-radius:12px;overflow:hidden;text-align:center;transition:all .3s}
+.tier-card:hover{border-color:var(--copper);transform:translateY(-3px)}
+.tier-top{padding:24px 16px 16px}
+.tier-level{font-size:.6em;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.tier-icon{font-size:3em;margin-bottom:8px}
+.tier-card h3{font-size:1.3em;color:var(--warm);letter-spacing:1px;margin-bottom:4px}
+.tier-phrase{font-size:.8em;color:var(--copper);font-style:italic;margin-bottom:12px}
+.tier-desc{font-size:.78em;color:var(--muted);line-height:1.6;padding:0 16px 16px}
+.tier-footer{font-size:.7em;color:var(--copper);text-transform:uppercase;letter-spacing:2px;padding:10px 16px;border-top:1px solid var(--border)}
+
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:900px;margin:0 auto}
+.chip{background:var(--slate2);border:1px solid var(--border);border-radius:6px;padding:12px 14px;cursor:pointer;transition:all .2s}
+.chip:hover{border-color:var(--copper)}
+.chip-name{font-size:.8em;font-weight:600;margin-bottom:4px;color:var(--fg)}
+.chip-badge{font-size:.55em;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 6px;border-radius:12px;display:inline-block}
+.badge-live{background:rgba(76,175,80,.12);color:var(--green)}
+.badge-build{background:rgba(184,115,51,.12);color:var(--copper)}
+.chip-addr{font-size:.55em;color:var(--muted);font-family:'SF Mono',Menlo,monospace;margin-top:3px}
+
+.modal-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--slate2);border:1px solid var(--border);border-radius:10px;padding:24px;max-width:440px;width:100%;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:1.1em;color:var(--copper);margin-bottom:10px}
+.modal p{font-size:.82em;color:var(--muted);line-height:1.7;margin-bottom:8px}
+.modal .addr{font-family:'SF Mono',Menlo,monospace;font-size:.72em;color:var(--amber)}
+.modal .link{display:inline-block;margin-top:10px;font-weight:600;font-size:.82em}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:1.1em;cursor:pointer}
+
+.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:800px;margin:0 auto}
+.pipe-step{background:var(--slate2);border:1px solid var(--border);border-radius:10px;padding:20px 12px;text-align:center;transition:all .3s}
+.pipe-step:hover{border-color:var(--copper);transform:translateY(-3px)}
+.pipe-icon{font-size:1.8em;margin-bottom:8px}
+.pipe-step h4{font-size:.85em;color:var(--warm);margin-bottom:4px}
+.pipe-step p{font-size:.68em;color:var(--muted);line-height:1.4;margin-bottom:0}
+
+.calc{max-width:460px;margin:0 auto;background:var(--slate2);border:1px solid var(--border);border-radius:10px;padding:24px;position:relative;overflow:hidden}
+.calc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--copper),var(--amber))}
+.calc h3{text-align:center;font-size:1.1em;color:var(--warm);margin-bottom:16px}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.calc-field label{font-size:.6em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;display:block}
+.calc-field input,.calc-field select{width:100%;background:var(--slate);border:1px solid var(--border);color:var(--fg);padding:8px;border-radius:5px;font-size:.85em;font-family:inherit}
+.calc-field input:focus,.calc-field select:focus{outline:none;border-color:var(--copper)}
+.calc-result{background:var(--slate);border:1px solid var(--border);border-radius:6px;padding:14px;margin-top:14px}
+.calc-row{display:flex;justify-content:space-between;padding:4px 0;font-size:.82em}
+.calc-row .lbl{color:var(--muted)}
+.calc-row .val{color:var(--fg);font-weight:600;font-family:'SF Mono',Menlo,monospace}
+.calc-row.neg .val{color:var(--red)}
+.calc-row.total{border-top:1px solid var(--border);margin-top:6px;padding-top:10px}
+.calc-row.total .val{font-size:1.1em;color:var(--copper)}
+.cta-row{display:flex;gap:10px;margin-top:16px}
+.cta-row .btn-copper,.cta-row .btn-outline{flex:1;text-align:center;padding:12px}
+
+.use-case-list{max-width:650px;margin:30px auto}
+.use-case{display:flex;gap:14px;align-items:flex-start;padding:20px 0;border-bottom:1px solid var(--border)}
+.use-case:last-child{border-bottom:none}
+.uc-icon{font-size:1.6em;flex-shrink:0;width:40px;text-align:center}
+.use-case h4{font-size:.95em;color:var(--warm);margin-bottom:4px}
+.use-case p{font-size:.78em;color:var(--muted);line-height:1.5;margin-bottom:0}
+
+.code-block{background:var(--slate2);border:1px solid var(--border);border-radius:6px;padding:16px;margin:20px auto;max-width:650px;overflow-x:auto}
+.code-block pre{font-family:'SF Mono',Menlo,monospace;font-size:.75em;color:var(--fg);line-height:1.7}
+.code-block .kw{color:var(--copper)}
+.code-block .fn{color:var(--amber)}
+.code-block .cm{color:var(--muted)}
+
+.precompile-table{max-width:800px;margin:24px auto;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.precompile-table .thead,.precompile-table .row{display:grid;grid-template-columns:70px 1fr 1fr 70px;gap:0}
+.precompile-table .thead{background:var(--slate3);font-size:.58em;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.precompile-table .thead div,.precompile-table .row div{padding:10px 12px;border-bottom:1px solid var(--border)}
+.precompile-table .row:last-child div{border-bottom:none}
+.precompile-table .row:hover{background:var(--slate2)}
+.precompile-table .addr{font-family:'SF Mono',Menlo,monospace;font-size:.78em;color:var(--copper)}
+.precompile-table .name{font-weight:600;font-size:.82em}
+.precompile-table .func{font-size:.75em;color:var(--muted)}
+.precompile-table .status{font-size:.72em;color:var(--green)}
+
+.story{max-width:650px;margin:0 auto;padding:50px 24px}
+.story p{font-size:.95em;line-height:2;margin-bottom:16px;color:var(--fg)}
+.story blockquote{border-left:2px solid var(--copper);padding-left:16px;margin:24px 0;font-family:'Playfair Display',Georgia,serif;font-size:1.3em;color:var(--copper);line-height:1.4}
+.compass{display:flex;justify-content:center;gap:24px;margin:32px auto;max-width:350px}
+.compass-item{text-align:center}
+.compass .letter{font-family:'Playfair Display',Georgia,serif;font-size:1.8em;color:var(--copper)}
+.compass .word{font-size:.6em;color:var(--muted);text-transform:uppercase;letter-spacing:2px}
+.coordinates{text-align:center;padding:32px 24px;border-top:1px solid var(--border)}
+.coordinates .coords{font-family:'SF Mono',Menlo,monospace;font-size:.82em;color:var(--copper);letter-spacing:2px}
+.coordinates .loc{font-size:.72em;color:var(--muted);margin-top:4px}
+.coordinates .tagline{margin-top:16px;font-style:italic;color:var(--muted)}
+.signature{font-size:.78em;color:var(--amber);margin-top:10px;letter-spacing:1px}
+
+.logo-banner{text-align:center;padding:48px 24px;border-top:1px solid var(--border)}
+.logo-banner-text{font-family:'Playfair Display',Georgia,serif;font-size:1.6em;color:var(--warm);letter-spacing:6px;margin-bottom:6px}
+.logo-banner-sub{font-size:.72em;color:var(--copper);text-transform:uppercase;letter-spacing:4px}
+.signature-block{margin-top:12px}
+.signature-name{font-family:'Playfair Display',Georgia,serif;font-size:.95em;color:var(--muted)}
+.signature-desc{font-size:.68em;color:var(--muted)}
+
+.footer{background:var(--slate2);border-top:1px solid var(--border);padding:40px 24px}
+.footer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1000px;margin:0 auto}
+.footer h4{font-size:.6em;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.footer ul{list-style:none;padding:0}
+.footer li{margin-bottom:5px}
+.footer a{font-size:.78em;color:var(--muted);transition:color .2s}
+.footer a:hover{color:var(--warm)}
+.footer-brand{font-family:'Playfair Display',Georgia,serif;font-size:1.1em;color:var(--warm);letter-spacing:1px;margin-bottom:6px}
+.footer-tagline{font-size:.72em;color:var(--copper);letter-spacing:2px}
+.footer-bottom{max-width:1000px;margin:24px auto 0;padding-top:16px;border-top:1px solid var(--border);text-align:center}
+.footer-bottom p{font-size:.68em;color:var(--muted)}
+.footer-uniform{width:100%;max-width:600px;margin:0 auto 16px;display:block}
+.footer-uniform img{width:100%;height:auto;display:block}
+
+@media(max-width:768px){
+  body{line-height:1.9;font-size:15px}
+  .hero h1{font-size:2.5em}
+  .values-grid{grid-template-columns:repeat(2,1fr)}
+  .tiers-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+  .pipeline{grid-template-columns:repeat(2,1fr)}
+  .calc-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .values-grid,.features-grid,.pipeline{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .stat{border-right:none}
+  .nav-links a{font-size:.55em;padding:3px 5px}
+}
+/* ── Mobile: consolidate header links into a dropdown ── */
+@media (max-width:768px){
+  .nav-toggle{display:block}
+  .nav-links{
+    display:none;
+    position:absolute;top:100%;right:0;left:0;
+    flex-direction:column;gap:0;
+    background:rgba(42,42,42,.99);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:8px 12px;
+    box-shadow:0 8px 24px rgba(0,0,0,.4);
+  }
+  .nav-links.open{display:flex}
+  .nav-links a{
+    font-size:.8em;
+    text-transform:none;
+    letter-spacing:.3px;
+    padding:12px 10px;
+    border-bottom:1px solid var(--border);
+    border-radius:0;
+  }
+  .nav-links a:last-child{border-bottom:none}
+  .nav-links a.active{background:transparent;color:var(--copper)}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <img src="/assets/waylogo.png" alt="WayChain" class="nav-logo-img">
+    <div class="nav-logo-text">WAYCHAIN</div>
+  </div>
+  <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleNav(this)">☰</button>
+  <div class="nav-links" id="navLinks">
+    <a href="#" class="active" data-page="home">Home</a>
+    <a href="/docs">Get Started</a>
+    <a href="/explorer">Explorer</a>
+    <a href="/badge">Badge</a>
+    <a href="/whitepaper">Whitepaper</a>
+    <a href="/wallet">Wallet</a>
+    <a href="/download">Get App</a>
+    <a href="/declaration">Declaration</a>
+    <a href="/journal">Binary Journal</a>
+    <a href="/locks">TrustlessLock</a>
+    <a href="/dex">DEX</a>
+    <a href="/tokens">Tokens</a>
+    <a href="/identity">Identity</a>
+    <a href="/defi">DeFi</a>
+    <a href="/realworld">Assets</a>
+    <a href="/protocol">Protocol</a>
+  </div>
+</nav>
+
+<div class="page active" id="home">
+  <section class="hero">
+    <img src="/assets/waychain-hero.jpg" alt="WayChain — Illuminate. Navigate. Arrive." class="hero-img">
+  </section>
+  <div class="hero-actions">
+    <div class="hero-ctas">
+      <a href="/explorer" class="btn-copper">Explore the Chain</a>
+      <a href="#protocol" class="btn-outline" data-page="protocol">Read the Protocol</a>
+    </div>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat-val">24</div><div class="stat-lbl">Live Features</div></div>
+      <div class="stat"><div class="stat-val">1s</div><div class="stat-lbl">Block Time</div></div>
+      <div class="stat"><div class="stat-val">200</div><div class="stat-lbl">Validators</div></div>
+      <div class="stat"><div class="stat-val">10008</div><div class="stat-lbl">Chain ID</div></div>
+    </div>
+  </div>
+
+  <section class="section">
+    <h2>Built to Guide. <em>Not to Control.</em></h2>
+    <div class="subtitle">Four principles that shape every decision on WayChain.</div>
+    <div class="values-grid">
+      <div class="value-card"><div class="value-icon"><img src="/assets/wayIconslantern.png" alt="Illuminate" width="48" height="48"></div><h3>Illuminate</h3><p>We make truth visible. You choose the path.</p></div>
+      <div class="value-card"><div class="value-icon"><img src="/assets/wayIconsanchor.png" alt="Immovable" width="48" height="48"></div><h3>Immovable</h3><p>Built on bedrock. Designed to endure.</p></div>
+      <div class="value-card"><div class="value-icon"><img src="/assets/wayIconsstar.png" alt="Tended" width="48" height="48"></div><h3>Tended</h3><p>Kept by stewards. Never owned.</p></div>
+      <div class="value-card"><div class="value-icon"><img src="/assets/wayIconscompass.png" alt="For All" width="48" height="48"></div><h3>For All</h3><p>Lighting the way home. Free to use. Free to become.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>24 Features Live</h2>
+    <div class="subtitle">Every feature verified on-chain. Click any chip for details.</div>
+    <div class="features-grid" id="featuresGrid"></div>
+      <img src="/assets/waydecor.png" alt="WayChain" class="section-decor">
+    </section>
+    <div class="modal-overlay" id="featureModal"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><h3 id="modalTitle"></h3><p id="modalDesc"></p><div class="addr" id="modalAddr"></div><a class="link" id="modalLink" href="#">Read in whitepaper →</a></div></div>
+
+  <section class="logo-banner">
+    <div class="logo-banner-text">WAYCHAIN</div>
+    <div class="logo-banner-sub">Illuminate the Way</div>
+    <div class="signature-block"><div class="signature-name">N. Tesla</div><div class="signature-desc">The Vision Continues.</div></div>
+  </section>
+</div>
+
+<div class="page" id="protocol">
+  <section class="section">
+    <h2>The Three Tiers</h2>
+    <div class="subtitle">The Verification Ladder. From individual to steward.</div>
+    <div class="tiers-grid">
+      <div class="tier-card"><div class="tier-top"><div class="tier-level">Level I</div><div class="tier-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#B87333" stroke-width="1.5"><rect x="8" y="6" width="8" height="12" rx="1"/><path d="M10 6V4h4v2"/><path d="M9 18l-1 3h8l-1-3"/><path d="M12 10v4"/><path d="M10 12h4"/></svg></div><h3>THE LANTERN</h3><div class="tier-phrase">The light begins.</div></div><div class="tier-desc">A verified human. A new beginning. No doxxing. Video or ZK verification. Simple data contracts. Full anonymity.</div><div class="tier-footer">A Verified Human. A New Beginning.</div></div>
+      <div class="tier-card"><div class="tier-top"><div class="tier-level">Level II</div><div class="tier-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#FFBF00" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 2 L14 12 L12 22"/><path d="M2 12 L12 14 L22 12"/><circle cx="12" cy="12" r="1" fill="#FFBF00"/></svg></div><h3>THE COMPASS</h3><div class="tier-phrase">Find your true north.</div></div><div class="tier-desc">100 WAY bond. Truth, Learn, Build, Serve. DeFi, validators, oracle participation. 2 curator endorsements required.</div><div class="tier-footer">Integrity Is Your Compass.</div></div>
+      <div class="tier-card"><div class="tier-top"><div class="tier-level">Level III</div><div class="tier-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M10 3h4l2 10-4 8-4-8 2-10z"/><rect x="8" y="13" width="8" height="2" rx="0.5"/><path d="M9 15l-2 6h10l-2-6"/><path d="M19 17c-2-3-2-7 0-10"/><path d="M5 17c2-3 2-7 0-10"/></svg></div><h3>THE LIGHTHOUSE</h3><div class="tier-phrase">Tend the light.</div></div><div class="tier-desc">5,000 WAY bond. 90-day term. Elected Curator. Can issue/revoke badges. Full accountability. Guides others. Leaves a legacy.</div><div class="tier-footer">Guide Others. Leave a Legacy.</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>The 3-Layer Deploy Gate</h2>
+    <div class="subtitle">Every action passes through three verification layers. No exceptions.</div>
+    <div class="tiers-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tier-card"><div class="tier-top"><div class="tier-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#B87333" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="2" fill="#B87333"/></svg></div><h3 style="font-size:1.1em">Layer 1: RPC</h3></div><div class="tier-desc">Rate limiting. Method filtering. Information disclosure minimization.</div></div>
+      <div class="tier-card"><div class="tier-top"><div class="tier-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#B87333" stroke-width="1.5"><rect x="8" y="6" width="8" height="12" rx="1"/><path d="M10 6V4h4v2"/><path d="M9 18l-1 3h8l-1-3"/><path d="M12 10v4"/><path d="M10 12h4"/></svg></div><h3 style="font-size:1.1em">Layer 2: Block</h3></div><div class="tier-desc">Consensus-level validation. Proposer verification. State consistency.</div></div>
+      <div class="tier-card"><div class="tier-top"><div class="tier-icon"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#B87333" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M12 8v4"/><path d="M10 10h4"/><circle cx="12" cy="12" r="3" fill="none" stroke="#B87333"/></svg></div><h3 style="font-size:1.1em">Layer 3: Opcode</h3></div><div class="tier-desc">Deploy gate precompile checks Dox_Dev badge level before execution.</div></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>27 Live Precompiles</h2>
+    <div class="subtitle">All live on chain ID 10008.</div>
+    <div class="precompile-table">
+      <div class="thead"><div>Address</div><div>Name</div><div>Function</div><div>Status</div></div>
+      <div class="row"><div class="addr">0x13</div><div class="name">DoxDevBadge</div><div class="func">Identity badge system</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x14</div><div class="name">BIJO</div><div class="func">Truth anchoring</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x15</div><div class="name">DeadMansSwitch</div><div class="func">Inheritance protocol</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x16</div><div class="name">BitcoinRegistry</div><div class="func">Bitcoin SPV</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x11</div><div class="name">AccountRecovery</div><div class="func">3-guardian recovery</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x0C</div><div class="name">OracleAggregator</div><div class="func">Price aggregation</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x0D</div><div class="name">OracleScheduler</div><div class="func">Oracle scheduling</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x20</div><div class="name">MRT Registry</div><div class="func">Mineral rights</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x18</div><div class="name">2WAY Vault</div><div class="func">Stablecoin CDP / stability layer</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x19</div><div class="name">2WAY Stability Pool</div><div class="func">LP rewards + liquidation absorption</div><div class="status">✅ Live</div></div>
+      <div class="row"><div class="addr">0x12</div><div class="name">StateRent</div><div class="func">State rent</div><div class="status">🔧 Building</div></div>
+    </div>
+  </section>
+</div>
+
+<div class="page" id="usecases">
+  <section class="section">
+    <h2>Use Cases</h2>
+    <div class="subtitle">Real-world impact. On-chain finality.</div>
+  </section>
+  <section class="section">
+    <h2 style="font-size:1.5em"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#B87333" stroke-width="1.5" style="vertical-align:middle;margin-right:8px"><path d="M12 4C8 4 6 8 6 12v4l-2 2h16l-2-2v-4c0-4-2-8-6-8z"/><path d="M9 18c0 1.7 1.3 3 3 3s3-1.3 3-3"/></svg> Mineral Rights Extinguishment</h2>
+    <div class="subtitle">Paying claim-holders to leave resources in the ground—permanently.</div>
+    <div class="pipeline">
+      <div class="pipe-step"><div class="pipe-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M9 18l-1 3h8l-1-3M4 4v14l4-4 4 4V4"/></svg></div><h4>1. Prove</h4><p>Title deed + GPS hashed to Binary Journal</p></div>
+      <div class="pipe-step"><div class="pipe-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#FFBF00" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 2 L14 12 L12 22"/><path d="M2 12 L12 14 L22 12"/><circle cx="12" cy="12" r="1" fill="#FFBF00"/></svg></div><h4>2. Price</h4><p>Oracle pulls spot → deducts fees → shows payout</p></div>
+      <div class="pipe-step"><div class="pipe-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M12 8v4"/><path d="M10 10h4"/></svg></div><h4>3. Escrow</h4><p>WAY locked → title NFT to Permanent Reserve</p></div>
+      <div class="pipe-step"><div class="pipe-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M12 2l2.5 6.5L21 9l-5 4.5 1.5 7L12 17l-5.5 3.5L8 13.5 3 9l6.5-.5L12 2z"/></svg></div><h4>4. Extinguish</h4><p>Immutable certificate. Resource is dead forever.</p></div>
+    </div>
+  </section>
+  <div class="calc">
+    <h3><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#B87333" stroke-width="1.5" style="vertical-align:middle;margin-right:6px"><path d="M12 2l2.5 6.5L21 9l-5 4.5 1.5 7L12 17l-5.5 3.5L8 13.5 3 9l6.5-.5L12 2z"/></svg> Calculate Your Payout</h3>
+    <div class="calc-grid">
+      <div class="calc-field"><label>Mineral</label><select id="mineral" onchange="updateCalc()"><option value="gold">Gold (troy oz)</option><option value="silver">Silver (troy oz)</option><option value="copper">Copper (lb)</option><option value="lithium">Lithium (kg)</option><option value="rare-earth">Rare Earth (kg)</option></select></div>
+      <div class="calc-field"><label>Volume (tons)</label><input type="number" id="volume" value="100" min="1" oninput="updateCalc()"></div>
+      <div class="calc-field"><label>Purity (%)</label><input type="number" id="purity" value="95" min="1" max="100" step="0.1" oninput="updateCalc()"></div>
+      <div class="calc-field"><label>Transport (km)</label><input type="number" id="distance" value="50" min="0" oninput="updateCalc()"></div>
+    </div>
+    <div class="calc-result">
+      <div class="calc-row"><span class="lbl">Spot Price</span><span class="val" id="spotPrice">Loading...</span></div>
+      <div class="calc-row"><span class="lbl">Gross Value</span><span class="val" id="grossValue">—</span></div>
+      <div class="calc-row neg"><span class="lbl">WayChain Fee (0.5%)</span><span class="val" id="fee">—</span></div>
+      <div class="calc-row neg"><span class="lbl">Extraction</span><span class="val" id="extraction">—</span></div>
+      <div class="calc-row neg"><span class="lbl">Transport</span><span class="val" id="transport">—</span></div>
+      <div class="calc-row total"><span class="lbl">Net Payout (USD)</span><span class="val" id="netUsd">—</span></div>
+      <div class="calc-row total"><span class="lbl">Net Payout (WAY)</span><span class="val" id="netWay">—</span></div>
+    </div>
+    <div class="cta-row"><button class="btn-copper" onclick="openDapp()">Request Extinguishment</button><button class="btn-outline" id="walletBtn" onclick="connectWallet()">Connect Dox_Dev L2</button></div>
+    <div id="wallet-widget" style="margin-top:14px"></div>
+  </div>
+  <section class="section">
+    <h2 style="font-size:1.4em">More Use Cases</h2>
+    <div class="use-case-list">
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 18h6"/><path d="M12 6v6"/><path d="M10 8l4 4"/></svg></div><div><h4>Mobile Wallet</h4><p>Native Ed25519 mobile wallet with send/receive, DEX integration, TrustlessLock views, and Energy Tide journaling. Available for iOS and Android.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M9 18l-1 3h8l-1-3M4 4v14l4-4 4 4V4"/></svg></div><div><h4>Energy Tide</h4><p>Personal journaling app anchored to Binary Journal. Every entry is a truth — timestamped, encrypted, permanent. The 3·6·9 protocol for self-sovereign knowledge.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><rect x="8" y="6" width="8" height="12" rx="1"/><path d="M10 6V4h4v2"/><path d="M9 18l-1 3h8l-1-3"/><path d="M12 10v4"/><path d="M10 12h4"/></svg></div><div><h4>Binary Journal</h4><p>Immutable truth anchoring. Attest any hash on-chain. Permanent, censorship-resistant records.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M12 4C8 4 6 8 6 12v4l-2 2h16l-2-2v-4c0-4-2-8-6-8z"/><path d="M9 18c0 1.7 1.3 3 3 3s3-1.3 3-3"/></svg></div><div><h4>Trustless Liquidity Locks</h4><p>Anti-rug LP locks with time/vesting schedules. 98/2 revenue share. Self-sustaining, no admin keys.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M12 4C8 4 6 8 6 12v4l-2 2h16l-2-2v-4c0-4-2-8-6-8z"/><path d="M9 18c0 1.7 1.3 3 3 3s3-1.3 3-3"/></svg></div><div><h4>Dead Man's Switch</h4><p>Inheritance protocol with heartbeat. Set heirs, stay alive, release keys when you can't.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 2 L14 12 L12 22"/><path d="M2 12 L12 14 L22 12"/><circle cx="12" cy="12" r="1" fill="#B87333"/></svg></div><div><h4>Professional Oracle Badges</h4><p>Geologists, lawyers, surveyors, engineers earn on-chain verification. Human-backed truth for DeFi, insurance, RWAs.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><path d="M12 2l2.5 6.5L21 9l-5 4.5 1.5 7L12 17l-5.5 3.5L8 13.5 3 9l6.5-.5L12 2z"/></svg></div><div><h4>Mineral Rights Tokenization</h4><p>Tokenize proven reserves. Register → verify → issue → monitor → transfer. Full lifecycle on-chain.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 2 L14 12 L12 22"/><path d="M2 12 L12 14 L22 12"/><circle cx="12" cy="12" r="1" fill="#B87333"/></svg></div><div><h4>Progressive Staking</h4><p>5-tier marginal APY: 15% / 8% / 4% / 2% / 1%. Anti-whale by design. Auto-compounding rewards.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><circle cx="12" cy="3" r="1.5" fill="#B87333"/><path d="M12 5v14"/><path d="M8 12c-3 0-5 2-5 4s2 4 5 4c2 0 3-1 4-2 1 1 2 2 4 2 3 0 5-2 5-4s-2-4-5-4"/></svg></div><div><h4>Account Recovery</h4><p>3-guardian social recovery. Guardians restore access without central authority. No seed phrase single point of failure.</p></div></div>
+      <div class="use-case"><div class="uc-icon"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#B87333" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 2 L14 12 L12 22"/><path d="M2 12 L12 14 L22 12"/><circle cx="12" cy="12" r="1" fill="#FFBF00"/></svg></div><div><h4>Oracle VRF + Time Execution</h4><p>Scheduled oracle triggers with verifiable randomness. RANDOM opcode (0xC4). 13 tests passing.</p></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="page" id="developers">
+  <section class="section">
+    <h2>Developers</h2>
+    <div class="subtitle">Build on the lighthouse. Native Go precompiles. 1-second finality.</div>
+    <h3 style="font-size:1.2em;margin-top:24px">Quick Start</h3>
+    <div class="code-block"><pre><span class="cm">// Connect to WayChain</span>
+client := waychain.Connect(<span class="str">"https://api.waychain.org"</span>)
+
+<span class="cm">// Check Dox_Dev badge level</span>
+level := client.Precompile(<span class="str">"0x13"</span>).Call(<span class="str">"checkLevel"</span>, deployerAddr)
+<span class="kw">if</span> level &lt; 2 {
+  <span class="kw">return</span> <span class="str">"Insufficient Dox_Dev level"</span>
+}
+
+<span class="cm">// Deploy contract (badge verified automatically)</span>
+tx := client.Deploy(contractCode, deployerAddr)</pre></div>
+    <h3 style="font-size:1.2em;margin-top:24px">RPC API</h3>
+    <div class="code-block"><pre><span class="cm"># Current block</span>
+curl -X POST https://api.waychain.org   -H <span class="str">"Content-Type: application/json"</span>   -d <span class="str">'{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'</span>
+
+<span class="cm"># WebSocket stream</span>
+wss://api.waychain.org/ws</pre></div>
+  </section>
+</div>
+
+<div class="page" id="about">
+  <section class="section">
+    <h2>About</h2>
+    <div class="subtitle">The light stays on.</div>
+  </section>
+  <section class="story">
+    <p>In 1901, Nikola Tesla began building the Wardenclyffe Tower—a structure meant to transmit wireless power and communication across the Atlantic. It was never finished. The tower was dismantled, the funding ran dry, and the world got radio towers instead of resonance.</p>
+    <blockquote>We built WayChain as the lighthouse Tesla never got to complete.</blockquote>
+    <p>We don't transmit power. We don't broadcast control. We illuminate truth—so you can navigate your own course.</p>
+    <p>One human. One voice. One chain. The light stays on.</p>
+    <div class="compass">
+      <div class="compass-item"><div class="letter">T</div><div class="word">Truth</div></div>
+      <div class="compass-item"><div class="letter">L</div><div class="word">Learn</div></div>
+      <div class="compass-item"><div class="letter">S</div><div class="word">Serve</div></div>
+      <div class="compass-item"><div class="letter">B</div><div class="word">Build</div></div>
+    </div>
+    <div class="coordinates">
+      <div class="coords">40.7128° N  74.0060° W</div>
+      <div class="loc">Wardenclyffe Tower, Shoreham, New York</div>
+      <div class="tagline">"The vision continues."</div>
+      <div class="signature">N. Tesla</div>
+    </div>
+  </section>
+</div>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div><div class="footer-brand">⛓ WAYCHAIN</div><div class="footer-tagline">ILLUMINATE. NAVIGATE. ARRIVE.</div><div style="font-size:.65em;color:var(--muted);margin-top:6px">EST. MMXXIV</div></div>
+    <div><h4>Protocol</h4><ul><li><a href="#protocol">Three Tiers</a></li><li><a href="#protocol">Deploy Gate</a></li><li><a href="#protocol">Precompiles</a></li></ul></div>
+    <div><h4>Use Cases</h4><ul><li><a href="#usecases">Mineral Rights</a></li><li><a href="#usecases">Binary Journal</a></li><li><a href="#usecases">Energy Tide</a></li><li><a href="#usecases">Mobile Wallet</a></li><li><a href="#usecases">TrustlessLock</a></li><li><a href="https://github.com/ThinkIbrokeIt/waychain-mobile">2WAY Stablecoin</a></li></ul></div>
+    <div><h4>Connect</h4><ul><li><a href="/explorer">Explorer</a></li><li><a href="/badge">Get Your Badge</a></li><li><a href="/wallet">Web Wallet</a></li><li><a href="https://github.com/ThinkIbrokeIt/waychain-mobile">Mobile Wallet</a></li><li><a href="/declaration">Declaration</a></li><li><a href="/journal">Binary Journal</a></li><li><a href="https://github.com/ThinkIbrokeIt/energy-tide">Energy Tide</a></li><li><a href="/locks">TrustlessLock</a></li><li><a href="/dex">DEX</a></li><li><a href="https://api.waychain.org/rpc">RPC</a></li></ul></div>
+  </div>
+  <div class="footer-bottom">
+  <img src="/assets/waychainuniform.png" alt="WayChain Uniform" class="footer-uniform">
+  <p><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#B87333" stroke-width="1.5" style="vertical-align:middle;margin-right:4px"><path d="M12 4C8 4 6 8 6 12v4l-2 2h16l-2-2v-4c0-4-2-8-6-8z"/><path d="M9 18c0 1.7 1.3 3 3 3s3-1.3 3-3"/></svg> The light stays on. 40.7128° N  74.0060° W</p>
+</div>
+</footer>
+
+<!-- Real Ed25519 wallet + RPC (issue #10). Replaces the fake connectWallet(). -->
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+<script src="/js/precompiles.js"></script>
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+<script src="/js/wallet-ui.js"></script>
+
+<style>
+.wc-card{background:rgba(0,0,0,0.03);border:1px solid var(--border);border-radius:12px;padding:14px 16px;max-width:420px}
+.wc-row{display:flex;justify-content:space-between;align-items:center}
+.wc-label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.wc-btn{background:var(--copper);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer}
+.wc-addr{font-family:monospace;font-size:12px;color:var(--fg);margin-top:8px;word-break:break-all}
+.wc-bal{font-size:20px;font-weight:600;color:var(--copper);margin-top:4px}
+</style>
+
+<script>
+const pages=['home','protocol','usecases','developers','about'];
+function showPage(id){pages.forEach(p=>{document.getElementById(p).classList.toggle('active',p===id);document.querySelector(`.nav-links a[data-page="${p}"]`)?.classList.toggle('active',p===id)});window.scrollTo(0,0)}
+document.querySelectorAll('[data-page]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();showPage(el.dataset.page);closeNav()});
+function toggleNav(btn){const n=document.getElementById('navLinks');const open=n.classList.toggle('open');btn.setAttribute('aria-expanded',open);btn.textContent=open?'✕':'☰';}
+function closeNav(){const n=document.getElementById('navLinks');n.classList.remove('open');const b=document.querySelector('.nav-toggle');if(b){b.setAttribute('aria-expanded','false');b.textContent='☰';}}
+// Close dropdown when a real link is tapped or on outside click
+document.getElementById('navLinks').addEventListener('click',e=>{if(e.target.tagName==='A'&&e.target.getAttribute('href')?.startsWith('/'))closeNav();});
+document.addEventListener('click',e=>{if(!e.target.closest('.nav'))closeNav();});
+
+const FEATURES=[
+  {name:"Mobile Wallet",status:"live",addr:"—",desc:"Ed25519 mobile wallet for WayChain. Key generation, send/receive, DEX swaps, TrustlessLock, Energy Tide journaling. Expo app for iOS/Android.",link:"/wallet"},
+  {name:"Energy Tide",status:"live",addr:"0x14",desc:"Journaling app that anchors truths via Binary Journal. Write, encrypt, timestamp — every entry permanent on-chain.",link:"/journal"},
+  {name:"Dox_Dev Badges",status:"live",addr:"0x13",desc:"Soulbound identity badges gate contract deployment, validator admission, oracle participation, and governance voting.",link:"/whitepaper/#philosophy"},
+  {name:"Binary Journal (BIJO)",status:"live",addr:"0x14",desc:"Immutable truth anchoring. Attest hashes on-chain. Permanent, censorship-resistant.",link:"/whitepaper/#architecture"},
+  {name:"Dead Man's Switch",status:"live",addr:"0x15",desc:"Inheritance protocol. Set heirs, heartbeat periodically, release keys when heartbeat stops.",link:"/whitepaper/#overview"},
+  {name:"Progressive Staking",status:"live",addr:"0x21-0x25",desc:"5-tier marginal APY: 15% / 8% / 4% / 2% / 1%. Anti-whale by design.",link:"/whitepaper/#philosophy"},
+  {name:"TaskRegistry",status:"live",addr:"0x23",desc:"Claimable WAY for verified professional work — geologists, lawyers, surveyors, engineers earn for oracle attestations and bug bounties.",link:"/docs/#0x23"},
+];
+const grid=document.getElementById('featuresGrid');
+FEATURES.forEach(f=>{const c=document.createElement('div');c.className='chip';c.innerHTML=`<div class="chip-name">${f.name}</div><span class="chip-badge badge-${f.status}">${f.status==='live'?'Live':'Building'}</span>${f.addr!=='—'?`<div class="chip-addr">${f.addr}</div>`:''}`;c.onclick=()=>openModal(f);grid.appendChild(c)});
+const viewAll=document.createElement('div');
+viewAll.style.cssText='text-align:center;margin-top:24px';
+viewAll.innerHTML=`<a href="/whitepaper/#architecture" class="link" style="font-size:.85em;color:var(--copper);font-weight:600">View All 24 Features →</a>`;
+grid.parentNode.appendChild(viewAll);
+function openModal(f){document.getElementById('modalTitle').textContent=f.name;document.getElementById('modalDesc').textContent=f.desc;document.getElementById('modalAddr').textContent=f.addr!=='—'?`Precompile: ${f.addr}`:'';document.getElementById('modalLink').href=f.link;document.getElementById('featureModal').classList.add('open')}
+function closeModal(){document.getElementById('featureModal').classList.remove('open')}
+document.getElementById('featureModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+
+const PRICES={gold:2340,silver:29.5,copper:4.2,lithium:14.5,'rare-earth':85};
+const UNITS={gold:'oz t',silver:'oz t',copper:'lb',lithium:'kg','rare-earth':'kg'};
+const EXTRACTION={gold:450,silver:35,copper:8,lithium:120,'rare-earth':200};
+async function updateCalc(){const m=document.getElementById('mineral').value;const vol=+document.getElementById('volume').value||0;const p=(+document.getElementById('purity').value||0)/100;const d=+document.getElementById('distance').value||0;const spot=PRICES[m];const u=(m==='gold'||m==='silver')?vol*32150.7*p:(m==='copper'?vol*p:vol*1000*p);const gross=u*spot;const fee=gross*0.005;const ex=vol*(EXTRACTION[m]||100);const tr=vol*d*0.15;const net=gross-fee-ex-tr;document.getElementById('spotPrice').textContent=`$${spot.toLocaleString()}/${UNITS[m]}`;document.getElementById('grossValue').textContent=`$${gross.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('fee').textContent=`-$${fee.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('extraction').textContent=`-$${ex.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('transport').textContent=`-$${tr.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('netUsd').textContent=`$${net.toLocaleString(undefined,{maximumFractionDigits:0})}`;document.getElementById('netWay').textContent=`${(net/0.05).toLocaleString(undefined,{maximumFractionDigits:0})} WAY`}
+function openDapp(){alert('Extinguishment dApp requires Dox_Dev Level 2 verification.')}
+function connectWallet(){
+  if(!window.WayChainWallet){alert('Wallet module not loaded.');return;}
+  const btn=document.getElementById('walletBtn');
+  if(btn)btn.textContent='Connecting...';
+  WayChainWallet.connect('walletBtn').then(acc=>{
+    // real read against the live node
+    if(window.WayChainRPC){
+      WayChainRPC.getBalance(acc.publicKey).then(b=>{
+        console.log('[waychain] connected',acc.address,'balance',b);
+      }).catch(e=>console.warn('[waychain] balance read failed',e.message));
+    }
+  }).catch(e=>{if(btn)btn.textContent='Connect';alert('Wallet error: '+e.message);});
+}
+updateCalc();
+</script>
+</body>
+</html>

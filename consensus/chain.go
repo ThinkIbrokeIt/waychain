@@ -8,8 +8,8 @@ import (
 
 	"math/big"
 
-	"github.com/wink/waychain-consensus/evm"
-	"github.com/wink/waychain-consensus/store"
+	"github.com/ThinkIbrokeIt/waychain-consensus/evm"
+	"github.com/ThinkIbrokeIt/waychain-consensus/store"
 )
 
 // Transaction is a WayChain transaction
@@ -160,7 +160,7 @@ func NewChain() *Chain {
 	state := evm.NewStateDB()
 	// Fund some test accounts
 	funder := state.GetOrCreateAccount("funder")
-	funder.Balance = new(big.Int).Mul(big.NewInt(1_000_000), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)) // 1M WAY
+	funder.Balance.SetUint64(1_000_000_000)
 
 	evmEngine := evm.NewEVM(state, evm.ConsensusLane, 1, uint64(time.Now().Unix()), 10008, 30_000_000, "")
 
@@ -170,7 +170,7 @@ func NewChain() *Chain {
 		EVM:     evmEngine,
 		Blocks:  make([]*BlockWithTx, 0),
 		Height:  0,
-		Staking: NewProgressiveStaking(100000), // 100K tokens/epoch reward pool
+		Staking: NewProgressiveStaking(DefaultAnnualInflationPct, DefaultBlockTimeSec, EpochLength), // 7% of supply/year, 3s blocks, 10000-block epochs
 	}
 
 	// Initialize precompile state at genesis
@@ -239,6 +239,14 @@ func (c *Chain) InitPrecompiles() {
 	var st [32]byte
 	new(big.Int).SetUint64(startTime).FillBytes(st[:])
 	endowAcc.Storage[[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}] = st
+
+	// ── WIFR Gauntlet (0x21): create account and initialize pools ──
+	wifrAddr := evm.PrecompileAddrHex(0x21)
+	wifrAcc := c.State.GetOrCreateAccount(wifrAddr)
+	_ = wifrAcc
+	if err := (&evm.WIFRGantletRewards{State: c.State}).Initialize(); err != nil {
+		panic(err)
+	}
 }
 
 func (c *Chain) issueGenesisBadge(badgeAcc *evm.Account, developer string, level uint8, validityPeriod uint64) {
@@ -297,6 +305,9 @@ func (c *Chain) OpenStore(dbPath string) (*store.Store, error) {
 		c.Height = s.Height()
 		// Rebuild EVM with loaded state
 		c.EVM = evm.NewEVM(state, evm.ConsensusLane, c.Height+1, uint64(time.Now().Unix()), 10008, 30_000_000, "")
+		if err := (&evm.WIFRGantletRewards{State: c.State}).EnsureInitialized(); err != nil {
+			return nil, fmt.Errorf("chain: init wifr: %w", err)
+		}
 
 		// Log latest blocks
 		blocks, _ := s.LatestBlocks(5)
@@ -522,8 +533,13 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 		}
 	}
 
-	// Distribute staking rewards for this block
-	if c.Staking != nil && c.Staking.BlockRewardLimit > 0 {
+	// Rollover the per-epoch emission cap when a new epoch begins.
+	if c.Staking != nil && c.Staking.EpochLength > 0 && c.Height%c.Staking.EpochLength == 0 {
+		c.Staking.RolloverEpoch()
+	}
+
+	// Distribute staking rewards for this block (anchored to the 7% annual cap).
+	if c.Staking != nil {
 		rewards := c.Staking.DistributeBlockReward(c.Height)
 		for id, amount := range rewards {
 			if amount > 0 {

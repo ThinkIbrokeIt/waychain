@@ -422,21 +422,19 @@ func TestCrossChainIsPrecompileRange(t *testing.T) {
 	if !IsPrecompile(0x1F) {
 		t.Fatal("0x1F should be a precompile")
 	}
-	if IsPrecompile(0x21) {
-		if _, ok := PrecompilesTable[0x21]; !ok {
-			t.Fatal("0x21 Keccak256 precompile expected but not registered")
-		}
+	if !IsPrecompile(0x21) {
+		t.Fatal("0x21 should be a precompile")
 	}
 	if IsPrecompile(0x0B) {
 		t.Fatal("0x0B should NOT be a precompile")
 	}
 	// Verify all known precompiles
-	for addr := byte(0x0C); addr <= 0x21; addr++ {
+	for addr := byte(0x0C); addr <= 0x20; addr++ {
 		if !IsPrecompile(addr) {
 			t.Fatalf("0x%02X should be a precompile", addr)
 		}
 	}
-	t.Logf("✅ Precompile range 0x0C-0x21 verified")
+	t.Logf("✅ Precompile range 0x0C-0x1F verified")
 }
 
 func TestCrossChainStorageKeyDeterministic(t *testing.T) {

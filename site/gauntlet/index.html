@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIFR Gauntlet — Certification Bootcamp</title>
+<meta property="og:title" content="WIFR Gauntlet — WayChain Certification Bootcamp">
+<meta property="og:description" content="WIFR Gauntlet is the WayChain certification bootcamp and reveal. Verify live state before treating pool figures as static copy.">
+<meta property="og:image" content="https://waychain.org/gauntlet/wifr-reveal-thumb.jpg">
+<meta property="og:video" content="https://waychain.org/gauntlet/wifr-reveal.mp4">
+<meta property="og:video:width" content="1920">
+<meta property="og:video:height" content="1080">
+<meta name="twitter:card" content="player">
+<meta name="twitter:title" content="WIFR Gauntlet Reveal">
+<meta name="twitter:description" content="WIFR Gauntlet is the WayChain certification bootcamp and reveal.">
+<meta name="twitter:player" content="https://waychain.org/gauntlet/wifr-reveal.mp4">
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
+.container { max-width: 700px; margin: 0 auto; }
+.hero {
+  text-align: center;
+  padding: 25px;
+  background: #1e1e1e;
+  border: 2px solid var(--amber);
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+.hero h1 { color: var(--copper); margin-bottom: 10px; }
+.hero .countdown { color: var(--green); font-size: 1.2em; font-weight: 600; margin: 15px 0; }
+
+.tier {
+  background: #1e1e1e;
+  border: 1px solid var(--copper);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+}
+.tier h3 { color: var(--amber); margin-bottom: 10px; }
+.tier .reward { color: var(--green); font-weight: 600; }
+.tier ul { margin: 10px 0 0 20px; }
+.tier li { margin: 5px 0; font-size: 14px; }
+
+.prize-pool {
+  background: #1a1a1a;
+  border: 1px solid var(--copper);
+  border-radius: 6px;
+  padding: 15px;
+  margin: 15px 0;
+}
+.btn { 
+  background: var(--copper);
+  color: var(--slate);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-block;
+  text-decoration: none;
+  margin: 10px 5px;
+}
+.btn.outline {
+  background: transparent;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+}
+
+.legend { background: #1a1a1a; padding: 15px; border-radius: 6px; margin-top: 20px; }
+.legend h4 { color: var(--amber); margin-bottom: 8px; }
+.legend p { font-size: 13px; color: #9A9A9A; }
+
+.audit-status {
+  background: #1a1a18;
+  border: 1px solid var(--amber);
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.audit-status p:first-child {
+  color: var(--amber);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h1>WIFR Gauntlet</h1>
+    <p>A 3-tier certification bootcamp. Earn WAY. Become a WayChain Oracle Professional.</p>
+    <div class="countdown">🥇 First 20 Grandmasters: 100,000 WAY Prize Pool</div>
+    <a href="/gauntlet/leaderboard" class="btn">View Leaderboard</a>
+    <a href="/gauntlet/start" class="btn outline">Start Gauntlet</a>
+  </div>
+
+  <!-- Reveal Video -->
+  <div id="reveal-section" style="max-width:720px;margin:0 auto 30px">
+    <video id="reveal-video" controls poster="/gauntlet/wifr-reveal-thumb.jpg" style="width:100%;border-radius:8px;border:1px solid var(--copper)" preload="metadata">
+      <source src="/gauntlet/wifr-reveal.mp4" type="video/mp4">
+    </video>
+    <p style="text-align:center;margin-top:8px;font-size:14px;color:var(--copper)">🎬 WIFR Reveal — certification bootcamp on WayChain</p>
+  </div>
+
+  <!-- Audit Status -->
+  <div class="audit-status">
+    <p>⏳ Live Verification</p>
+    <p>The Gauntlet quests resolve against the live WayChain runtime. Verify current state on RPC rather than relying on static copy or stale pool claims.</p>
+  </div>
+
+  <div class="tier">
+    <h3>🥇 Tier 1: Pioneer</h3>
+    <p>Bridge, sign, read price. Prove WayChain interaction and keep claims grounded in the live runtime.</p>
+    <div class="reward">Reward: 50 WAY (+ 2x if Early Worm)</div>
+    <ul>
+      <li>Burn 1 WIFR → CrossChainAttestation</li>
+      <li>Sign challenge message (wallet proof)</li>
+      <li>Call oracle for WIFR price attestation</li>
+    </ul>
+    <p><strong>Unlock:</strong> Specialist eligibility + Pioneer Discord role</p>
+  </div>
+
+  <div class="tier">
+    <h3>🥈 Tier 2: Specialist</h3>
+    <p>Deploy, attest, integrate. Show builder skills.</p>
+    <div class="reward">Reward: 200 WAY (+ 2x if Early Worm)</div>
+    <ul>
+      <li>Deploy contract with audited template</li>
+      <li>Write data attestation to registry</li>
+      <li>Integrate oracle in contract + emit event</li>
+    </ul>
+    <p><strong>Unlock:</strong> Oracle Pro eligibility + Specialist role + dev channels</p>
+  </div>
+
+  <div class="tier">
+    <h3>🥉 Tier 3: Oracle Professional</h3>
+    <p>Run oracle node. Become certified data authority.</p>
+    <div class="reward">Reward: 5,000 WAY (first 20) / 1,000 WAY (others)</div>
+    <ul>
+      <li>Run Oracle Reporter 24h (stake test WAY)</li>
+      <li>Cross-attest with peers (accuracy check)</li>
+      <li>Submit governance proposal + proof</li>
+    </ul>
+    <p><strong>Grandmaster Bonuses:</strong></p>
+    <ul>
+      <li>Revenue share on oracle fees (permanent)</li>
+      <li>2x governance vote power</li>
+      <li>Whitelist for mainnet oracle nodes</li>
+      <li>Oracle Professional Discord tag + dev roundtable</li>
+    </ul>
+  </div>
+
+  <div class="prize-pool">
+    <strong>Prize Pools:</strong><br>
+    Pioneer Pool: 1,000,000 WAY<br>
+    Specialist Pool: 200,000 WAY<br>
+    Grandmaster Pool: 100,000 WAY (first 20 only)
+  </div>
+
+  <div class="legend">
+    <h4>The Race is On</h4>
+    <p>24-hour uptime test prevents bot spam. First 20 to complete Tier 3 become legendary Genesis Oracles, forever memorialized on-chain.</p>
+    <p style="margin-top:8px"><a href="/wifr" style="color:var(--copper)">← Back to WIFR</a></p>
+  </div>
+</div>
+</body>
+</html>

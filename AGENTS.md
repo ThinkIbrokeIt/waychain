@@ -1,50 +1,78 @@
-# WayChain — Umbrella / Archive Index
+# WayChain — Agent entry (ONE TREE)
 
-> **⚠️ NOT THE SOURCE OF TRUTH.**
+> **Read `REPO_LAW.md` first. It is binding.**
 >
-> This monorepo folder is a **historical umbrella** and partially dirty local mirror.
-> Do **not** edit protocol code here. Do **not** treat this AGENTS.md as protocol truth.
+> Working tree: `/home/wink/projects/waychain` · Remote: `ThinkIbrokeIt/waychain`
+>
+> **Do not edit** `waychain-consensus` / `waychain-site` / `waychain-mobile` / sibling clones for product work. Those are READ-ONLY jail mirrors after the combine (issue #1).
 
-## Canonical sources (2026-07-15 freeze — consensus issue #23)
+---
 
-| Layer | Canonical home | Branch |
-|---|---|---|
-| **Protocol code** | [`ThinkIbrokeIt/waychain-consensus`](https://github.com/ThinkIbrokeIt/waychain-consensus) | `master` |
-| **Protocol machine SoT** | `waychain-consensus/protocol-manifest.json` (generated from `evm/precompiles.go`) | — |
-| **Live deploy** | **AWS `3.89.116.45`** `/usr/local/bin/waychain` + `/home/ubuntu/.waychain/chain.db` | service `waychain.service` |
-| **Site** | [`ThinkIbrokeIt/waychain-site`](https://github.com/ThinkIbrokeIt/waychain-site) — local symlink `site/` → `../waychain-site` | **`main`** (not master) |
-| **Mobile** | [`ThinkIbrokeIt/waychain-mobile`](https://github.com/ThinkIbrokeIt/waychain-mobile) | `main` |
-| **Operator releases** | [`ThinkIbrokeIt/waychain-client`](https://github.com/ThinkIbrokeIt/waychain-client) | release tags from consensus |
-| **Contracts** | [`ThinkIbrokeIt/waychain-contracts`](https://github.com/ThinkIbrokeIt/waychain-contracts) | **LEGACY only** |
-| **Blueprint / plan** | `projects/WAYCHAIN_BLUEPRINT` | design, not live |
-| **Work tracking** | GitHub Issues on the repo that owns the layer | not chat |
-
-## Hard facts (do not re-derive from this tree)
-
-- **27 precompiles** at **0x0C–0x26** (not 20/21/22)
-- **0x21 = WIFRGantletRewards** — **not** Keccak256
-- Selectors = `sha256(signature)[:4]` everywhere
-- EOA account key / `tx.from` / `way_getBalance` = **full 64-hex** ed25519 pubkey; 20-byte is display-only
-- Precompile calldata address args = **raw 20-byte**
-- coded ≠ deployed ≠ live — AWS binary hash proves deploy; client DOM proves user-facing live
-
-## Local layout (convenience only)
+## Map
 
 ```
 waychain/
-├── AGENTS.md          ← this file (umbrella demotion notice)
-├── consensus/         ← STALE/DIRTY local mirror — use waychain-consensus repo
-├── site/              ← symlink → ../waychain-site (edit there)
-├── contracts/         ← LEGACY accession of Solidity
-├── blueprint/         ← partial copy; prefer WAYCHAIN_BLUEPRINT
-└── ...
+├── REPO_LAW.md              ← BINDING law (one tree, three states, issue-first)
+├── AGENTS.md                ← you are here
+├── protocol-manifest.json   ← machine SoT (27 precompiles 0x0C–0x26)
+├── consensus/               ← Go L1 (canonical protocol)
+│   ├── evm/precompiles.go
+│   ├── scripts/audit-consistency.sh
+│   └── …
+├── site/                    ← waychain.org (Vercel root = site/)
+├── mobile/                  ← Expo wallet (Expo root = mobile/)
+├── contracts/               ← LEGACY Solidity (do not deploy as protocol)
+├── blueprint/               ← plan/spec (not live)
+├── docs/ scripts/ assets/   ← supporting
+└── …
 ```
 
-## What agents must do
+## Canonical facts
 
-1. Work in the **canonical GitHub repo** for the layer you touch.
-2. File a **GitHub issue** before drift-class fixes (address form, counts, selectors).
-3. After protocol merges, **redeploy AWS** and record binary sha256 (issue #27).
-4. Never update this monorepo’s `consensus/` and claim the chain was fixed.
+| Fact | Value |
+|---|---|
+| Chain ID | 10008 (`0x2718`) |
+| Precompiles | **27** @ **0x0C–0x26** |
+| 0x21 | **WIFRGantletRewards** (not Keccak) |
+| Selectors | `sha256(sig)[:4]` |
+| EOA key / balance / tx.from | **64-hex** pubkey; 20-byte display only |
+| Live node | AWS **3.89.116.45** `waychain.service` |
+| Public RPC | `https://api.waychain.org` |
+| Public site | `https://waychain.org` |
 
-Parent tracking: ThinkIbrokeIt/waychain-consensus#23
+## Commands (from monorepo root)
+
+```bash
+# Protocol
+cd consensus && go test ./...
+cd consensus && bash scripts/audit-consistency.sh
+
+# Site count SoT
+cd site && bash scripts/check-precompile-count.sh
+
+# Mobile mdrifts
+cd mobile && npm test
+```
+
+## Workflow
+
+1. Issue on `ThinkIbrokeIt/waychain`
+2. Branch `fix/…` or `feat/…`
+3. Edit only under this tree
+4. PR + CI
+5. If protocol change claims deploy → AWS binary sha on the issue
+6. Live claim → client path proof
+
+## Coded ≠ deployed ≠ live
+
+Never collapse them. AWS sha proves deployed. User client proves live.
+
+## Refuse these
+
+- `git clone` a new waychain satellite for “cleanliness”
+- Feature work in old standalone repos
+- Treating monorepo `blueprint/` as live chain
+- Deploying `contracts/` as WayChain mainnet protocol
+- Hardcoding marketing tier numbers as on-chain truth without asking
+
+**Doctrine:** truth first · one voice per layer · no silent drift · REPO_LAW supersedes chat memory.

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WIFR Bridge — Burn & Claim</title>
+  <style>
+    :root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+    body { background:var(--slate); color:var(--warm); font-family:'Inter',sans-serif; padding:40px 20px; }
+    .container { max-width:600px; margin:0 auto; }
+    .card { background:#1e1e1e; border:1px solid var(--copper); border-radius:8px; padding:30px; margin-bottom:20px; }
+    h2 { color:var(--copper); margin-bottom:15px; }
+    .btn { background:var(--copper); color:var(--slate); border:none; padding:12px 24px; border-radius:6px; cursor:pointer; font-weight:600; margin:5px; display:inline-block; text-decoration:none; }
+    .btn.outline { background:transparent; border:1px solid var(--copper); color:var(--copper); }
+    .status { background:#1a1a1a; padding:15px; border-radius:4px; margin-top:15px; font-size:14px; }
+    input { width:100%; padding:12px; background:#111; border:1px solid var(--amber); border-radius:4px; color:var(--warm); margin:10px 0; }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h2>🔥 Burn WIFR to Claim WAY</h2>
+      <p>Burn exactly 1 WIFR to receive Pioneer Badge + 50 WAY.</p>
+      <input type="text" id="solanaAddr" placeholder="WIFR address (for bonus tracking)">
+      <input type="text" id="waychainAddr" placeholder="WayChain address (derived)">
+      <button class="btn" onclick="initiateBurn()">Connect Phantom & Burn</button>
+      <button class="btn outline" onclick="connectWallet()">Connect WayChain Wallet</button>
+      <div id="status" class="status" style="display:none;"></div>
+    </div>
+    
+    <div class="card">
+      <h2>🧪 Early Worm Bonus</h2>
+      <p>First 10,000 Pioneer badge holders get 2x WAY reward.</p>
+      <div id="counter" style="color:var(--amber); font-weight:600;">Loaded 1,234 / 10,000</div>
+    </div>
+  </div>
+  
+  <script>
+    async function connectWallet() {
+      if(!window.WayChainWallet){alert('Wallet module not loaded.');return;}
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      try {
+        const acc = await WayChainWallet.connect();
+        status.textContent = 'Connected: ' + acc.address.slice(0,12) + '…';
+      } catch(e) {
+        status.textContent = 'Wallet error: ' + e.message;
+      }
+    }
+    
+    async function initiateBurn() {
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      status.innerHTML = '<span style="color:var(--amber)">Step 1: Connect Phantom wallet...</span><br>Step 2: Burn 1 WIFR<br>Step 3: Receive CrossChainAttestation<br>Step 4: Claim on WayChain';
+    }
+  </script>
+  <!-- Real wallet + RPC (issue #10) -->
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+  <script src="/js/precompiles.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/rpc.js"></script>
+</body>
+</html>

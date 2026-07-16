@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "WayChain Mobile",
+    "slug": "waychain-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "runtimeVersion": "1.0.0",
+    "sdkVersion": "53.0.0",
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "android": {
+      "package": "org.waychain.mobile",
+      "versionCode": 1
+    },
+    "ios": {
+      "bundleIdentifier": "org.waychain.mobile"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4d21c7ab-45bf-4e61-af0e-0379a69aaeb2"
+      }
+    },
+    "owner": "winc_hood"
+  }
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIFR Quests — Earn Free WAY</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { 
+  background: var(--slate); 
+  color: var(--warm); 
+  padding: 40px 20px;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.hero {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid var(--amber);
+}
+.hero h2 { color: var(--amber); margin-bottom: 10px; }
+.hero .pool { color: var(--green); font-size: 1.5em; }
+.hero .cta { margin-top: 15px; }
+
+.quest { 
+  background: #1e1e1e;
+  border: 1px solid var(--copper);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 15px 0;
+  transition: border-color 0.3s;
+}
+.quest.completed { border-color: var(--green); }
+.quest h3 { color: var(--amber); margin-bottom: 10px; }
+.quest .reward { color: var(--green); font-weight: 600; }
+.badge { 
+  display: inline-block;
+  background: var(--amber);
+  color: var(--slate);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  margin-left: 8px;
+}
+.btn { 
+  background: var(--copper);
+  color: var(--slate);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  margin-top: 10px;
+}
+.btn.secondary {
+  background: transparent;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+}
+.note { color: #9A9A9A; font-size: 12px; margin-top: 5px; }
+.total-reward {
+  text-align: center;
+  padding: 20px;
+  background: #1a1a1a;
+  border-radius: 8px;
+  margin: 20px 0;
+  color: var(--amber);
+}
+.gauntlet {
+  background: #1e1e1e;
+  border: 2px solid var(--green);
+  border-radius: 8px;
+  padding: 25px;
+  margin: 25px 0;
+  text-align: center;
+}
+.gauntlet h3 { color: var(--green); margin-bottom: 10px; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <h2>WAY Quest Pool</h2>
+    <div class="pool">1,000,000+ WAY</div>
+    <p style="margin-top:10px;font-size:14px">Complete quests to claim WAY. Keep your WIFR.</p>
+    <div class="cta">
+      <a href="/gauntlet" class="btn" style="background:var(--green)">Enter the Gauntlet</a>
+      <a href="/gauntlet/leaderboard" class="btn secondary">View Leaderboard</a>
+    </div>
+  </div>
+
+  <div class="gauntlet">
+    <h3>🥇 The Certification Gauntlet</h3>
+    <p>3 tiers. Soulbound badges. First 20 Grandmasters earn 5,000 WAY + revenue share.</p>
+    <a href="/gauntlet" class="btn">Start Certification</a>
+  </div>
+
+  <div class="quest">
+    <h3>Bridge Builder <span class="badge">1,000 WAY</span></h3>
+    <p>Use the burn bridge. Prove you burned WIFR to claim WAY. No purchase needed.</p>
+    <a href="/wifr/bridge" class="btn">Use Burn Bridge</a>
+    <p class="note">Quest rewards resolve against the live WayChain runtime. Keep only what you need for the path you’re taking.</p>
+  </div>
+
+  <div class="quest">
+    <h3>Testnet Warrior <span class="badge">1,000 WAY</span></h3>
+    <p>Deploy on WayChain testnet. Submit transaction hash.</p>
+    <button class="btn secondary">Submit Proof</button>
+  </div>
+
+  <div class="quest">
+    <h3>Oracle Attester <span class="badge">500 WAY</span></h3>
+    <p>Submit first oracle attestation on mainnet. Requires Dox_Dev L2+.</p>
+    <button class="btn secondary">Verify Badge</button>
+    <p class="note">Badge verification required before starting.</p>
+  </div>
+
+  <div class="quest">
+    <h3>Meme Captain <span class="badge">2,000 WAY</span></h3>
+    <p>Best WIFR meme posted. Tag @waychain. No NSFW. Monthly cap 5.</p>
+    <button class="btn secondary">Submit Meme</button>
+  </div>
+
+  <div class="quest">
+    <h3>Social Signal <span class="badge">100 WAY</span></h3>
+    <p>Retweet WIFR reveal. DM proof on X. Monthly cap 10.</p>
+    <button class="btn secondary">Verify</button>
+  </div>
+
+  <div class="quest">
+    <h3>Early Worm <span class="badge">2x Bonus</span></h3>
+    <p>First 10,000 to claim WAY get 2x from bonus pool (100k WAY).</p>
+    <p class="note">Automatic bonus on first quest completion.</p>
+  </div>
+
+  <div class="total-reward">
+    Total Pool: 1,000,000 WAY (guaranteed) + bonus for early worms
+  </div>
+</div>
+</body>
+</html>

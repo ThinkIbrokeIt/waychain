@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Journal — WayChain Agora</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:18px}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);text-decoration:none}
+a:hover{color:var(--warm)}
+.nav{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.2em;color:var(--warm);letter-spacing:1px}
+.nav-logo span{color:var(--copper)}
+.nav-links{display:flex;gap:4px}
+.nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px}
+.nav-links a:hover{color:var(--warm);background:var(--slate2)}
+.hero{text-align:center;padding:80px 24px 60px;background:linear-gradient(180deg,#1a1a2e 0%,var(--slate) 100%)}
+.hero h1{font-size:3em;color:var(--warm);margin-bottom:8px;letter-spacing:2px}
+.hero .tagline{font-size:.8em;color:var(--copper);letter-spacing:4px;text-transform:uppercase}
+.hero .divider{width:50px;height:1px;background:var(--copper);margin:12px auto 16px}
+.hero p{color:var(--muted);font-size:.85em;max-width:500px;margin:0 auto}
+.container{max-width:700px;margin:0 auto;padding:0 24px}
+.card{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:24px;margin:20px 0}
+.card h3{color:var(--copper);font-size:.85em;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.input-group{display:flex;gap:8px;margin-bottom:12px}
+.input-group input{flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px 16px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif;outline:none}
+.input-group input:focus{border-color:var(--copper)}
+.input-group button{background:var(--copper);color:var(--warm);font-weight:700;padding:12px 24px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;font-family:'Inter',sans-serif}
+.input-group button:hover{background:#a0642a}
+.btn{background:var(--copper);color:var(--warm);font-weight:700;padding:12px 28px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn:hover{background:#a0642a}
+.truth-list{font-size:.82em}
+.truth-item{padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.truth-item:last-child{border:none}
+.truth-hash{font-family:'SF Mono',Menlo,monospace;color:var(--fg);word-break:break-all;font-size:.85em}
+.truth-slot{color:var(--muted);font-size:.75em;margin-right:8px}
+.status-msg{padding:12px 16px;border-radius:6px;margin:12px 0;font-size:.82em;display:none}
+.status-msg.show{display:block}
+.status-msg.good{background:rgba(76,175,80,.12);border:1px solid var(--green);color:var(--green)}
+.status-msg.bad{background:rgba(229,57,53,.12);border:1px solid var(--red);color:var(--red)}
+.status-msg.info{background:rgba(184,115,51,.1);border:1px solid var(--copper);color:var(--copper)}
+.footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:.72em;border-top:1px solid var(--border);margin-top:40px}
+@media(max-width:768px){.hero h1{font-size:2em}.input-group{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo"><span>⬡</span> Binary Journal</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/wallet">Wallet</a>
+    <a href="/declaration">Declaration</a>
+    <a href="/badge">Badge</a>
+    <a href="/dex">DEX</a>
+  </div>
+</nav>
+
+<!-- Wallet Connection -->
+<div class="card" style="margin-top:-24px">
+  <h3 style="display:flex;justify-content:space-between;align-items:center">
+    <span>WayChain Wallet</span>
+    <button class="btn" style="width:auto;font-size:.7em;padding:6px 12px;background:var(--slate);color:var(--fg);border:1px solid var(--border)" onclick="connectWallet()">Connect</button>
+  </h3>
+  <div id="wallet-status" style="font-size:.75em;color:var(--muted);margin-top:8px;display:none">
+    Connected: <code id="bj-wallet-address" style="color:var(--amber)"></code>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Binary Journal</h1>
+  <p class="tagline">3 · 6 · 9 — The Key to the Universe</p>
+  <div class="divider"></div>
+  <p>The Agora — where truths are anchored immutably on WayChain. Make yourself a copy and pass it along.</p>
+</div>
+
+<div class="container">
+
+<div class="card">
+  <h3>Submit a Truth</h3>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Anchor a SHA256 hash on-chain. Becomes immutable. Timestamped forever.</p>
+  <div class="input-group">
+    <input type="text" id="truthAddr" placeholder="Your address (0x...)" value="0xabc">
+  </div>
+  <div class="input-group">
+    <input type="text" id="truthHash" placeholder="SHA256 hash to anchor (64 hex chars)">
+  </div>
+  <button class="btn" onclick="submitTruth()">⬡ Anchor This Truth</button>
+  <div id="submitStatus" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>🔐 Dead Man's Switch — Private Inheritance</h3>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Set a trusted heir. If you stop proving you're alive, they inherit. No courts. No lawyers. No permission.</p>
+
+  <div style="font-size:.82em;line-height:1.8;margin-bottom:16px">
+    <p><strong>Light Truth (type 0):</strong> Public — anyone can see the switch exists. The heir can verify without your involvement.</p>
+    <p style="margin-top:8px"><strong>Dark Truth (type 1):</strong> Private — only you and your heir know. Encrypted until triggered.</p>
+    <p style="margin-top:8px;color:var(--amber)"><strong>Interval:</strong> 1 day to 1 year between heartbeats. Miss the window, the switch triggers.</p>
+  </div>
+
+  <div class="input-group">
+    <input type="text" id="dmsAddr" placeholder="Your address (0x...)" value="0xabc" style="flex:1">
+  </div>
+  <div class="input-group">
+    <input type="text" id="dmsHeir" placeholder="Heir address (0x...)" style="flex:1">
+  </div>
+  <div class="input-group">
+    <select id="dmsType" style="flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif">
+      <option value="0">Light Truth (public)</option>
+      <option value="1">Dark Truth (private, needs heir)</option>
+    </select>
+  </div>
+  <div class="input-group">
+    <select id="dmsInterval" style="flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif">
+      <option value="86400">1 day</option>
+      <option value="259200">3 days</option>
+      <option value="604800">1 week</option>
+      <option value="2592000">30 days</option>
+      <option value="7776000">90 days</option>
+      <option value="31536000">1 year</option>
+    </select>
+  </div>
+  <button class="btn" onclick="createDMS()">⬡ Create Dead Man's Switch</button>
+  <div id="dmsStatus" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>Check Claim Status</h3>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Enter a switch ID to check if it's claimable.</p>
+  <div class="input-group">
+    <input type="number" id="switchId" placeholder="Switch ID (0, 1, 2...)" min="0" style="flex:1">
+    <button onclick="checkSwitch()">Check</button>
+  </div>
+  <div id="switchInfo" style="font-size:.82em;color:var(--muted)"></div>
+  <div id="switchStatus" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>Browse Truths</h3>
+  <div class="input-group">
+    <input type="text" id="browseAddr" placeholder="Address to browse (0x...)" value="0xabc">
+    <button onclick="loadTruths()">Load</button>
+  </div>
+  <div id="truthList" style="font-size:.85em;color:var(--muted)">Enter an address to see their anchored truths.</div>
+  <div id="browseStatus" class="status-msg"></div>
+</div>
+
+<div class="card">
+  <h3>About the 3·6·9 Protocol</h3>
+  <div style="font-size:.82em;line-height:1.8">
+    <p><strong>The Clue (3):</strong> Tesla said "If you only knew the magnificence of the 3, 6 and 9, you would have the key to the universe." Knowledge should be self-sovereign.</p>
+    <p style="margin-top:10px"><strong>The Path (6):</strong> The Sanctuary — your biometric-locked, encrypted journal. Your truths, your key.</p>
+    <p style="margin-top:10px"><strong>The Key (9):</strong> The Ledger — immutably anchored truths. Attestation + DeadMansSwitch + StorageEndowment + BIJO. The protocol becomes natural law.</p>
+    <p style="margin-top:16px;color:var(--copper);font-style:italic">"The light doesn't push. It shows." — N. Tesla</p>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p>Binary Journal — WayChain's Self-Sovereignty Protocol. Chain ID 10008.</p>
+  <p style="margin-top:8px"><a href="https://waychain.org">waychain.org</a></p>
+</div>
+
+<script>
+const RPC = 'https://api.waychain.org';
+function connectWallet(){
+  if(!window.WayChainWallet){window.location.href='/wallet';return;}
+  WayChainWallet.connect().then(acc=>{
+    document.getElementById('wallet-status').style.display='block';
+    document.getElementById('bj-wallet-address').textContent=acc.address;
+  }).catch(()=>window.location.href='/wallet');
+}
+
+async function rpc(m, p) {
+  const r = await fetch(RPC, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',method:m,params:p,id:1})});
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.result;
+}
+function show(el, msg, type) { el.textContent = msg; el.className = 'status-msg show ' + type; }
+
+async function submitTruth() {
+  const addr = document.getElementById('truthAddr').value.trim();
+  const hash = document.getElementById('truthHash').value.trim();
+  const s = document.getElementById('submitStatus');
+  if (!addr||!hash) { show(s,'Enter address and hash','bad'); return; }
+  show(s,'Anchoring truth...','info');
+  try {
+    const r = await rpc('way_attestTruth', [addr, hash]);
+    show(s,`✅ Truth anchored at slot ${r.slot}. Timestamped forever. Make a copy and pass it along.`,'good');
+  } catch(e) { show(s,'Error: '+e.message,'bad'); }
+}
+
+async function loadTruths() {
+  const addr = document.getElementById('browseAddr').value.trim();
+  const list = document.getElementById('truthList');
+  const s = document.getElementById('browseStatus');
+  if (!addr) { show(s,'Enter an address','bad'); return; }
+  show(s,'Loading...','info');
+  try {
+    const truths = await rpc('way_getTruths', [addr]);
+    if (!truths||truths.length===0) {
+      list.innerHTML = '<p style="color:var(--muted)">No truths anchored by this address.</p>';
+      show(s,'','');
+      return;
+    }
+    let html = '';
+    for (const t of truths) {
+      html += `<div class="truth-item"><span><span class="truth-slot">#${t.slot}</span><span class="truth-hash">0x${t.hash.slice(0,32)}...</span></span></div>`;
+    }
+    list.innerHTML = html;
+    show(s,`${truths.length} truth(s) found`,'good');
+  } catch(e) { show(s,'Error: '+e.message,'bad'); }
+}
+
+// Dead Man's Switch — Precompile 0x15 selectors
+const DMS = {
+  createSwitch: '0x7f78edcf',  // createSwitch(uint8,address,uint64,bytes32)
+  heartbeat:    '0x7018b39e',  // heartbeat(uint64)
+  claim:        '0x40fadb8b',  // claim(uint64)
+  canClaim:     '0xa688a635',  // canClaim(uint64)
+  timeUntil:    '0xd75235c5',  // timeUntilClaimable(uint64)
+  getInfo:      '0x0034afaa',  // getSwitchInfo(uint64)
+  total:        '0x890219ed'   // totalSwitches()
+};
+
+async function createDMS() {
+  const addr = document.getElementById('dmsAddr').value.trim();
+  const heir = document.getElementById('dmsHeir').value.trim();
+  const type = document.getElementById('dmsType').value;
+  const interval = document.getElementById('dmsInterval').value;
+  const s = document.getElementById('dmsStatus');
+
+  if (!addr) { show(s,'Enter your address','bad'); return; }
+  if (type === '1' && !heir) { show(s,'Dark truth needs an heir address','bad'); return; }
+
+  show(s,'Use the wallet to submit this transaction. Open /wallet with your key and send a tx to precompile 0x15 with this data.','info');
+  // Build instruction string
+  const heirPad = heir ? heir.replace('0x','').padStart(64,'0') : '0'.repeat(64);
+  const intervalHex = BigInt(interval).toString(16).padStart(16,'0');
+  const data = DMS.createSwitch + type.padStart(2,'0') + heirPad + intervalHex + '0'.repeat(64);
+  s.innerHTML = `<b>Transaction data:</b><br><code style="font-size:.7em;word-break:break-all">${data}</code><br><br>Send to:<br><code>0x0000000000000000000000000000000000000015</code>`;
+  s.className = 'status-msg show info';
+}
+
+async function checkSwitch() {
+  const id = document.getElementById('switchId').value;
+  const info = document.getElementById('switchInfo');
+  const s = document.getElementById('switchStatus');
+  if (id === '') { show(s,'Enter a switch ID','bad'); return; }
+  show(s,'Checking...','info');
+  try {
+    const idHex = '0x' + BigInt(id).toString(16).padStart(64,'0');
+    const data = DMS.getInfo + idHex.slice(2);
+    const result = await fetch(RPC, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({jsonrpc:'2.0',method:'eth_call',params:[{to:'0x0000000000000000000000000000000000000015',data},'latest'],id:1})
+    });
+    const r = await result.json();
+    if (r.error) { show(s,'Error: '+r.error.message,'bad'); return; }
+    info.innerHTML = `<p>Switch #${id} result: <code>${r.result}</code></p>`;
+    show(s,'Switch found','good');
+  } catch(e) { show(s,'Error: '+e.message,'bad'); }
+}
+</script>
+
+<!-- Real wallet + RPC (issue #10) -->
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+<script src="/js/precompiles.js"></script>
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+</body>
+</html>

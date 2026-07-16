@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>WayChain Wallet</title>
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script type="module">
+    // BIP39 mnemonic support via @scure/bip39 (browser ESM; the old UMD
+    // dist/index.browser.min.js was removed from bip39 v3 and 404s).
+    import { generateMnemonic, mnemonicToSeedSync } from 'https://cdn.jsdelivr.net/npm/@scure/bip39@1.2.2/+esm';
+    import { wordlist } from 'https://cdn.jsdelivr.net/npm/@scure/bip39@1.2.2/wordlists/english.js/+esm';
+    window.bip39 = {
+      entropyToMnemonic: (hex) => generateMnemonic(wordlist), // wallet generates 16B entropy internally
+      mnemonicToSeed: (m, pwd) => mnemonicToSeedSync(m, pwd || ''),
+      generateMnemonic: () => generateMnemonic(wordlist),
+    };
+    window.__bip39Ready = true;
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --warm: #FFF8F0;
+      --slate: #2A2A2A;
+      --slate2: #1E1E1E;
+      --slate3: #333;
+      --fg: #E8E4DD;
+      --muted: #9A9A9A;
+      --copper: #B87333;
+      --amber: #FFBF00;
+      --green: #4CAF50;
+      --red: #E53935;
+      --border: #3A3A3A;
+      --success: #3fb950;
+      --warning: #d29922;
+      --error: #f85149;
+      --info: #58a6ff;
+      --radius: 18px;
+      --radius-sm: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(184,115,51,0.18), transparent 60%),
+        var(--slate);
+      color: var(--fg);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px 16px 48px;
+    }
+    #app {
+      max-width: 480px;
+      width: 100%;
+      background: var(--slate2);
+      border-radius: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    /* Header */
+    header {
+      background:
+        radial-gradient(600px 240px at 50% 0%, rgba(255,191,0,0.16), transparent 70%),
+        linear-gradient(180deg, #242018, var(--slate2));
+      padding: 26px 22px 22px;
+      text-align: center;
+      position: relative;
+    }
+    .brandmark {
+      width: 56px; height: 56px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 35%, var(--amber), var(--copper));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700; font-size: 26px; color: #2A2A2A;
+      box-shadow: 0 6px 18px rgba(184,115,51,0.4);
+    }
+    header h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.5em;
+      color: var(--warm);
+      letter-spacing: 0.4px;
+    }
+    header p {
+      font-size: 0.85em;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .section { padding: 20px 22px; border-bottom: 1px solid var(--border); }
+    .section:last-child { border-bottom: none; }
+    .section h2 {
+      font-size: 0.78em;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      font-weight: 600;
+    }
+    .card {
+      background: var(--slate3);
+      border-radius: var(--radius-sm);
+      padding: 18px;
+      border: 1px solid var(--border);
+    }
+    label, .label {
+      font-size: 0.82em;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+      font-weight: 500;
+    }
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--slate);
+      color: var(--fg);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    input:focus { border-color: var(--copper); box-shadow: 0 0 0 3px rgba(184,115,51,0.18); }
+    input:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 18px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.18s, background 0.18s;
+      width: 100%;
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+    .btn:last-child { margin-bottom: 0; }
+    .btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+    .btn:active:not(:disabled) { transform: translateY(0); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(180deg, var(--copper), #9c5f28); color: var(--warm); }
+    .btn-secondary { background: var(--slate); color: var(--fg); border: 1px solid var(--border); }
+    .btn-success { background: linear-gradient(180deg, #57b85f, #3f9c47); color: #fff; }
+    .btn-danger { background: linear-gradient(180deg, #e0584f, var(--red)); color: #fff; }
+    .btn-outline { background: transparent; color: var(--copper); border: 1px solid rgba(184,115,51,0.5); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-group { display: flex; gap: 10px; }
+    .btn-group .btn { flex: 1; margin-bottom: 0; }
+    .btn-sm { padding: 9px 12px; font-size: 12.5px; border-radius: 10px; }
+
+    /* Balance hero */
+    .hero {
+      text-align: center;
+      padding: 8px 4px 4px;
+    }
+    .hero .bal {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 2.4em;
+      font-weight: 700;
+      color: var(--warm);
+      letter-spacing: 0.3px;
+    }
+    .hero .bal small { font-size: 0.42em; color: var(--muted); font-family: 'Inter', sans-serif; font-weight: 500; margin-left: 6px; }
+    .hero .addr-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 12px;
+      padding: 7px 14px;
+      background: var(--slate);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-family: 'SF Mono', Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      color: var(--info);
+      cursor: pointer;
+      transition: border-color 0.18s;
+    }
+    .hero .addr-pill:hover { border-color: var(--copper); }
+
+    .empty-cta { text-align: center; padding: 30px 10px 14px; }
+    .empty-cta .glyph {
+      width: 64px; height: 64px; margin: 0 auto 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(184,115,51,0.18), rgba(184,115,51,0.05));
+      border: 1px solid rgba(184,115,51,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .empty-cta h3 { color: var(--warm); font-size: 1.1em; margin-bottom: 6px; }
+    .empty-cta p { color: var(--muted); font-size: 0.85em; margin-bottom: 18px; }
+
+    /* Action grid (mirrors mobile wallet tiles) */
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+    .grid .tile {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+      padding: 18px 10px; border-radius: 14px;
+      background: var(--slate3); border: 1px solid var(--border);
+      color: var(--fg); font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: transform 0.12s, border-color 0.18s, background 0.18s;
+      font-family: inherit;
+    }
+    .grid .tile span { font-size: 13px; }
+    .grid .tile:hover:not(:disabled) { border-color: var(--copper); transform: translateY(-1px); }
+    .grid .tile:disabled { opacity: 0.45; cursor: not-allowed; }
+    .grid .tile-primary { background: linear-gradient(180deg, rgba(184,115,51,0.22), rgba(184,115,51,0.08)); border-color: rgba(184,115,51,0.5); color: var(--warm); }
+
+    .warn-banner {
+      background: rgba(229,57,53,0.12); border: 1px solid var(--red);
+      color: #FF8A80; border-radius: 12px; padding: 12px 14px;
+      font-size: 13px; font-weight: 500; text-align: center; cursor: pointer;
+      margin-bottom: 14px;
+    }
+
+    /* status / dot */
+    .status {
+      padding: 11px 13px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 12px;
+      word-break: break-all;
+      line-height: 1.5;
+      display: none;
+    }
+    .status.ok { background: rgba(63,185,80,0.14); border: 1px solid var(--success); color: var(--success); }
+    .status.error { background: rgba(248,81,73,0.14); border: 1px solid var(--error); color: var(--error); }
+    .status.info { background: rgba(88,166,255,0.14); border: 1px solid var(--info); color: var(--info); }
+    .status.warning { background: rgba(210,153,34,0.14); border: 1px solid var(--warning); color: var(--warning); }
+
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.on { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .dot.off { background: var(--muted); }
+
+    .addr {
+      font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      font-size: 12.5px; color: var(--info);
+      word-break: break-all;
+      background: var(--slate);
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .secret {
+      font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;
+      font-size: 12.5px; color: var(--amber);
+      word-break: break-all;
+      background: var(--slate);
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(210,153,34,0.4);
+      margin: 8px 0;
+      line-height: 1.5;
+      display: none;
+    }
+    .row-actions { display: flex; gap: 10px; margin-top: 6px; }
+    .row-actions .btn { margin-bottom: 0; }
+
+    .tip {
+      background: rgba(184,115,51,0.10);
+      border-left: 3px solid var(--copper);
+      padding: 12px 15px;
+      margin: 14px 0;
+      border-radius: 0 10px 10px 0;
+      font-size: 13px;
+      color: var(--fg);
+      line-height: 1.55;
+    }
+    .tip strong { color: var(--amber); }
+
+    .collapse-head {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none;
+      padding: 4px 0;
+    }
+    .collapse-head .chev { transition: transform 0.2s; color: var(--muted); }
+    .collapse-head.open .chev { transform: rotate(90deg); }
+    .collapse-body { display: none; margin-top: 12px; }
+    .collapse-body.open { display: block; }
+
+    .tx-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px; gap: 10px;
+    }
+    .tx-item:last-child { border-bottom: none; }
+    .tx-hash { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12px; color: var(--muted); }
+    .tx-details { display: flex; flex-direction: column; gap: 3px; text-align: right; }
+    .tx-label { font-size: 11px; color: var(--muted); }
+    .tx-value { font-weight: 600; color: var(--fg); }
+
+    .footer {
+      text-align: center; padding: 20px 22px;
+      color: var(--muted); font-size: 0.8em;
+      border-top: 1px solid var(--border);
+    }
+    .footer a { color: var(--copper); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    .hide { display: none !important; }
+    .mb { margin-bottom: 10px; }
+    @media (max-width: 480px) {
+      #app { border-radius: 0; }
+      body { padding: 0 0 40px; }
+      .btn-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="brandmark">W</div>
+      <h1>WayChain Wallet</h1>
+      <p>Self-custodial &middot; your keys, your chain</p>
+    </header>
+
+    <!-- EMPTY STATE -->
+    <section class="section" id="empty-state">
+      <div class="empty-cta">
+        <div class="glyph">🔑</div>
+        <h3>Welcome to your wallet</h3>
+        <p>Create a new wallet or import an existing one to get started.</p>
+        <button class="btn btn-primary" onclick="genWallet()">Create New Wallet</button>
+        <button class="btn btn-secondary" onclick="showImp()">Import Wallet</button>
+      </div>
+
+      <div id="imp" class="hide">
+        <div class="card" style="margin-top:16px;">
+          <label>Private Key (64 bytes / 128 hex)</label>
+          <input type="text" id="ik" placeholder="Paste your private key" autocomplete="off">
+          <button class="btn btn-success btn-sm" style="margin-top:12px;" onclick="impWallet()">Import with Private Key</button>
+          <div class="tip" style="margin-bottom:0;">Paste your private key exactly as saved. Leading <code>0x</code> is optional. Must be 64 bytes (128 hex chars).</div>
+        </div>
+        <div class="card" style="margin-top:12px;">
+          <label>Recovery Phrase (12 words)</label>
+          <input type="text" id="imn" placeholder="word1 word2 word3 ... word12" autocomplete="off">
+          <button class="btn btn-success btn-sm" style="margin-top:12px;" onclick="impMnemonic()">Restore with Phrase</button>
+          <div class="tip" style="margin-bottom:0;">Case-insensitive. Separate words with spaces.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WALLET (loaded) — aligned with mobile wallet IA -->
+    <section class="section hide" id="wallet-state">
+      <!-- Backup warning (mirrors mobile "Not backed up" banner) -->
+      <div class="warn-banner hide" id="backup-warn" onclick="revealRecovery()">
+        ⚠️ Not backed up — tap to view your recovery phrase
+      </div>
+
+      <!-- Balance hero -->
+      <div class="hero">
+        <div class="hero-label">Total Balance</div>
+        <div class="bal" id="ba">— <small>WAY</small></div>
+        <div class="addr-pill" onclick="copyAddr()" id="addr-pill">
+          <span id="ad-short">0x…</span>
+          <span style="color:var(--muted);font-size:11px;">⧉ copy</span>
+        </div>
+      </div>
+
+      <div id="balance-status" class="status"></div>
+
+      <!-- Action grid (mirrors mobile WalletScreen grid) -->
+      <div class="grid">
+        <button class="tile" onclick="revealRecovery()">📥<span>Receive</span></button>
+        <button class="tile tile-primary" onclick="document.getElementById('send-card').scrollIntoView({behavior:'smooth'})">📤<span>Send</span></button>
+        <button class="tile" onclick="document.getElementById('txh').scrollIntoView({behavior:'smooth'})">🕘<span>History</span></button>
+        <button class="tile" onclick="faucet()" id="fb" disabled>🚰<span>Get Test WAY</span></button>
+        <button class="tile" onclick="document.getElementById('tokens-note').scrollIntoView({behavior:'smooth'})">🪙<span>Tokens</span></button>
+        <button class="tile" onclick="document.getElementById('identity-note').scrollIntoView({behavior:'smooth'})">🛡️<span>Identity</span></button>
+        <button class="tile" onclick="document.getElementById('locks-note').scrollIntoView({behavior:'smooth'})">🔒<span>Locks</span></button>
+        <button class="tile" onclick="document.getElementById('protocol-note').scrollIntoView({behavior:'smooth'})">⚙️<span>Protocol</span></button>
+      </div>
+
+      <!-- Send (inline, below grid like mobile's Send screen) -->
+      <div class="card" id="send-card" style="margin-top:16px;">
+        <h2 style="margin-bottom:14px;">Send WAY</h2>
+        <label>To Address</label>
+        <input type="text" id="to" placeholder="0x…" autocomplete="off">
+        <label style="margin-top:12px;">Amount (WAY)</label>
+        <input type="text" id="amt" placeholder="e.g. 0.01" autocomplete="off">
+        <label style="margin-top:12px;">Gas Price (gwei)</label>
+        <input type="text" id="gp" value="1000">
+        <button class="btn btn-primary" id="sb" onclick="sendTx()" disabled style="margin-top:14px;">Send Transaction</button>
+        <div id="tx-status" class="status"></div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card" style="margin-top:12px;">
+        <h2 style="margin-bottom:8px;">Recent Activity</h2>
+        <div id="txh">
+          <div style="text-align:center;color:var(--muted);font-style:italic;padding:18px 0;">No transactions yet.</div>
+        </div>
+      </div>
+
+      <!-- Linked precompile info tiles (mirror mobile grid destinations) -->
+      <div class="card" id="tokens-note" style="margin-top:12px;">
+        <h2 style="margin-bottom:8px;">Tokens</h2>
+        <p style="color:var(--muted);font-size:13px;line-height:1.6;">Manage BIJO, 1WAY, SWAY and other WayChain assets. Token balances and transfers live on-chain via the precompiles.</p>
+      </div>
+      <div class="card" id="identity-note" style="margin-top:12px;">
+        <h2 style="margin-bottom:8px;">Identity</h2>
+        <p style="color:var(--muted);font-size:13px;line-height:1.6;">View your Dox_Dev badge level and verification status. Curator-gated issuance keeps the network trustworthy.</p>
+      </div>
+      <div class="card" id="locks-note" style="margin-top:12px;">
+        <h2 style="margin-bottom:8px;">Locks</h2>
+        <p style="color:var(--muted);font-size:13px;line-height:1.6;">TrustlessLock (0x1A) anti-rug liquidity locks. Release and extend locked positions directly.</p>
+      </div>
+      <div class="card" id="protocol-note" style="margin-top:12px;">
+        <h2 style="margin-bottom:8px;">Protocol</h2>
+        <p style="color:var(--muted);font-size:13px;line-height:1.6;">Advanced precompiles (0x0C–0x12, 0x17, 0x1C, 0x1F) and network parameters. For power users.</p>
+      </div>
+
+      <!-- Settings / reveal (mirrors mobile Settings + reveal flow) -->
+      <div class="card" style="margin-top:12px;">
+        <h2 style="margin-bottom:12px;">Wallet Settings</h2>
+        <label>Your Full Address</label>
+        <div class="addr" id="ad"></div>
+        <div class="row-actions">
+          <button class="btn btn-outline btn-sm" onclick="copyAddr()">Copy Address</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleMnemonic()" id="mn-btn">Show Recovery Phrase</button>
+        </div>
+        <div class="secret" id="mnemonic-display"></div>
+
+        <label style="margin-top:14px;">Private Key (hex)</label>
+        <div class="secret" id="pkd" style="color:var(--error);border-color:rgba(248,81,73,0.4);"></div>
+        <button class="btn btn-ghost btn-sm" onclick="togglePk()" id="pk-btn">Show Private Key</button>
+
+        <div class="tip" style="margin:14px 0 0;">
+          <strong>Never share</strong> your private key or recovery phrase. Anyone with them controls your funds. WayChain stores keys only in this browser.
+        </div>
+        <button class="btn btn-danger" onclick="clearWallet()" style="margin-top:14px;">Remove Wallet from This Device</button>
+      </div>
+    </section>
+
+    <div class="footer">
+      <p>WayChain Wallet &middot; v1.1 &middot; <a href="/">Back to WayChain</a></p>
+      <p style="margin-top:6px;">Keys are stored locally in your browser. Use only on devices you trust — browser storage is not a hardened vault.</p>
+    </div>
+  </div>
+
+  <script>
+    const RPC = 'https://api.waychain.org',
+          DEC = 18,
+          LP = 'waychain_p',
+          LS = 'waychain_s',
+          LA = 'waychain_a',
+          LT = 'waychain_tx',
+          FU = RPC + '/faucet';
+
+    // BIP39 Mnemonic functions for wallet recovery
+    async function ensureBip39() {
+      // ES module loads deferred; wait until the global is ready.
+      let tries = 0;
+      while (typeof bip39 === 'undefined' && tries < 50) {
+        await new Promise(r => setTimeout(r, 50));
+        tries++;
+      }
+      if (typeof bip39 === 'undefined') throw new Error('mnemonic library failed to load');
+    }
+    async function genMnemonic() {
+      await ensureBip39();
+      const entropy = crypto.getRandomValues(new Uint8Array(16));
+      return bip39.entropyToMnemonic(toH(entropy));
+    }
+    async function mnemonicToSeed(mnemonic) {
+      await ensureBip39();
+      return bip39.mnemonicToSeed(mnemonic, '');
+    }
+    async function seedToKeyPair(seed) {
+      const h = await crypto.subtle.digest('SHA-256', seed);
+      const seedBytes = new Uint8Array(h);
+      return nacl.sign.keyPair.fromSeed(seedBytes.slice(0, 32));
+    }
+    function svM(m) { localStorage.setItem('waychain_mnemonic', m); }
+    function ldM() { return localStorage.getItem('waychain_mnemonic'); }
+
+    // Utility functions
+    function toH(a) { return Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); }
+    function frH(h) {
+      if (typeof h !== 'string') return new Uint8Array(0);
+      h = h.replace('0x', '');
+      if (h.length % 2) h = '0' + h;
+      const r = new Uint8Array(h.length / 2);
+      for (let i = 0; i < h.length; i += 2) r[i / 2] = parseInt(h.substr(i, 2), 16);
+      return r;
+    }
+    function b2B(n, l) {
+      const b = new Uint8Array(l);
+      let v = BigInt(n);
+      for (let i = l - 1; i >= 0; i--) { b[i] = Number(v & 0xFFn); v >>= 8n; }
+      return b;
+    }
+    function cat(a) {
+      const l = a.reduce((s, x) => s + x.length, 0);
+      const r = new Uint8Array(l);
+      let o = 0;
+      for (const x of a) { r.set(x, o); o += x.length; }
+      return r;
+    }
+    function w2w(s) {
+      s = s.trim();
+      const d = s.indexOf('.');
+      if (d === -1) return BigInt(s) * 10n ** BigInt(DEC);
+      let w = s.slice(0, d) || '0', f = s.slice(d + 1);
+      f = (f.length > DEC ? f.slice(0, DEC) : f).padEnd(DEC, '0');
+      return BigInt(w + f);
+    }
+    function w2W(w) {
+      const s = w.toString().padStart(DEC + 1, '0'),
+            wh = s.slice(0, -DEC) || '0',
+            fr = s.slice(-DEC).replace(/0+$/, '');
+      return fr ? wh + '.' + fr : wh;
+    }
+    function genK() {
+      const k = nacl.sign.keyPair();
+      return { p: k.publicKey, s: k.secretKey };
+    }
+    async function p2a(p) {
+      const h = await crypto.subtle.digest('SHA-256', p),
+            a = new Uint8Array(h);
+      return '0x' + toH(a.slice(0, 20));
+    }
+    function shortAddr(a) { return a ? a.slice(0, 6) + '…' + a.slice(-4) : '0x…'; }
+    async function rpc(m, p) {
+      const r = await fetch(RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: m, params: p })
+      });
+      const d = await r.json();
+      if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+      return d.result;
+    }
+    function ldW() {
+      const p = localStorage.getItem(LP),
+            s = localStorage.getItem(LS),
+            a = localStorage.getItem(LA);
+      if (p && s && a) return { publicKey: frH(p), secretKey: frH(s), address: a };
+      return null;
+    }
+    function svW(p, s, a) {
+      localStorage.setItem(LP, toH(p));
+      localStorage.setItem(LS, toH(s));
+      localStorage.setItem(LA, a);
+    }
+    function clW() {
+      localStorage.removeItem(LP);
+      localStorage.removeItem(LS);
+      localStorage.removeItem(LA);
+    }
+    function ldT() {
+      try { return JSON.parse(localStorage.getItem(LT) || '[]'); } catch { return []; }
+    }
+    function svT(t) { localStorage.setItem(LT, JSON.stringify(t.slice(0, 20))); }
+    function adTx(h, to, amt, st) {
+      const t = ldT();
+      t.unshift({ hash: h, to, amt, st, time: Date.now() });
+      svT(t);
+      rTx();
+    }
+    function bld(n, fB, tB, v, gL, gP) {
+      const d = new Uint8Array(0), e = new Uint8Array(0);
+      return cat([
+        b2B(n, 8),
+        new Uint8Array([fB.length]), fB,
+        new Uint8Array([tB.length]), tB,
+        b2B(v, 32),
+        b2B(gL, 8),
+        b2B(gP, 8),
+        b2B(d.length, 4), d,
+        new Uint8Array([0]),
+        b2B(e.length, 4), e
+      ]);
+    }
+    // FIX (handoff-flagged): node requires the FULL 64-hex pubkey as wire 'from',
+    // not the 20-byte display address. Use stored publicKey (64-hex) for fB.
+    async function snd(wallet, tA, v, gL, gP, sk) {
+      const nH = await rpc('eth_getTransactionCount', [wallet.address, 'pending']),
+            n = BigInt(nH),
+            fB = wallet.publicKey,            // 64-hex pubkey (correct wire 'from')
+            tB = frH(tA),
+            u = bld(n, fB, tB, v, gL, gP),
+            sig = nacl.sign.detached(u, sk);
+      const s = cat([u, sig]),
+            tx = '0x' + toH(s);
+      return rpc('eth_sendRawTransaction', [tx]);
+    }
+
+    let w = null;
+
+    function setStatus(id, msg, type) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = `status ${type}`;
+      el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function clearStatus() {
+      ['balance-status','tx-status','manage-status'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+      });
+    }
+
+    function upUI() {
+      clearStatus();
+      w = ldW();
+      const empty = document.getElementById('empty-state'),
+            loaded = document.getElementById('wallet-state');
+      if (w) {
+        empty.classList.add('hide');
+        loaded.classList.remove('hide');
+        document.getElementById('ad').textContent = w.address;
+        document.getElementById('ad-short').textContent = shortAddr(w.address);
+        document.getElementById('ba').innerHTML = '— <small>WAY</small>';
+        // secret fields default hidden
+        document.getElementById('pkd').style.display = 'none';
+        document.getElementById('mnemonic-display').style.display = 'none';
+        const mnemonic = ldM();
+        if (mnemonic) document.getElementById('mnemonic-display').textContent = mnemonic;
+        // backup warning mirrors mobile "Not backed up" banner
+        const backedUp = localStorage.getItem('waychain_backedup_' + w.address) === '1';
+        const warn = document.getElementById('backup-warn');
+        if (!backedUp) warn.classList.remove('hide'); else warn.classList.add('hide');
+      } else {
+        loaded.classList.add('hide');
+        empty.classList.remove('hide');
+      }
+      document.getElementById('fb').disabled = !w;
+      document.getElementById('sb').disabled = !w;
+    }
+
+    // Mirrors mobile: reveal recovery phrase + mark backed up
+    function revealRecovery() {
+      const mnEl = document.getElementById('mnemonic-display');
+      const btn = document.getElementById('mn-btn');
+      if (!mnEl.textContent) {
+        const m = ldM();
+        if (m) mnEl.textContent = m;
+      }
+      mnEl.style.display = 'block';
+      btn.textContent = 'Hide Recovery Phrase';
+      if (w) {
+        localStorage.setItem('waychain_backedup_' + w.address, '1');
+        document.getElementById('backup-warn').classList.add('hide');
+      }
+    }
+
+    async function genWallet() {
+      const btn = document.querySelector('#empty-state .btn-primary');
+      btn.disabled = true; btn.textContent = '⏳ Creating…';
+      try {
+        const mnemonic = await genMnemonic();
+        const seed = await mnemonicToSeed(mnemonic);
+        const k = await seedToKeyPair(new Uint8Array(seed));
+        const a = await p2a(k.publicKey);
+        svW(k.publicKey, k.secretKey, a);
+        svM(mnemonic);
+        upUI();
+        // surface recovery phrase immediately for backup (mirrors mobile reveal flow)
+        revealRecovery();
+        setStatus('balance-status', '✅ Wallet created: ' + shortAddr(a) + '. Save your recovery phrase now!', 'ok');
+        refreshBal();
+      } catch (e) {
+        setStatus('balance-status', '❌ ' + e.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Create New Wallet';
+      }
+    }
+
+    function showImp() {
+      document.getElementById('imp').classList.toggle('hide');
+      document.getElementById('ik').value = '';
+      document.getElementById('imn').value = '';
+    }
+
+    async function impWallet() {
+      const raw = document.getElementById('ik').value.trim();
+      if (!raw) { setStatus('balance-status', '⚠️ Please enter your private key', 'error'); return; }
+      let b;
+      try { b = frH(raw); } catch { setStatus('balance-status', '⚠️ Invalid hex format', 'error'); return; }
+      if (b.length !== 64) { setStatus('balance-status', '⚠️ Key must be 64 bytes (128 hex characters)', 'error'); return; }
+      try {
+        const k = nacl.sign.keyPair.fromSecretKey(b),
+              a = await p2a(k.publicKey);
+        svW(k.publicKey, k.secretKey, a);
+        upUI();
+        setStatus('balance-status', '✅ Wallet imported: ' + shortAddr(a), 'ok');
+        refreshBal();
+      } catch (e) { setStatus('balance-status', '❌ Import failed: ' + e.message, 'error'); }
+    }
+
+    function clearWallet() {
+      if (!confirm('Remove wallet from this device? Make sure you have your recovery phrase backed up.')) return;
+      clW();
+      w = null;
+      upUI();
+      setStatus('balance-status', '🗑️ Wallet removed', 'info');
+    }
+
+    function togglePk() {
+      const d = document.getElementById('pkd');
+      const btn = document.getElementById('pk-btn');
+      if (d.style.display === 'none' || !d.style.display) {
+        if (w) d.textContent = '0x' + toH(w.secretKey);
+        d.style.display = 'block'; btn.textContent = 'Hide Private Key';
+      } else { d.style.display = 'none'; btn.textContent = 'Show Private Key'; }
+    }
+    function toggleMnemonic() {
+      const el = document.getElementById('mnemonic-display');
+      const btn = document.getElementById('mn-btn');
+      if (el.style.display === 'none' || !el.style.display) {
+        el.style.display = 'block'; btn.textContent = 'Hide Recovery Phrase';
+      } else { el.style.display = 'none'; btn.textContent = 'Show Recovery Phrase'; }
+    }
+
+    function copyAddr() {
+      if (!w) return;
+      navigator.clipboard.writeText(w.address).then(() => {
+        const pill = document.getElementById('addr-pill');
+        const orig = document.getElementById('ad-short').textContent;
+        document.getElementById('ad-short').textContent = '✅ copied';
+        setTimeout(() => document.getElementById('ad-short').textContent = orig, 1500);
+      }).catch(() => setStatus('balance-status', '⚠️ Copy failed', 'error'));
+    }
+
+    async function refreshBal() {
+      if (!w) return;
+      const btn = document.getElementById('rb');
+      const prev = btn ? btn.textContent : '';
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
+      try {
+        const bH = await rpc('way_getBalance', ['0x' + toH(w.publicKey)]);
+        document.getElementById('ba').innerHTML = w2W(BigInt(bH)) + ' <small>WAY</small>';
+        setStatus('balance-status', '✅ Balance updated', 'ok');
+      } catch (e) {
+        setStatus('balance-status', '❌ ' + e.message, 'error');
+      }
+      if (btn) { btn.disabled = false; btn.textContent = prev; }
+    }
+
+    async function sendTx() {
+      if (!w) return;
+      const tA = document.getElementById('to').value.trim(),
+            aS = document.getElementById('amt').value.trim(),
+            gS = document.getElementById('gp').value.trim();
+      if (!tA || !tA.startsWith('0x') || tA.length !== 42) {
+        setStatus('tx-status', '⚠️ Invalid address format', 'error'); return;
+      }
+      if (!aS || isNaN(Number(aS)) || Number(aS) <= 0) {
+        setStatus('tx-status', '⚠️ Invalid amount', 'error'); return;
+      }
+      const gP = BigInt(gS || '1000'), gL = 21000n;
+      let vW;
+      try { vW = w2w(aS); } catch { setStatus('tx-status', '⚠️ Invalid amount', 'error'); return; }
+      try {
+        const bH = await rpc('eth_getBalance', [w.address, 'latest']),
+              bW = BigInt(bH),
+              tC = vW + gL * gP;
+        if (tC > bW) {
+          setStatus('tx-status', '⚠️ Insufficient balance. Need ' + w2W(tC) + ' WAY, have ' + w2W(bW), 'error');
+          return;
+        }
+      } catch (e) { setStatus('tx-status', '⚠️ ' + e.message, 'error'); return; }
+      const btn = document.getElementById('sb');
+      btn.disabled = true; btn.textContent = '⏳ Sending…';
+      document.getElementById('tx-status').style.display = 'none';
+      try {
+        const h = await snd(w, tA, vW, gL, gP, w.secretKey);
+        setStatus('tx-status', '✅ Sent! Tx: ' + h.substring(0, 10) + '…', 'ok');
+        adTx(h, tA, aS, 'pending');
+        setTimeout(refreshBal, 2000);
+        document.getElementById('to').value = '';
+        document.getElementById('amt').value = '';
+      } catch (e) {
+        setStatus('tx-status', '❌ Send failed: ' + e.message, 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Send Transaction';
+    }
+
+    async function faucet() {
+      if (!w) return;
+      const btn = document.getElementById('fb');
+      btn.disabled = true; btn.textContent = '⏳ …';
+      setStatus('balance-status', '⏳ Requesting test WAY…', 'info');
+      try {
+        let ok = false;
+        try {
+          const r = await fetch(FU, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: w.address }) });
+          if (r.ok) ok = true;
+        } catch {}
+        if (!ok) {
+          const r2 = await fetch(FU + '?address=' + encodeURIComponent(w.address));
+          if (r2.ok) ok = true;
+        }
+        if (ok) {
+          setStatus('balance-status', '✅ Faucet sent! Balance updates shortly.', 'ok');
+          setTimeout(refreshBal, 3000);
+        } else {
+          setStatus('balance-status', '⚠️ Faucet unavailable. Try again later.', 'error');
+        }
+      } catch (e) {
+        setStatus('balance-status', '⚠️ ' + e.message, 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Get Test WAY';
+    }
+
+    async function impMnemonic() {
+      const raw = document.getElementById('imn').value.trim();
+      if (!raw || raw.split(' ').length !== 12) { setStatus('balance-status', '⚠️ Enter 12 words', 'error'); return; }
+      try {
+        const seed = await mnemonicToSeed(raw);
+        const k = await seedToKeyPair(new Uint8Array(seed));
+        const a = await p2a(k.publicKey);
+        svW(k.publicKey, k.secretKey, a);
+        upUI();
+        setStatus('balance-status', '✅ Wallet restored: ' + shortAddr(a), 'ok');
+        refreshBal();
+      } catch (e) { setStatus('balance-status', '❌ Import failed: ' + e.message, 'error'); }
+    }
+
+    function rTx() {
+      const el = document.getElementById('txh'),
+            txs = ldT();
+      if (!txs.length) {
+        el.innerHTML = '<div style="text-align:center;color:var(--muted);font-style:italic;padding:18px 0;">No transactions yet.</div>';
+        return;
+      }
+      el.innerHTML = txs.map(t => `
+        <div class="tx-item">
+          <div class="tx-hash">${t.hash.substring(0, 10)}…${t.hash.slice(-6)}</div>
+          <div class="tx-details">
+            <div><span class="tx-label">To:</span> <span class="tx-value">${t.to.substring(0, 6)}…${t.to.slice(-4)}</span></div>
+            <div><span class="tx-label">Amount:</span> <span class="tx-value">${w2W(BigInt(t.amt))} WAY</span></div>
+            <div><span class="tx-label">Status:</span> <span class="tx-value">${t.st}</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Initialize
+    upUI();
+    rTx();
+    if (w) refreshBal();
+    setInterval(() => { if (w) refreshBal(); }, 30000);
+  </script>
+</body>
+</html>

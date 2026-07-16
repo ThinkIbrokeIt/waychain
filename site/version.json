@@ -1,0 +1,38 @@
+{
+  "version": "4.1.39",
+  "chain_id": 10008,
+  "chain_id_hex": "0x2718",
+  "name": "WayChain",
+  "tagline": "Actually Decentralized",
+  "deployed_at": "2026-07-15",
+  "whitepaper_sections": 22,
+  "live_features": 24,
+  "spec_features": 6,
+  "precompiles": 27,
+  "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
+  "blueprint_files": 29,
+  "blueprint_lines": 11947,
+  "source_of_truth": {
+    "protocol": "ThinkIbrokeIt/waychain-consensus (protocol-manifest.json)",
+    "site": "ThinkIbrokeIt/waychain-site main",
+    "mobile": "ThinkIbrokeIt/waychain-mobile main",
+    "live_node": "AWS 3.89.116.45 /usr/local/bin/waychain"
+  },
+  "new_features": [
+    "WayChain Mobile Wallet — added to feature chips, use cases, and footer",
+    "Energy Tide — added as branded product: feature chip, use case, footer",
+    "Feature chips expanded from 6 to 7: Mobile Wallet and Energy Tide promoted to first priority",
+    "Footer: Mobile Wallet, Energy Tide links in Connect and Use Cases sections",
+    "Mobile nav: header dashboard links consolidated into hamburger dropdown (≤768px)"
+  ],
+  "fixes": [
+    "SoT freeze: precompiles count 22→27 matches protocol-manifest (0x0C–0x26)",
+    "Address false marketing counts (20/21/22) in declaration/telegram/MARKETING",
+    "BIJO clarified as ecosystem reward token (not fuel token)",
+    "BIJO supply corrected: 369B → 369M (matches on-chain precompile)",
+    "State rent pricing updated to match 2026 cloud storage costs",
+    "Whitepaper HTML restored (was broken/regressed in v3.1.1)",
+    "Navigation links for Binary Journal, TrustlessLock, DEX, Declaration now visible in header and footer",
+    "Precompile count updated from 20 to 27 (added 0x0E-0x12, 0x22-0x26)"
+  ]
+}

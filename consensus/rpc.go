@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/wink/waychain-consensus/evm"
+	"github.com/ThinkIbrokeIt/waychain-consensus/evm"
 	"nhooyr.io/websocket"
 )
 
@@ -72,7 +72,6 @@ func (rpc *RPCServer) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", rpc.handleRequest)
 	mux.HandleFunc("/health", rpc.handleHealth)
-	mux.HandleFunc("/faucet", rpc.handleFaucet)
 
 	rpc.server = &http.Server{
 		Addr:    fmt.Sprintf(":%d", rpc.port),
@@ -95,59 +94,6 @@ func (rpc *RPCServer) handleHealth(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status": "ok",
 		"blocks": len(rpc.chain.Blocks),
-	})
-}
-
-// handleFaucet sends 100 WAY from treasury to a requesting address
-func (rpc *RPCServer) handleFaucet(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	if r.Method != "POST" {
-		json.NewEncoder(w).Encode(map[string]interface{}{"error": "POST required"})
-		return
-	}
-	var req struct {
-		Address string `json:"address"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Address == "" {
-		json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid request"})
-		return
-	}
-	addr := strings.ToLower(strings.TrimPrefix(req.Address, "0x"))
-	if len(addr) == 0 || len(addr) > 40 {
-		json.NewEncoder(w).Encode(map[string]interface{}{"error": "invalid address"})
-		return
-	}
-
-	rpc.mu.Lock()
-	defer rpc.mu.Unlock()
-
-	// Fund from the "funder" genesis account
-	funder := rpc.chain.State.GetAccount("funder")
-	if funder == nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{"error": "faucet account not found"})
-		return
-	}
-
-	// Debug: log funder balance
-	slog.Info("faucet", "funder_balance", funder.Balance.String(), "funder_addr", "funder")
-
-	// 10 WAY = 10 * 10^18 (18 decimals)
-	amount := new(big.Int).Mul(big.NewInt(10), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil))
-
-	if funder.Balance.Cmp(amount) < 0 {
-		json.NewEncoder(w).Encode(map[string]interface{}{"error": "faucet insufficient funds", "balance": funder.Balance.String()})
-		return
-	}
-
-	recipient := rpc.chain.State.GetOrCreateAccount(addr)
-	funder.Balance.Sub(funder.Balance, amount)
-	recipient.Balance.Add(recipient.Balance, amount)
-
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success":  true,
-		"amount":   amount.String(),
-		"address":  "0x" + addr,
-		"currency": "WAY",
 	})
 }
 
@@ -211,6 +157,10 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		}
 		blockNumStr := fmt.Sprintf("%v", p[0])
 		var blockNum int
+		fullTx := false
+		if len(p) > 1 {
+			if b, ok := p[1].(bool); ok { fullTx = b }
+		}
 		if strings.HasPrefix(blockNumStr, "0x") {
 			fmt.Sscanf(blockNumStr, "0x%x", &blockNum)
 		} else if blockNumStr == "latest" || blockNumStr == "pending" {
@@ -222,35 +172,64 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 			return nil, nil
 		}
 		block := rpc.chain.Blocks[blockNum]
+
+		// Build transactions array
+		var txResult interface{}
+		if fullTx {
+			txList := make([]map[string]interface{}, len(block.Transactions))
+			for i, tx := range block.Transactions {
+				j, _ := json.Marshal(tx.ToJSON())
+				var m map[string]interface{}
+				json.Unmarshal(j, &m)
+				txList[i] = m
+			}
+			txResult = txList
+		} else {
+			txList := make([]string, len(block.Transactions))
+			for i, tx := range block.Transactions {
+				txList[i] = "0x" + hex.EncodeToString(tx.Hash[:])
+			}
+			txResult = txList
+		}
+
 		return map[string]interface{}{
 			"number":       fmt.Sprintf("0x%x", block.Height),
 			"hash":         fmt.Sprintf("0x%x", block.Hash),
 			"parentHash":   fmt.Sprintf("0x%x", block.PrevHash),
 			"timestamp":    fmt.Sprintf("0x%x", block.Timestamp),
-			"transactions": len(block.Transactions),
+			"transactions": txResult,
 			"proposer":     block.Proposer.String(),
 		}, nil
 
 	case "eth_getBlockByHash":
-		var p []interface{}
-		if err := json.Unmarshal(params, &p); err != nil || len(p) < 1 {
-			return nil, fmt.Errorf("invalid params")
-		}
-		hashStr := strings.TrimPrefix(fmt.Sprintf("%v", p[0]), "0x")
-		for _, block := range rpc.chain.Blocks {
-			blockHash := fmt.Sprintf("%x", block.Hash)
-			if strings.EqualFold(blockHash, hashStr[:min(len(hashStr), len(blockHash))]) {
-				return map[string]interface{}{
-					"number":       fmt.Sprintf("0x%x", block.Height),
-					"hash":         fmt.Sprintf("0x%x", block.Hash),
-					"parentHash":   fmt.Sprintf("0x%x", block.PrevHash),
-					"timestamp":    fmt.Sprintf("0x%x", block.Timestamp),
-					"transactions": len(block.Transactions),
-					"proposer":     block.Proposer.String(),
-				}, nil
+			var p []interface{}
+			if err := json.Unmarshal(params, &p); err != nil || len(p) < 1 {
+				return nil, fmt.Errorf("invalid params")
 			}
-		}
-		return nil, nil
+			hashStr := strings.TrimPrefix(fmt.Sprintf("%v", p[0]), "0x")
+
+			for _, blk := range rpc.chain.Blocks {
+				blockHash := fmt.Sprintf("%x", blk.Hash)
+				if strings.EqualFold(blockHash, hashStr[:min(len(hashStr), len(blockHash))]) {
+					// Build transactions array (same as eth_getBlockByNumber)
+					txList := make([]map[string]interface{}, len(blk.Transactions))
+					for i, tx := range blk.Transactions {
+						j, _ := json.Marshal(tx.ToJSON())
+						var m map[string]interface{}
+						json.Unmarshal(j, &m)
+						txList[i] = m
+					}
+					return map[string]interface{}{
+						"number":       fmt.Sprintf("0x%x", blk.Height),
+						"hash":         fmt.Sprintf("0x%x", blk.Hash),
+						"parentHash":   fmt.Sprintf("0x%x", blk.PrevHash),
+						"timestamp":    fmt.Sprintf("0x%x", blk.Timestamp),
+						"transactions": txList,
+						"proposer":     blk.Proposer.String(),
+					}, nil
+				}
+			}
+			return nil, nil
 
 	// ── Account methods ──
 	case "eth_getBalance":
@@ -279,7 +258,40 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 
 	// ── Call / Estimate ──
 	case "eth_call":
-		return "0x", nil
+		var p []map[string]interface{}
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 1 {
+			return nil, fmt.Errorf("invalid params")
+		}
+		call := p[0]
+
+		to, _ := call["to"].(string)
+		dataStr, _ := call["data"].(string)
+		from, _ := call["from"].(string)
+
+		data, err := hex.DecodeString(strings.TrimPrefix(dataStr, "0x"))
+		if err != nil {
+			return "0x", nil
+		}
+		from = strings.ToLower(strings.TrimPrefix(from, "0x"))
+		to = strings.ToLower(strings.TrimPrefix(to, "0x"))
+
+		// Route through EVM (precompile or revm contract execution)
+		snapshot := rpc.chain.State.Clone()
+		callEVM := evm.NewEVM(snapshot, evm.ConsensusLane, rpc.chain.Height,
+			uint64(time.Now().Unix()), 10008, 30_000_000, "")
+		ctx := &evm.CallContext{
+			Caller:   from,
+			Address:  to,
+			Value:    big.NewInt(0),
+			GasLimit: 30_000_000,
+			Calldata: data,
+			ReadOnly: true,
+		}
+		result := callEVM.Execute(ctx)
+		if result.Error != nil {
+			return "0x", nil
+		}
+		return "0x" + hex.EncodeToString(result.ReturnData), nil
 	case "eth_estimateGas":
 		return "0x5208", nil // 21000 gas
 
@@ -312,57 +324,76 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		}
 		return fmt.Sprintf("0x%s", acc.Balance.Text(16)), nil
 
+	case "way_fundGenesis":
+		var p []string
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 2 {
+			return nil, fmt.Errorf("invalid params: expected [\"addr\", \"amount\"]")
+		}
+		addr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
+		amtStr := strings.TrimPrefix(p[1], "0x")
+		amt, ok := new(big.Int).SetString(amtStr, 16)
+		if !ok {
+			return nil, fmt.Errorf("invalid amount: %s", p[1])
+		}
+		rpc.mu.Lock()
+		acc := rpc.chain.State.GetOrCreateAccount(addr)
+		if acc.Balance == nil {
+			acc.Balance = new(big.Int)
+		}
+		acc.Balance.Add(acc.Balance, amt)
+		if acc.DoxDevLevel < 3 {
+			acc.DoxDevLevel = 3
+		}
+		// Persist to disk if store is configured
+		if rpc.chain.Store != nil {
+			_ = rpc.chain.Store.SaveAllAccounts(rpc.chain.State)
+		}
+		rpc.mu.Unlock()
+		return fmt.Sprintf("0x%s", acc.Balance.Text(16)), nil
+
 	case "way_getBlockCount":
 		rpc.mu.RLock()
 		count := len(rpc.chain.Blocks)
 		rpc.mu.RUnlock()
 		return strconv.Itoa(count), nil
 
-	// ── Truth Anchoring ──
-	case "way_attestTruth":
+	// ── Wallet P3 panel read surfaces ──
+	// These expose existing precompile READ functions without going through
+	// eth_call (which the public RPC blocks for precompiles). Read-only.
+	case "way_govProposals":
+		return evm.GovernanceListProposals(rpc.chain.State), nil
+
+	case "way_twoWayStats":
+		vaults, debt := evm.GetTwoWayStats(rpc.chain.State)
+		return map[string]interface{}{
+			"vaults":   fmt.Sprintf("0x%x", vaults),
+			"totalDebt": fmt.Sprintf("0x%x", debt),
+		}, nil
+
+	case "way_bridgeStats":
+		committed, withdrawn := evm.GetBridgeStats(rpc.chain.State)
+		return map[string]interface{}{
+			"committed": fmt.Sprintf("0x%x", committed),
+			"withdrawn": fmt.Sprintf("0x%x", withdrawn),
+		}, nil
+
+	// ── Contract Deployment ──
+	case "way_deployCode":
 		var p []string
 		if err := json.Unmarshal(params, &p); err != nil || len(p) < 2 {
-			return nil, fmt.Errorf("need [address, truth_hash]")
+			return nil, fmt.Errorf("invalid params: expected [\"deployer_hex\", \"bytecode_hex\"]")
 		}
-		addr := strings.TrimPrefix(p[0], "0x")
-		hash := strings.TrimPrefix(p[1], "0x")
-		if addr == "" || hash == "" {
-			return nil, fmt.Errorf("invalid params")
+		deployer := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
+		bytecodeHex := strings.TrimPrefix(p[1], "0x")
+		bytecode, err := hex.DecodeString(bytecodeHex)
+		if err != nil {
+			return nil, fmt.Errorf("invalid bytecode: %v", err)
 		}
-		rpc.mu.Lock()
-		acc := rpc.chain.State.GetOrCreateAccount(strings.ToLower(addr))
-		idx := acc.Nonce
-		key := sha256.Sum256([]byte("truth_" + strconv.FormatUint(idx, 10)))
-		var data [32]byte
-		copy(data[:], []byte(hash))
-		acc.Storage[key] = data
-		rpc.mu.Unlock()
-		return map[string]interface{}{"ok": true, "slot": idx}, nil
-
-	case "way_getTruths":
-		var p []string
-		if err := json.Unmarshal(params, &p); err != nil || len(p) < 1 {
-			return nil, fmt.Errorf("need [address]")
+		addr, err := rpc.chain.EVM.DeployContractFromCode(deployer, bytecode, evm.ClassA)
+		if err != nil {
+			return nil, fmt.Errorf("deploy failed: %v", err)
 		}
-		addr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
-		rpc.mu.RLock()
-		acc := rpc.chain.State.GetAccount(addr)
-		if acc == nil {
-			rpc.mu.RUnlock()
-			return []interface{}{}, nil
-		}
-		var list []map[string]interface{}
-		for i := uint64(0); i < acc.Nonce+20; i++ {
-			k := sha256.Sum256([]byte("truth_" + strconv.FormatUint(i, 10)))
-			if v := acc.Storage[k]; v != [32]byte{} {
-				list = append(list, map[string]interface{}{"slot": i, "hash": hex.EncodeToString(v[:])})
-			}
-		}
-		rpc.mu.RUnlock()
-		if list == nil {
-			return []interface{}{}, nil
-		}
-		return list, nil
+		return "0x" + addr, nil
 
 	// ── Transaction methods ──
 
@@ -496,12 +527,12 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		}
 
 		rpc.mu.RLock()
-		// Search in-memory blocks with-in-memory blocks first
-		for _, block := range rpc.chain.Blocks {
+		// Search in-memory blocks first
+		for blockIdx, block := range rpc.chain.Blocks {
 			for _, tx := range block.Transactions {
 				txHex := hex.EncodeToString(tx.Hash[:])
 				if strings.EqualFold(txHex, searchHash) {
-					receipt := buildReceipt(tx, int(block.Height), block.Hash)
+					receipt := buildReceipt(tx, blockIdx, block.Hash)
 					rpc.mu.RUnlock()
 					return receipt, nil
 				}
@@ -545,107 +576,6 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 
 	case "eth_unsubscribe":
 		return nil, fmt.Errorf("eth_unsubscribe requires a WebSocket connection")
-
-	// ── Professional Badge methods ──
-	case "way_applyBadge":
-		var p []string
-		if err := json.Unmarshal(params, &p); err != nil || len(p) < 2 {
-			return nil, fmt.Errorf("invalid params: expected [\"0xaddress\", \"profession\"]")
-		}
-		addr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
-		profession := strings.ToLower(p[1])
-
-		// Generate license hash from address+profession
-		licenseInput := fmt.Sprintf("%s:%s", addr, profession)
-		licenseHash := sha256.Sum256([]byte(licenseInput))
-
-		rpc.mu.Lock()
-		err := evm.ApplyForProfessionalBadge(profession, licenseHash, rpc.chain.State, addr)
-		rpc.mu.Unlock()
-		if err != nil {
-			return nil, fmt.Errorf("apply failed: %v", err)
-		}
-		return map[string]interface{}{
-			"success":    true,
-			"address":    "0x" + addr,
-			"profession": profession,
-		}, nil
-
-	case "way_getPendingApplications":
-		schedulerAddr := evm.PrecompileAddrHex(0x0D)
-
-		rpc.mu.RLock()
-		schedulerAcc := rpc.chain.State.GetAccount(schedulerAddr)
-		if schedulerAcc == nil {
-			rpc.mu.RUnlock()
-			return []interface{}{}, nil
-		}
-
-		validProfessions := []string{"geologist", "lawyer", "surveyor", "engineer"}
-		var applications []map[string]interface{}
-
-		// Iterate all accounts; check each for pending applications
-		for addr, acc := range rpc.chain.State.Accounts {
-			if acc.DoxDevLevel >= 2 {
-				for _, prof := range validProfessions {
-					appKey := sha256.Sum256(append(append([]byte{0x15}, []byte(addr)...), []byte(prof)...))
-					if val, ok := schedulerAcc.Storage[appKey]; ok {
-						status := "pending"
-						if val[31] == 2 {
-							status = "verified"
-						} else if val[31] == 0 {
-							status = "rejected"
-						}
-						applications = append(applications, map[string]interface{}{
-							"address":    "0x" + addr,
-							"profession": prof,
-							"status":     status,
-						})
-					}
-				}
-			}
-		}
-		rpc.mu.RUnlock()
-
-		if applications == nil {
-			return []interface{}{}, nil
-		}
-		return applications, nil
-
-	case "way_approveBadge":
-		var p []string
-		if err := json.Unmarshal(params, &p); err != nil || len(p) < 3 {
-			return nil, fmt.Errorf("invalid params: expected [\"0xcaller\", \"0xapplicant\", \"profession\"]")
-		}
-		callerAddr := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
-		applicantAddr := strings.ToLower(strings.TrimPrefix(p[1], "0x"))
-		profession := strings.ToLower(p[2])
-
-		rpc.mu.Lock()
-		verified, err := evm.VerifyProfessionalBadge(profession, rpc.chain.State, callerAddr)
-		if err != nil {
-			rpc.mu.Unlock()
-			return nil, fmt.Errorf("verification failed: %v", err)
-		}
-
-		// Update the application status in precompile 0x0D's storage
-		if verified {
-			schedulerAddr := evm.PrecompileAddrHex(0x0D)
-			schedulerAcc := rpc.chain.State.GetOrCreateAccount(schedulerAddr)
-			appKey := sha256.Sum256(append(append([]byte{0x15}, []byte(applicantAddr)...), []byte(profession)...))
-			if val, ok := schedulerAcc.Storage[appKey]; ok {
-				val[31] = 2 // Mark as verified
-				schedulerAcc.Storage[appKey] = val
-			}
-		}
-		rpc.mu.Unlock()
-
-		return map[string]interface{}{
-			"success":    verified,
-			"caller":     "0x" + callerAddr,
-			"applicant":  "0x" + applicantAddr,
-			"profession": profession,
-		}, nil
 
 	default:
 		return nil, fmt.Errorf("method not found: %s", method)

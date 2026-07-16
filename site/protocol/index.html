@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WayChain · Oracle, Privacy & Protocol</title>
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    body{font-family:Inter,system-ui,sans-serif;background:var(--parchment,#FFF8F0);color:#2A2A2A;margin:0}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+    h1{font-size:28px;color:#B87333;margin-bottom:4px}
+    .sub{color:#666;margin-bottom:24px}
+    .card{background:#fff;border:1px solid #e7ddd0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(42,42,42,.05)}
+    .tok{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+    .tok h2{font-size:19px;margin:0}
+    .addr{font-family:monospace;font-size:12px;color:#999}
+    .row{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
+    .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999}
+    .stat .v{font-size:18px;font-weight:600;color:#B87333;font-family:monospace}
+    input{font-family:monospace;padding:7px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;width:320px}
+    button{background:#B87333;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+    .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
+    .adv{font-size:12px;color:#888;background:#f5f5f5;border:1px solid #ddd;border-radius:8px;padding:8px 12px;margin-top:10px}
+    #wallet-widget{margin-bottom:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Oracle, Privacy &amp; Protocol</h1>
+    <div class="sub">The infrastructure layer: oracles, TLS verification, ZK privacy, cross-chain attestation, storage rent, templates, and the WIFR gauntlet rewards.</div>
+
+    <div id="wallet-widget"></div>
+
+    <!-- WIFR 0x21 -->
+    <div class="card">
+      <div class="tok"><h2>WIFR Gauntlet Rewards</h2><span class="addr">0x0000…0021</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Total Rewards Remaining</div><div class="v" id="wifr-total">—</div></div>
+        <div class="stat"><div class="k">Pool 1 Remaining</div><div class="v" id="wifr-pool1">—</div></div>
+      </div>
+      <div class="note">Live reward pool. Pioneers claim via claimPioneer(address) — a write op (wallet signer required).</div>
+    </div>
+
+    <!-- StateRent 0x12 (no-selector raw) -->
+    <div class="card">
+      <div class="tok"><h2>State Rent Calculator</h2><span class="addr">0x0000…0012</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Rent Due (sample)</div><div class="v" id="rent-due">—</div></div>
+      </div>
+      <div class="adv">No-selector precompile: input is raw [address(20)][contractSize(8)]. Rent = size × blocksSinceLast / 1000 (min 1 WAY/KB). Live sample computed above.</div>
+    </div>
+
+    <!-- OracleAggregator 0x0C (no-selector) -->
+    <div class="card">
+      <div class="tok"><h2>Oracle Aggregator</h2><span class="addr">0x0000…000C</span></div>
+      <div class="sub" style="margin-top:6px">Aggregates signed oracle reports (ed25519-verified, Dox_Dev L2+ required) and returns median + confidence.</div>
+      <div class="adv">No-selector precompile: input = [count(1)] then per oracle [pubkey(32)][value(32)][dataHash(32)][sig(64)]. Requires constructing signed reports — advanced; not callable from this read-only UI.</div>
+    </div>
+
+    <!-- OracleScheduler 0x0D / Verifier 0x0E -->
+    <div class="card">
+      <div class="tok"><h2>Oracle Scheduler / Verifier</h2><span class="addr">0x0000…000D / 0x0E</span></div>
+      <div class="adv">No-selector precompiles. Scheduler takes [interval(8)][startBlock(8)][feedId(32)][maxExec(8)][reward(8)]; Verifier checks report authenticity. Raw-input; advanced.</div>
+    </div>
+
+    <!-- TLSVerifier 0x0F / AggSig 0x10 -->
+    <div class="card">
+      <div class="tok"><h2>TLS Verifier / Aggregate Sig</h2><span class="addr">0x0000…000F / 0x10</span></div>
+      <div class="adv">No-selector precompiles. TLSVerifier proves a TLS session transcript; AggregateSignatureVerify (BLS) verifies aggregated ed25519 signatures. Raw-input; advanced.</div>
+    </div>
+
+    <!-- Privacy 0x1C -->
+    <div class="card">
+      <div class="tok"><h2>Privacy (ZK)</h2><span class="addr">0x0000…001C</span></div>
+      <div class="adv">ZK selective disclosure: range proofs, membership proofs, identity attestations. Selector-based (commit/verifyRange/verifyMembership). Proof construction requires off-chain ZK tooling — advanced; not callable from this read-only UI.</div>
+    </div>
+
+    <!-- CrossChain 0x1F -->
+    <div class="card">
+      <div class="tok"><h2>Cross-Chain Attestation</h2><span class="addr">0x0000…001F</span></div>
+      <div class="adv">Witnesses events on external chains (witnessEvent/getAttestation/challengeAttestation). Selector-based. Requires relayed chain proofs — advanced; not callable from this read-only UI.</div>
+    </div>
+
+    <!-- AccountRecovery 0x11 (no-selector) -->
+    <div class="card">
+      <div class="tok"><h2>Account Recovery</h2><span class="addr">0x0000…0011</span></div>
+      <div class="sub" style="margin-top:6px">Social-recovery vault: nominated guardians can rotate a lost key after a cooldown. Requires multiple guardian signatures — not callable from this read-only UI.</div>
+      <div class="adv">No-selector precompile (0x11): input is raw guardian-signed recovery payloads. Advanced; handled off-chain by the recovery guardian set.</div>
+    </div>
+
+    <!-- TemplateRegistry 0x26 -->
+    <div class="card">
+      <div class="tok"><h2>Template Registry</h2><span class="addr">0x0000…0026</span></div>
+      <div class="adv">Register/deploy smart-contract templates (registerTemplate/deployFromTemplate/getTemplate/getUserTemplates). Selector-based. Write ops require a wallet signer.</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+  <script src="/js/precompiles.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/rpc.js"></script>
+  <script src="/js/abi.js"></script>
+  <script src="/js/wallet-ui.js"></script>
+
+  <script>
+    const RPC = window.WayChainRPC;
+    const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
+
+    async function readProtocol() {
+      try {
+        const t = await RPC.precompileCall('0x21', 'getTotalRemaining', '');
+        document.getElementById('wifr-total').textContent = hexToNum(t).toLocaleString() + ' WAY';
+        const p1 = await RPC.precompileCall('0x21', 'getRemainingRewards', window.WayChainABI.encodeUint256(1));
+        document.getElementById('wifr-pool1').textContent = (p1 && p1 !== '0x') ? hexToNum(p1).toLocaleString() + ' WAY' : '0';
+      } catch (e) { document.getElementById('wifr-total').textContent = 'err'; }
+      try {
+        // StateRent calcRent: raw [addr(20)][size(8)]. Use zero-addr + 8 bytes size.
+        const raw = '0x' + '00'.repeat(20) + '0000000000000008';
+        const r = await RPC.precompileCall('0x12', 'calcRent', raw.replace('0x', ''));
+        document.getElementById('rent-due').textContent = (r && r !== '0x') ? hexToNum(r).toLocaleString() + ' WAY' : '—';
+      } catch (e) { document.getElementById('rent-due').textContent = 'err'; }
+    }
+
+    window.addEventListener('load', readProtocol);
+  </script>
+</body>
+</html>

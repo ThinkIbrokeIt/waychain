@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain Explorer — Actually Decentralized</title>
+<meta name="description" content="WayChain block explorer — view real blocks, transactions, and accounts on WayChain.">
+<style>
+:root {
+  --bg: #2A2A2A; --bg2: #1E1E1E; --bg3: #333;
+  --fg: #E8E4DD; --fg2: #9A9A9A;
+  --accent: #B87333; --accent2: #ff6b35; --accent3: #FFBF00;
+  --green: #4CAF50; --red: #E53935; --yellow: #FFBF00;
+  --border: #3A3A3A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--fg);
+  line-height: 1.8;
+  font-size: 18px;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Headings */
+h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
+
+/* Header */
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 0; border-bottom: 1px solid var(--border);
+  flex-wrap: wrap; gap: 10px;
+}
+.header h1 { font-size: 1.2em; color: var(--accent); }
+.header .nav a {
+  font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px;
+  margin-left: 20px; color: var(--fg2);
+}
+.header .nav a:hover { color: var(--accent); }
+.header-logo{display:flex;align-items:center;gap:10px}
+.header-logo-img{height:40px;width:auto;display:block}
+
+/* Stats bar */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; padding: 15px 0;
+}
+.stat {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px; text-align: center;
+}
+.stat .val { font-size: 1.3em; font-weight: 700; color: var(--accent); }
+.stat .lbl { font-size: 0.65em; color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+.stat .val.green { color: var(--green); }
+.stat .val.red { color: var(--red); }
+
+/* Search */
+.search-box {
+  display: flex; gap: 8px; margin: 15px 0;
+}
+.search-box input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  color: var(--fg); padding: 10px 14px; border-radius: 6px;
+  font-family: 'Inter', -apple-system, sans-serif; font-size: 0.85em;
+}
+.search-box input:focus { outline: none; border-color: var(--accent); }
+.search-box button {
+  background: var(--accent); color: var(--bg); border: none;
+  padding: 10px 20px; border-radius: 6px;
+  font-family: 'Inter', -apple-system, sans-serif; font-weight: 700;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+  font-size: 0.8em;
+}
+.search-box button:hover { opacity: 0.9; }
+
+/* Sections */
+.section {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; margin: 15px 0; padding: 15px;
+}
+.section h2 {
+  font-size: 0.9em; color: var(--accent); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.section h3 {
+  font-size: 0.75em; color: var(--fg2); text-transform: uppercase;
+  letter-spacing: 1px; margin: 10px 0;
+}
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.75em; }
+th { color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; font-size: 0.65em; }
+tr:hover td { background: var(--bg3); }
+.hash { color: var(--accent); max-width: 200px; overflow: hidden; text-overflow: ellipsis; word-break: break-all; }
+.addr { color: var(--fg2); word-break: break-all; }
+.hash.clickable { cursor: pointer; }
+.hash.clickable:hover { text-decoration: underline; }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.yellow { color: var(--yellow); }
+
+/* Detail panels */
+.detail { font-size: 0.8em; }
+.detail .row { display: flex; padding: 6px 0; border-bottom: 1px solid rgba(58,58,58,0.3); }
+.detail .label { width: 140px; color: var(--fg2); flex-shrink: 0; }
+.detail .value { flex: 1; word-break: break-all; }
+.detail .hash-value { color: var(--accent); }
+
+/* Log */
+#log {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px; font-size: 0.7em;
+  max-height: 120px; overflow-y: auto; margin-top: 10px;
+}
+#log div { padding: 2px 0; border-bottom: 1px solid rgba(58,58,58,0.1); }
+#log .ok { color: var(--green); }
+#log .err { color: var(--red); }
+#log .info { color: var(--fg2); }
+
+/* Status indicator */
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.online { background: var(--green); }
+.status-dot.offline { background: var(--red); }
+
+/* Footer */
+.footer {
+  text-align: center; padding: 30px 20px;
+  color: var(--fg2); font-size: 0.7em; border-top: 1px solid var(--border);
+  margin-top: 30px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .header { flex-direction: column; align-items: flex-start; }
+  .header .nav a { margin-left: 0; margin-right: 15px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">
+      <img src="/assets/waylogo.png" alt="WayChain" class="header-logo-img">
+      <h1>⬡ WayChain Explorer</h1>
+    </div>
+    <div class="nav">
+      <span id="statusSpan"><span class="status-dot offline" id="statusDot"></span><span id="statusText">Connecting...</span></span>
+      <span id="wallet-span" style="display:none;font-size:.7em;color:var(--accent3)">
+        Connected: <code id="explorer-wallet-address" style="font-size:.85em"></code>
+      </span>
+      <button onclick="connectWallet()" style="background:var(--accent);color:var(--bg);border:none;padding:6px 12px;border-radius:6px;font-size:.7em;cursor:pointer;margin-left:10px">Connect</button>
+      <a href="https://waychain.org">Dashboard</a>
+      <a href="/badge">Badge</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><div class="val" id="blockHeight">—</div><div class="lbl">Block Height</div></div>
+    <div class="stat"><div class="val green" id="txCount">0</div><div class="lbl">Total Txs</div></div>
+    <div class="stat"><div class="val" id="poolSize">0</div><div class="lbl">Pending Txs</div></div>
+    <div class="stat"><div class="val" id="accountCount">0</div><div class="lbl">Accounts</div></div>
+    <div class="stat"><div class="val green" id="validators">200</div><div class="lbl">Validators</div></div>
+    <div class="stat"><div class="val" id="chainId">10008</div><div class="lbl">Chain ID</div></div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-box">
+    <input id="searchInput" type="text" placeholder="Search by block number, address, or tx hash..." value="">
+    <button onclick="doSearch()">Search</button>
+    <button onclick="clearSearch()" style="background:var(--bg3);color:var(--fg2)">Clear</button>
+  </div>
+
+  <!-- Detail view (hidden initially) -->
+  <div id="detailView" class="section" style="display:none">
+    <h2 id="detailTitle">Detail</h2>
+    <div id="detailContent"></div>
+  </div>
+
+  <!-- Blocks -->
+  <div class="section">
+    <h2>⧫ Latest Blocks <span id="blockCount" style="color:var(--fg2);font-weight:400">(0)</span></h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Height</th><th>Hash</th><th>Proposer</th><th>Txs</th><th>Time</th>
+        </tr></thead>
+        <tbody id="blocksTable"><tr><td colspan="5" style="color:var(--fg2);text-align:center">Waiting for blocks...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="section">
+    <h2>Activity</h2>
+    <div id="log"><div class="info">Explorer initialized</div></div>
+  </div>
+</div>
+
+<div class="footer">
+  WayChain v0.1.0 — "Actually Decentralized"<br>
+  <a href="https://waychain.org">waychain.org</a> &middot; Explorer &middot; Chain ID 10008
+</div>
+
+<script>
+// ── Configuration ──
+const DEFAULT_RPC = 'https://api.waychain.org';
+const urlParams = new URLSearchParams(window.location.search);
+const RPC_URL = urlParams.get('rpc') || DEFAULT_RPC;
+const REFRESH_INTERVAL = 5000; // 5 seconds
+const BLOCKS_TO_SHOW = 20;
+
+// ── State ──
+let currentBlockHeight = 0;
+let allBlocks = [];
+let lastTxCount = 0;
+
+// ── Helpers ──
+function log(msg, cls = 'info') {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = cls;
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.prepend(div);
+  while (el.children.length > 100) el.removeChild(el.lastChild);
+}
+
+function setStatus(online) {
+  document.getElementById('statusDot').className = online ? 'status-dot online' : 'status-dot offline';
+  document.getElementById('statusText').textContent = online ? 'Connected' : 'Offline';
+}
+
+function connectWallet() {
+  if(!window.WayChainWallet){window.location.href='/wallet';return;}
+  WayChainWallet.connect().then(acc=>{
+    document.getElementById('wallet-span').style.display='inline';
+    document.getElementById('explorer-wallet-address').textContent=acc.address;
+  }).catch(()=>window.location.href='/wallet');
+}
+
+async function rpc(method, params = []) {
+  const resp = await fetch(RPC_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
+}
+
+function toNum(hex) {
+  if (typeof hex === 'number') return hex;
+  const s = (hex || '0x0').startsWith('0x') ? hex.slice(2) : hex;
+  return parseInt(s, 16) || 0;
+}
+
+function ago(ts) {
+  const sec = Math.floor((Date.now()/1000) - ts);
+  if (sec < 5) return 'just now';
+  if (sec < 60) return sec + 's ago';
+  if (sec < 3600) return Math.floor(sec/60) + 'm ago';
+  return Math.floor(sec/3600) + 'h ago';
+}
+
+function shortHash(h, len = 12) {
+  if (!h || h === '0x') return '—';
+  const s = h.replace('0x', '');
+  return s.slice(0, len) + '...' + s.slice(-len);
+}
+
+function fullHash(h) {
+  return h.startsWith('0x') ? h : '0x' + h;
+}
+
+// ── Search ──
+async function doSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+  log(`Searching: ${q}`);
+
+  // Check if it's a number (block height)
+  const num = parseInt(q);
+  if (!isNaN(num) && num > 0) {
+    return showBlockDetail(num);
+  }
+  // Check if it looks like a tx hash or address (hex)
+  const clean = q.replace('0x', '');
+  if (/^[0-9a-fA-F]{8,}$/.test(clean)) {
+    // Try as tx hash first
+    try {
+      const tx = await rpc('eth_getTransactionByHash', [fullHash(clean)]);
+      if (tx && tx.hash) return showTxDetail(tx);
+    } catch(e) {}
+    // Try as address
+    try {
+      const bal = await rpc('eth_getBalance', [fullHash(clean)]);
+      if (bal && bal !== '0x0') {
+        return showAddressDetail(clean);
+      }
+    } catch(e) {}
+    // Show anyway
+    return showAddressDetail(clean);
+  }
+  log(`Could not parse query: ${q}`, 'err');
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('detailView').style.display = 'none';
+}
+
+// ── Detail Views ──
+
+function showBlockDetail(num) {
+  const dv = document.getElementById('detailView');
+  const title = document.getElementById('detailTitle');
+  const content = document.getElementById('detailContent');
+  dv.style.display = 'block';
+  title.textContent = `⧫ Block #${num}`;
+
+  // Find in cache first
+  const cached = allBlocks.find(b => toNum(b.number) === num);
+  if (cached) {
+    renderBlockDetail(content, cached, num);
+  } else {
+    content.innerHTML = '<div class="detail"><div class="row"><span style="color:var(--fg2)">Loading...</span></div></div>';
+    rpc('eth_getBlockByNumber', [`0x${num.toString(16)}`]).then(b => {
+      if (b) renderBlockDetail(content, b, num);
+      else content.innerHTML = '<div class="detail"><div class="row"><span class="red">Block not found</span></div></div>';
+    }).catch(e => {
+      content.innerHTML = `<div class="detail"><div class="row"><span class="red">Error: ${e.message}</span></div></div>`;
+    });
+  }
+  window.scrollTo({ top: dv.offsetTop - 20, behavior: 'smooth' });
+}
+
+function renderBlockDetail(el, block, num) {
+  const hash = block.hash || '—';
+  const parent = block.parentHash || '—';
+  const proposer = block.proposer || '—';
+  const ts = toNum(block.timestamp);
+  const txs = block.transactions || 0;
+  const txCount = typeof txs === 'number' ? txs : txs.length;
+
+  el.innerHTML = `
+    <div class="detail">
+      <div class="row"><div class="label">Height</div><div class="value">${num.toLocaleString()}</div></div>
+      <div class="row"><div class="label">Hash</div><div class="value hash-value">${fullHash(hash)}</div></div>
+      <div class="row"><div class="label">Parent Hash</div><div class="value hash-value">${fullHash(parent)}</div></div>
+      <div class="row"><div class="label">Proposer</div><div class="value">${proposer}</div></div>
+      <div class="row"><div class="label">Timestamp</div><div class="value">${ts ? new Date(ts*1000).toLocaleString() + ' (' + ago(ts) + ')' : '—'}</div></div>
+      <div class="row"><div class="label">Transactions</div><div class="value">${txCount}</div></div>
+    </div>
+    <h3 style="margin-top:15px">Transactions in Block #${num}</h3>
+    <div id="blockTxs">${txCount > 0 ? renderTxList(block, num) : '<div style="color:var(--fg2);font-size:0.75em">No transactions in this block</div>'}</div>
+  `;
+}
+
+function renderTxList(block, num) {
+  const txs = block.transactions || [];
+  if (typeof txs === 'number') return '<div style="color:var(--fg2);font-size:0.75em">' + txs + ' transactions (use tx hash search to view)</div>';
+  if (txs.length === 0) return '<div style="color:var(--fg2);font-size:0.75em">No transactions</div>';
+  let html = '<table><thead><tr><th>Hash</th><th>From</th><th>To</th><th>Value</th></tr></thead><tbody>';
+  txs.forEach(tx => {
+    const txHash = tx.hash || '—';
+    const val = toNum(tx.value);
+    html += `<tr onclick="showTxByHash('${txHash}')" style="cursor:pointer">
+      <td class="hash clickable">${shortHash(txHash, 10)}</td>
+      <td class="addr">${shortHash(tx.from, 8)}</td>
+      <td class="addr">${shortHash(tx.to, 8) || '—'}</td>
+      <td>${val.toLocaleString()}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+async function showTxByHash(hash) {
+  try {
+    const tx = await rpc('eth_getTransactionByHash', [hash]);
+    if (tx) showTxDetail(tx);
+  } catch(e) {
+    log(`Tx lookup error: ${e.message}`, 'err');
+  }
+}
+
+function showTxDetail(tx) {
+  const dv = document.getElementById('detailView');
+  const title = document.getElementById('detailTitle');
+  const content = document.getElementById('detailContent');
+  dv.style.display = 'block';
+  title.textContent = '⧫ Transaction';
+
+  const val = toNum(tx.value);
+  const gas = toNum(tx.gasLimit);
+  const price = toNum(tx.gasPrice);
+
+  content.innerHTML = `
+    <div class="detail">
+      <div class="row"><div class="label">Hash</div><div class="value hash-value">${tx.hash}</div></div>
+      <div class="row"><div class="label">From</div><div class="value hash-value">${tx.from}</div></div>
+      <div class="row"><div class="label">To</div><div class="value hash-value">${tx.to || '<span class="yellow">Contract Creation</span>'}</div></div>
+      <div class="row"><div class="label">Value</div><div class="value">${val.toLocaleString()} WAY</div></div>
+      <div class="row"><div class="label">Nonce</div><div class="value">${toNum(tx.nonce)}</div></div>
+      <div class="row"><div class="label">Gas Limit</div><div class="value">${gas.toLocaleString()}</div></div>
+      <div class="row"><div class="label">Gas Price</div><div class="value">${price} gwei</div></div>
+      <div class="row"><div class="label">Data</div><div class="value hash-value">${tx.data || '0x'}</div></div>
+      <div class="row"><div class="label">Signature</div><div class="value hash-value" style="font-size:0.85em">${tx.signature ? shortHash(tx.signature, 16) : '—'}</div></div>
+    </div>
+    <h3>Receipt</h3>
+    <div id="receiptInfo"><span style="color:var(--fg2);font-size:0.75em">Loading...</span></div>
+  `;
+
+  // Fetch receipt
+  rpc('eth_getTransactionReceipt', [tx.hash]).then(rec => {
+    if (!rec) return;
+    document.getElementById('receiptInfo').innerHTML = `
+      <div class="detail">
+        <div class="row"><div class="label">Status</div><div class="value">${rec.status === '0x1' ? '<span class="green">Success</span>' : '<span class="red">Failed</span>'}</div></div>
+        <div class="row"><div class="label">Block</div><div class="value hash-value">${rec.blockNumber} <span style="color:var(--fg2)">(${toNum(rec.blockNumber).toLocaleString()})</span></div></div>
+        <div class="row"><div class="label">Gas Used</div><div class="value">${toNum(rec.gasUsed).toLocaleString()}</div></div>
+        ${rec.contractAddress ? `<div class="row"><div class="label">Contract</div><div class="value hash-value">${rec.contractAddress}</div></div>` : ''}
+      </div>
+    `;
+  }).catch(() => {});
+
+  window.scrollTo({ top: dv.offsetTop - 20, behavior: 'smooth' });
+}
+
+async function showAddressDetail(addr) {
+  const dv = document.getElementById('detailView');
+  const title = document.getElementById('detailTitle');
+  const content = document.getElementById('detailContent');
+  dv.style.display = 'block';
+  title.textContent = '⧫ Account';
+
+  content.innerHTML = '<div class="detail"><div class="row"><span style="color:var(--fg2)">Loading...</span></div></div>';
+
+  try {
+    const [balance, nonce, level] = await Promise.all([
+      rpc('eth_getBalance', [fullHash(addr)]),
+      rpc('eth_getTransactionCount', [fullHash(addr)]),
+      rpc('way_getDoxLevel', [fullHash(addr)])
+    ]);
+    const bal = toNum(balance);
+    content.innerHTML = `
+      <div class="detail">
+        <div class="row"><div class="label">Address</div><div class="value hash-value">${fullHash(addr)}</div></div>
+        <div class="row"><div class="label">Balance</div><div class="value">${bal.toLocaleString()} WAY</div></div>
+        <div class="row"><div class="label">Nonce</div><div class="value">${toNum(nonce)}</div></div>
+        <div class="row"><div class="label">Dox_Dev</div><div class="value">${toNum(level) > 0 ? '<span class="green">Level ' + toNum(level) + '</span>' : '<span class="red">Not verified</span>'}</div></div>
+      </div>
+    `;
+  } catch(e) {
+    content.innerHTML = `<div class="detail"><div class="row"><span class="red">Error: ${e.message}</span></div></div>`;
+  }
+  window.scrollTo({ top: dv.offsetTop - 20, behavior: 'smooth' });
+}
+
+// ── Block Fetching ──
+
+async function fetchLatestBlocks() {
+  try {
+    const blockNumStr = await rpc('eth_blockNumber');
+    const height = toNum(blockNumStr);
+    if (height === currentBlockHeight) return;
+    currentBlockHeight = height;
+
+    document.getElementById('blockHeight').textContent = height.toLocaleString();
+    document.getElementById('blockCount').textContent = '(' + height.toLocaleString() + ')';
+    setStatus(true);
+
+    // Fetch latest blocks
+    const start = Math.max(1, height - BLOCKS_TO_SHOW + 1);
+    const batch = [];
+    for (let i = height; i >= start; i--) {
+      batch.push(rpc('eth_getBlockByNumber', [`0x${i.toString(16)}`]));
+    }
+    const blocks = await Promise.all(batch);
+    allBlocks = blocks.filter(b => b);
+
+    // Calculate total txs
+    let totalTxs = 0;
+    allBlocks.forEach(b => {
+      const txs = b.transactions || 0;
+      totalTxs += typeof txs === 'number' ? txs : (txs ? txs.length : 0);
+    });
+
+    // Update stats
+    document.getElementById('txCount').textContent = totalTxs.toLocaleString();
+
+    // Render table
+    const tbody = document.getElementById('blocksTable');
+    let html = '';
+    allBlocks.forEach(b => {
+      const height = b.number ? toNum(b.number) : '—';
+      const hash = b.hash || '—';
+      const proposer = b.proposer || '—';
+      const txs = b.transactions || 0;
+      const txCount = typeof txs === 'number' ? txs : (txs ? txs.length : 0);
+      const ts = toNum(b.timestamp);
+      html += `<tr onclick="showBlockDetail(${height})" style="cursor:pointer">
+        <td style="color:var(--accent);font-weight:700">${typeof height === 'number' ? height.toLocaleString() : height}</td>
+        <td class="hash">${shortHash(hash)}</td>
+        <td>${proposer}</td>
+        <td>${txCount}</td>
+        <td>${ts ? ago(ts) : '—'}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html || '<tr><td colspan="5" style="color:var(--fg2)">No blocks found</td></tr>';
+
+    log(`Fetched ${allBlocks.length} blocks (height ${height.toLocaleString()})`, 'ok');
+    lastTxCount = totalTxs;
+  } catch(e) {
+    setStatus(false);
+    log(`Fetch error: ${e.message}`, 'err');
+  }
+}
+
+// ── Init ──
+fetchLatestBlocks();
+setInterval(fetchLatestBlocks, REFRESH_INTERVAL);
+setTimeout(() => {
+  document.getElementById('searchInput').placeholder = 'Search by block number, address, or tx hash...';
+}, 500);
+log('Explorer connected to ' + RPC_URL, 'ok');
+</script>
+<!-- Real wallet + RPC (issue #10) -->
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+<script src="/js/precompiles.js"></script>
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WayChain · Identity & Governance</title>
+  <link rel="stylesheet" href="/assets/site.css">
+  <style>
+    body{font-family:Inter,system-ui,sans-serif;background:var(--parchment,#FFF8F0);color:#2A2A2A;margin:0}
+    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+    h1{font-size:28px;color:#B87333;margin-bottom:4px}
+    .sub{color:#666;margin-bottom:24px}
+    .card{background:#fff;border:1px solid #e7ddd0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(42,42,42,.05)}
+    .tok{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+    .tok h2{font-size:19px;margin:0}
+    .addr{font-family:monospace;font-size:12px;color:#999}
+    .row{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
+    .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999}
+    .stat .v{font-size:18px;font-weight:600;color:#B87333;font-family:monospace}
+    input{font-family:monospace;padding:7px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;width:320px}
+    button{background:#B87333;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+    button:disabled{background:#ccc;cursor:not-allowed}
+    .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
+    .gate{font-size:13px;color:#666;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    #wallet-widget{margin-bottom:20px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Identity &amp; Governance</h1>
+    <div class="sub">Dox_Dev reputation, on-chain governance, and the TaskRegistry that lets professionals earn WAY.</div>
+
+    <div id="wallet-widget"></div>
+
+    <!-- DoxDev 0x13 -->
+    <div class="card">
+      <div class="tok"><h2>Dox_Dev Badge</h2><span class="addr">0x0000…0013</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Your Level</div><div class="v" id="dox-level">—</div></div>
+        <div class="stat"><div class="k">Verified</div><div class="v" id="dox-verified">—</div></div>
+        <div class="stat"><div class="k">Total Badges (chain)</div><div class="v" id="dox-total">—</div></div>
+        <div class="stat"><div class="k">Curators</div><div class="v" id="dox-curators">—</div></div>
+      </div>
+    </div>
+
+    <!-- Governance 0x1D -->
+    <div class="card">
+      <div class="tok"><h2>Governance</h2><span class="addr">0x0000…001D</span></div>
+      <div class="row">
+        <div class="stat"><div class="k">Your Credits</div><div class="v" id="gov-credits">—</div></div>
+      <div class="note">Proposals/votes are Dox_Dev-weighted (Direct / Quadratic / Futarchy). Write ops (createProposal, vote, finalize) require an unlocked wallet — you'll see a confirm modal before broadcasting.</div>
+      <div class="gate">
+        <input id="gov-pid" placeholder="proposal ID (32-byte hex)" style="width:360px">
+        <button id="gov-get" onclick="loadProposal()">Get Proposal</button>
+        <button id="gov-vote" disabled onclick="voteProposal()">Vote (connect)</button>
+      </div>
+      <div class="gate" style="margin-top:8px">
+        <input id="gov-title" placeholder="proposal title (hashed on-chain)" style="width:300px">
+        <select id="gov-vtype" style="padding:7px;border-radius:8px;border:1px solid #ccc">
+          <option value="0">Direct</option><option value="1">Quadratic</option><option value="2">Futarchy</option>
+        </select>
+        <button id="gov-create" disabled onclick="createProposal()">Create Proposal (connect)</button>
+      </div>
+      <div class="row" id="gov-proposal" style="display:none">
+        <div class="stat"><div class="k">Proposal Status</div><div class="v" id="gov-status">—</div></div>
+        <div class="stat"><div class="k">Your Vote</div><div class="v" id="gov-vote">—</div></div>
+      </div>
+      <div class="note">Proposals/votes are Dox_Dev-weighted (Direct / Quadratic / Futarchy). Write ops (createProposal, vote, finalize) require a connected wallet signer.</div>
+    </div>
+
+    <!-- TaskRegistry 0x23 -->
+    <div class="card">
+      <div class="tok"><h2>TaskRegistry</h2><span class="addr">0x0000…0023</span></div>
+      <div class="sub" style="margin-top:6px">Professionals claim a task, a verifier approves, and WAY is earned. Claim/verify are write ops (wallet signer required).</div>
+      <div class="gate">
+        <input id="task-id" placeholder="task ID (32-byte hex)" style="width:360px">
+        <button id="task-claim" disabled onclick="claimTask()">Claim Task (connect)</button>
+        <button id="task-verify" disabled onclick="verifyTask()">Verify (connect)</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
+  <script src="/js/precompiles.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/rpc.js"></script>
+  <script src="/js/abi.js"></script>
+  <script src="/js/wallet-ui.js"></script>
+
+  <script>
+    const P = window.WayChainPrecompiles;
+    const RPC = window.WayChainRPC;
+    const ABI = window.WayChainABI;
+    const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
+    const boolRes = (b) => (b && b !== '0x' && BigInt(b || '0x0') !== 0n) ? 'yes' : 'no';
+
+    async function readIdentity(addr) {
+      if (!addr) return;
+      try {
+        const lvl = await RPC.precompileCall('0x13', 'getLevel', ABI.encodeAddress(addr));
+        document.getElementById('dox-level').textContent = hexToNum(lvl);
+        const v = await RPC.precompileCall('0x13', 'isVerified', ABI.encodeAddress(addr));
+        document.getElementById('dox-verified').textContent = boolRes(v);
+        const tb = await RPC.precompileCall('0x13', 'getTotalBadges', '');
+        document.getElementById('dox-total').textContent = hexToNum(tb);
+        const cc = await RPC.precompileCall('0x13', 'getCuratorCount', '');
+        document.getElementById('dox-curators').textContent = hexToNum(cc);
+      } catch (e) { document.getElementById('dox-level').textContent = 'err'; }
+      try {
+        const cr = await RPC.precompileCall('0x1D', 'getCredits', '');
+        document.getElementById('gov-credits').textContent = hexToNum(cr);
+      } catch (e) { document.getElementById('gov-credits').textContent = 'err'; }
+    }
+
+    async function loadProposal() {
+      const pid = document.getElementById('gov-pid').value.trim().replace(/^0x/, '');
+      if (!pid || pid.length !== 64) { alert('Enter a 32-byte (64-hex) proposal ID'); return; }
+      const arg = ABI.pad32(pid);
+      try {
+        const p = await RPC.precompileCall('0x1D', 'getProposal', arg);
+        // out[0]=voteType, out[1]=status (1=active)
+        const status = (p && p.length >= 4) ? Number(BigInt('0x' + p.slice(2, 4))) : 0;
+        document.getElementById('gov-status').textContent = status === 1 ? 'active' : (status === 2 ? 'passed' : 'pending/' + status);
+        document.getElementById('gov-proposal').style.display = 'flex';
+      } catch (e) { alert('getProposal failed: ' + e.message); }
+      const a = window.waychainAccount && window.waychainAccount.address;
+      if (a) {
+        try {
+          const v = await RPC.precompileCall('0x1D', 'getVote', arg);
+          document.getElementById('gov-vote').textContent = (v && v !== '0x') ? 'recorded' : 'none';
+        } catch (e) {}
+      }
+    }
+
+    async function claimTask() {
+      const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
+      const tid = document.getElementById('task-id').value.trim().replace(/^0x/, '');
+      if (tid.length !== 64) return alert('Enter a 32-byte task ID');
+      try {
+        await window.WayChainWallet.unlock();
+        await RPC.precompileCall('0x23', 'taskClaim', ABI.pad32(tid), { write: true });
+        alert('Task claimed. Check the TaskRegistry on-chain.');
+      } catch (e) { alert('Claim failed: ' + e.message); }
+    }
+    async function verifyTask() {
+      const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
+      const tid = document.getElementById('task-id').value.trim().replace(/^0x/, '');
+      if (tid.length !== 64) return alert('Enter a 32-byte task ID');
+      const arg = ABI.pad32(tid) + ABI.rawAddress20(a.address);
+      try {
+        await window.WayChainWallet.unlock();
+        await RPC.precompileCall('0x23', 'taskVerify', arg, { write: true });
+        alert('Task verified. WAY earned by claimant.');
+      } catch (e) { alert('Verify failed: ' + e.message); }
+    }
+
+    // Governance write ops. Unlock ephemeral seed, then the registry write path signs + confirms.
+    async function govUnlockFirst() {
+      if (!window.waychainAccount) { alert('Connect wallet first'); return false; }
+      if (!window.WayChainWallet.isUnlocked()) {
+        try { await window.WayChainWallet.unlock(); } catch (e) { alert('Unlock failed: ' + e.message); return false; }
+      }
+      return true;
+    }
+    async function voteProposal() {
+      if (!(await govUnlockFirst())) return;
+      const pid = document.getElementById('gov-pid').value.trim().replace(/^0x/, '');
+      if (pid.length !== 64) return alert('Enter a 32-byte proposal ID');
+      const dir = prompt('Vote direction:\n1 = for\n0 = against', '1');
+      if (dir === null) return;
+      try {
+        const args = ABI.govVoteArgs({ proposalID: pid, voteDirection: Number(dir) || 0, credits: 1 });
+        const r = await RPC.precompileCall('0x1D', 'vote', args.replace(/^0x/, ''), { write: true });
+        alert('Vote submitted. Tx: ' + (r && r.txHash ? r.txHash.slice(0, 20) + '…' : 'ok'));
+      } catch (e) { alert('Vote failed: ' + e.message); }
+    }
+    async function createProposal() {
+      if (!(await govUnlockFirst())) return;
+      const title = document.getElementById('gov-title').value.trim();
+      if (!title) return alert('Enter a proposal title');
+      const vtype = Number(document.getElementById('gov-vtype').value) || 0;
+      try {
+        // title/desc hashed (sha256) — browser crypto.subtle available on https.
+        const toHash = async (s) => { const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''); };
+        const titleHash = await toHash(title);
+        const descHash = await toHash(title + ' — created via WayChain web wallet');
+        const args = ABI.govCreateProposalArgs({ voteType: vtype, titleHash, descHash, target: window.waychainAccount.address });
+        const r = await RPC.precompileCall('0x1D', 'createProposal', args.replace(/^0x/, ''), { write: true });
+        alert('Proposal created. Tx: ' + (r && r.txHash ? r.txHash.slice(0, 20) + '…' : 'ok'));
+      } catch (e) { alert('Create failed: ' + e.message); }
+    }
+
+    const origConnect = window.WayChainWallet && window.WayChainWallet.connect;
+    if (origConnect) {
+      window.WayChainWallet.connect = async function () {
+        const acc = await origConnect.apply(this, arguments);
+        ['task-claim', 'task-verify', 'gov-vote', 'gov-create'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) { el.disabled = false; el.textContent = el.textContent.replace(' (connect)', ''); }
+        });
+        await readIdentity(acc.address);
+        return acc;
+      };
+    }
+    window.addEventListener('load', () => {
+      const a = window.waychainAccount && window.waychainAccount.address;
+      if (a) readIdentity(a);
+    });
+  </script>
+</body>
+</html>

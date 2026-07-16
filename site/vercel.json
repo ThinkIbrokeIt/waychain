@@ -1,0 +1,47 @@
+{
+  "framework": null,
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": ".",
+  "installCommand": "",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/version.json", "destination": "/version.json" },
+    { "source": "/whitepaper", "destination": "/whitepaper/index.html" },
+    { "source": "/whitepaper/", "destination": "/whitepaper/index.html" },
+    { "source": "/whitepaper/:path*", "destination": "/whitepaper/index.html" },
+    { "source": "/explorer", "destination": "/explorer/index.html" },
+    { "source": "/badge", "destination": "/badge/index.html" },
+    { "source": "/plan", "destination": "/plan/index.html" },
+    { "source": "/docs", "destination": "/docs/index.html" },
+    { "source": "/declaration", "destination": "/declaration/index.html" },
+    { "source": "/independence", "destination": "/declaration/index.html" },
+    { "source": "/wallet", "destination": "/wallet/index.html" },
+    { "source": "/faucet", "destination": "/faucet/index.html" },
+    { "source": "/journal", "destination": "/binary-journal/index.html" },
+    { "source": "/locks", "destination": "/locks/index.html" },
+    { "source": "/dex", "destination": "/dex/index.html" },
+    { "source": "/bridge", "destination": "/dex/bridge.html" },
+    { "source": "/dex/bridge", "destination": "/dex/bridge.html" },
+    { "source": "/wifr", "destination": "/wifr.html" },
+    { "source": "/wifr/bridge", "destination": "/wifr/bridge.html" },
+    { "source": "/wifr/pool", "destination": "/wifr/pool.html" },
+    { "source": "/wifr/leaderboard", "destination": "/wifr/leaderboard.html" },
+    { "source": "/wifr/quests", "destination": "/wifr/quests.html" },
+    { "source": "/wifr/quest", "destination": "/wifr/quests.html" },
+    { "source": "/wif", "destination": "/wif.html" },
+    { "source": "/docs/run-a-node", "destination": "/docs/run-a-node.html" },
+    { "source": "/gauntlet", "destination": "/gauntlet/index.html" },
+    { "source": "/gauntlet/", "destination": "/gauntlet/index.html" },
+    { "source": "/gauntlet/leaderboard", "destination": "/gauntlet/leaderboard/index.html" },
+    { "source": "/gauntlet/start", "destination": "/gauntlet/start/index.html" },
+    { "source": "/gauntlet/pools", "destination": "/gauntlet/pools/index.html" }
+  ]
+}

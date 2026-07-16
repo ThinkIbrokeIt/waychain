@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 600" width="1920" height="600">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="60%" stop-color="#2A2A2A"/>
+      <stop offset="100%" stop-color="#1E1E1E"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#B87333" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#FFBF00" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#B87333" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#B87333" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#B87333" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1920" height="600" fill="url(#bg)"/>
+  
+  <!-- Trading wave lines (nautical aesthetic) -->
+  <g stroke="#B87333" stroke-opacity="0.15" stroke-width="2">
+    <path d="M0 200 Q480 180 960 220 T1920 180"/>
+    <path d="M0 280 Q480 300 960 260 T1920 320"/>
+    <path d="M0 360 Q480 340 960 380 T1920 340"/>
+  </g>
+  
+  <!-- Beacon tower (WayChain lighthouse) -->
+  <g transform="translate(960, 600)">
+    <!-- Base -->
+    <rect x="-30" y="-380" width="60" height="380" fill="#333" rx="4"/>
+    <!-- Beacon housing -->
+    <rect x="-35" y="-420" width="70" height="40" fill="#B87333" rx="4"/>
+    <!-- Glass prism -->
+    <polygon points="-35,-420 0,-460 35,-420" fill="#FFBF00" opacity="0.7"/>
+    <!-- Light beam sweep -->
+    <g filter="url(#softGlow)">
+      <path d="M0,-420 L600,-500 L800,-450 L600,-380 Z" fill="url(#beam)"/>
+    </g>
+  </g>
+  
+  <!-- Floating WAY tokens (hexagonal) -->
+  <g transform="translate(300, 150)">
+    <g class="token-orb pulse">
+      <polygon points="50,3 78,20 78,50 50,57 22,50 22,20" fill="none" stroke="#B87333" stroke-width="2"/>
+      <circle cx="50" cy="30" r="8" fill="#FFBF00"/>
+      <text x="50" y="35" font-family="Inter" font-size="14" fill="#2A2A2A" text-anchor="middle" font-weight="700">WAY</text>
+    </g>
+  </g>
+  
+  <g transform="translate(1500, 200)">
+    <g class="token-orb pulse">
+      <polygon points="60,3 88,20 88,50 60,57 32,50 32,20" fill="none" stroke="#FFBF00" stroke-width="2"/>
+      <circle cx="60" cy="30" r="8" fill="#B87333"/>
+      <text x="60" y="35" font-family="Inter" font-size="12" fill="#2A2A2A" text-anchor="middle" font-weight="700">2WAY</text>
+    </g>
+  </g>
+  
+  <!-- Central title area -->
+  <g transform="translate(960, 380)">
+    <text x="0" y="0" font-family="'Playfair Display', Georgia, serif" font-size="72" fill="#FFF8F0" text-anchor="middle" font-weight="400">SWAP ROUTE</text>
+    <text x="0" y="50" font-family="Inter" font-size="24" fill="#B87333" text-anchor="middle" letter-spacing="4">WayChain DEX</text>
+    <text x="0" y="90" font-family="Inter" font-size="16" fill="#9A9A9A" text-anchor="middle">1-second settlement • Identity-gated • Truth-anchored</text>
+  </g>
+  
+  <!-- Subtle grid overlay -->
+  <g stroke="#3A3A3A" stroke-opacity="0.2" stroke-width="1">
+    <line x1="400" y1="0" x2="400" y2="600"/>
+    <line x1="800" y1="0" x2="800" y2="600"/>
+    <line x1="1200" y1="0" x2="1200" y2="600"/>
+    <line x1="1600" y1="0" x2="1600" y2="600"/>
+  </g>
+</svg>

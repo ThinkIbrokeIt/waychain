@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Developer Docs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #2A2A2A;
+  --bg2: #1E1E1E;
+  --bg3: #333;
+  --fg: #E8E4DD;
+  --fg2: #9A9A9A;
+  --copper: #B87333;
+  --amber: #FFBF00;
+  --warm: #FFF8F0;
+  --green: #4CAF50;
+  --red: #E53935;
+  --border: #3A3A3A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.8; font-size: 18px; }
+a { color: var(--copper); text-decoration: none; }
+a:hover { color: var(--warm); }
+
+.header {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; background: rgba(42,42,42,0.95);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+}
+.header h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.2em; color: var(--warm); font-weight: 400; }
+.header h1 span { color: var(--copper); margin-left: 6px; }
+.nav-links { display: flex; gap: 4px; }
+.nav-links a { font-size: 0.65em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 10px 12px; color: var(--fg2); border-radius: 4px; transition: all 0.2s; text-decoration: none; }
+.nav-links a:hover { color: var(--warm); background: var(--bg3); }
+.nav-links a.active { color: var(--bg); background: var(--copper); }
+
+.doc-container { max-width: 700px; margin: 0 auto; padding: 40px 20px; }
+.doc-container h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 48px; color: var(--warm); margin: 36px 0 16px; font-weight: 400; line-height: 1.2; }
+.doc-container h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 32px; color: var(--warm); margin: 36px 0 14px; font-weight: 400; border-bottom: 1px solid var(--border); padding-bottom: 8px; line-height: 1.2; }
+.doc-container h3 { font-family: 'DM Serif Display', Georgia, serif; font-size: 24px; color: var(--copper); margin: 28px 0 10px; font-weight: 400; line-height: 1.3; }
+.doc-container h4 { font-size: 20px; color: var(--fg); margin: 20px 0 8px; font-weight: 600; }
+.doc-container p { margin-bottom: 16px; line-height: 1.8; font-size: 18px; }
+.doc-container ul, .doc-container ol { margin: 10px 0 18px 24px; }
+.doc-container li { margin-bottom: 8px; line-height: 1.8; font-size: 18px; }
+
+.pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 800px; margin: 0 auto; }
+.pipe-step { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 12px; text-align: center; transition: all 0.3s; }
+.pipe-step:hover { border-color: var(--copper); transform: translateY(-3px); }
+.pipe-icon { font-size: 1.8em; margin-bottom: 8px; }
+.pipe-step h4 { font-size: 0.85em; color: var(--warm); margin-bottom: 4px; }
+.pipe-step p { font-size: 0.68em; color: var(--fg2); line-height: 1.4; margin-bottom: 0; }
+
+.info-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 16px 0; }
+.info-box h4 { color: var(--copper); margin-bottom: 8px; font-family: 'DM Serif Display', Georgia, serif; }
+
+.code-block { background: var(--bg2); padding: 18px; border-radius: 6px; overflow-x: auto; margin: 18px 0; border: 1px solid var(--border); font-size: 0.85em; }
+.code-block pre { font-family: 'SF Mono', Menlo, monospace; color: var(--fg); }
+.code-block code { color: var(--copper); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin: 18px 0; }
+th, td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; }
+th { background: var(--bg2); color: var(--copper); font-weight: 700; }
+tr:nth-child(even) { background: var(--bg2); }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+.step-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px 16px; text-align: center; }
+.step-num { font-size: 1.4em; color: var(--copper); margin-bottom: 8px; }
+.step-card h4 { font-size: 0.9em; color: var(--warm); margin-bottom: 6px; }
+.step-card p { font-size: 0.78em; color: var(--fg2); line-height: 1.5; margin-bottom: 0; }
+
+.terminal { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; font-family: 'SF Mono', Menlo, monospace; font-size: 0.75em; color: var(--fg); margin: 12px 0; }
+.terminal .prompt { color: var(--copper); }
+
+.footer { text-align: center; padding: 40px 20px; color: var(--fg2); font-size: 0.75em; border-top: 1px solid var(--border); margin-top: 40px; }
+
+@media (max-width: 768px) {
+  body { line-height: 2.0; }
+  .doc-container { max-width: 100%; padding: 20px; }
+  .doc-container h1 { font-size: 32px; }
+  .doc-container h2 { font-size: 24px; }
+  .doc-container h3 { font-size: 20px; }
+  .pipeline { grid-template-columns: 1fr 1fr; }
+  .steps { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>WayChain <span>Docs</span></h1>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/whitepaper">Whitepaper</a>
+    <a href="/explorer">Explorer</a>
+    <a href="/badge">Badge</a>
+    <a href="/wallet">Wallet</a>
+    <a href="/faucet">Faucet</a>
+    <a href="/locks">TrustlessLock</a>
+    <a href="/dex">DEX</a>
+  </div>
+</div>
+
+<div class="doc-container">
+
+  <h1>Getting Started</h1>
+  <p>New to blockchains? This is your UX wall walkthrough — from zero to first transaction in 3 steps.</p>
+
+  <div class="steps">
+    <div class="step-card">
+      <div class="step-num">1️⃣</div>
+      <h4>Get a Wallet</h4>
+      <p>WayChain uses Ed25519 signatures. Generate your key, save your seed phrase.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2️⃣</div>
+      <h4>Get Test Tokens</h4>
+      <p>Visit /faucet. Request 10 WAY. No real money needed.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3️⃣</div>
+      <h4>Send Transaction</h4>
+      <p>Transfer to another address. See it confirmed in 1 second.</p>
+    </div>
+  </div>
+
+  <h2>Step 1: Get Your Wallet</h2>
+  <p>A blockchain wallet is like a bank account, but you hold the keys. WayChain uses <strong>Ed25519</strong> signatures — different from Bitcoin/Ethereum.</p>
+  
+  <p>Use the web wallet at <a href="/wallet">/wallet</a> for key generation. All operations happen client-side, but the wallet stores keys in browser storage on this device, so treat it as a convenience wallet rather than a hardened vault.</p>
+  
+  <p>Or use any Ed25519-compatible library in your preferred language to generate keys locally.</p>
+  <ul>
+    <li>Your <strong>seed phrase</strong> (12 words) — write this down. Never share it.</li>
+    <li>Your <strong>public address</strong> (0x...) — this is like your account number.</li>
+    <li>Your <strong>private key</strong> — never share this either. Keep it secret.</li>
+  </ul>
+
+  <div class="info-box">
+    <h4>WayChain uses Ed25519 signatures</h4>
+    <p>Generate keys in the <a href="/wallet">web wallet</a> (browser-local private key + recovery phrase) or <a href="https://github.com/ThinkIbrokeIt/waychain-mobile">mobile wallet</a> (12-word recovery phrase). Both use Ed25519 — different from Bitcoin/Ethereum's secp256k1. Your keys, your custody.</p>
+  </div>
+
+  <h2>Step 2: Get Test Tokens</h2>
+  <p>Two ways to get WAY tokens:</p>
+
+  <h3>Option A: CashApp Bitcoin Bridge</h3>
+  <p><small><em>Precompile live (BitcoinRegistry 0x16). Consumer UX in development.</em></small></p>
+  <ol>
+    <li>Send $1 BTC to the WayChain treasury address (shown on <a href="/badge">Dox_Dev Badge</a> page)</li>
+    <li>Your TXID proves the send (6+ confirmations on Bitcoin)</li>
+    <li>~100 WAY will credit to your WayChain address</li>
+  </ol>
+  <p style="color:var(--copper);font-size:0.9em">Treasury holds the BTC. Protocol credits your address.</p>
+
+  <h3>Option B: Request from Faucet</h3>
+  <p>Go to <a href="/faucet">/faucet</a>. Paste your address. Click "Request 10 WAY". Get tokens in 1 second.</p>
+
+  <ol>
+    <li>Go to <a href="/faucet">Faucet</a></li>
+    <li>Paste your WayChain address (starts with 0x)</li>
+    <li>Click "Request 10 WAY"</li>
+    <li>Check your balance in 1 second (links to explorer)</li>
+  </ol>
+
+  <h3>Option C: Send Bitcoin, Receive 1WAY Stablecoin</h3>
+  <p><small><em>Precompile live (WayStablecoin 1WAY 0x22). Consumer UX in development.</em></small></p>
+  <p>Send real BTC and receive <strong>1WAY — the Bitcoin-backed stablecoin</strong> — at 1:1 peg. 1WAY is minted by the <strong>1WAY precompile (0x22)</strong> itself when BTC is deposited and attested (BTC locked → 1WAY minted). It is <em>not</em> minted by the BitcoinRegistry (0x16, which only maps BTC addresses to WayChain addresses) and <em>not</em> by the Vault. The Vault (TwoWayVault 0x18) is a separate CDP engine that mints <strong>2WAY</strong> against deposited stablecoins. The oracle
+  <ol>
+    <li>Send BTC to the 1WAY bridge address (details on <a href="/badge">badge page</a>)</li>
+    <li>Wait for 6+ confirmations (~1 hour on Bitcoin)</li>
+    <li>1WAY credits to your WayChain address via the 1WAY precompile (0x22)</li>
+    <li>Use 1WAY anywhere on WayChain — swap, send, hold</li>
+  </ol>
+  <p style="color:var(--copper);font-size:0.9em">1WAY = Bitcoin on WayChain. Fully backed 1:1 (BTC locked → 1WAY minted at 0x22). Vault (0x18) mints 2WAY, not 1WAY.</p>
+
+  <div class="terminal">
+<span class="prompt">Balance check:</span> curl -X POST https://api.waychain.org \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"way_getBalance","params":["0xYourAddress"],"id":1}'
+  </div>
+
+  <h2>Step 3: Send Your First Transaction</h2>
+  <p>Transfer tokens to another address. Watch it get confirmed in 1 second.</p>
+
+  <div class="terminal">
+<span class="prompt">$</span> curl -X POST https://api.waychain.org \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc":"2.0",
+    "method":"eth_sendRawTransaction",
+    "params":["0x<binary-signed-tx>"],
+    "id":1
+  }'
+  </div>
+  <p><small><em>WayChain uses Ed25519-signed binary transactions submitted via <code>eth_sendRawTransaction</code> — there is no <code>eth_sendTransaction</code> (account-unlocking) RPC. Build and sign the tx client-side (see <a href="/wallet">web wallet</a> / mobile wallet), then broadcast the raw bytes.</em></small></p>
+
+  <p><strong>What happened:</strong></p>
+  <ul>
+    <li>Your transaction entered the pool</li>
+    <li>A validator picked it up within 1 second</li>
+    <li>The block was finalized</li>
+    <li>The recipient got the tokens</li>
+  </ul>
+
+  <h2>What Is a Blockchain?</h2>
+  <p>A blockchain is a <strong>digital ledger</strong> that everyone can read but no one can secretly edit. Instead of one company holding all records, copies exist on thousands of computers worldwide.</p>
+
+  <table>
+    <tr><th>Traditional Bank</th><th>WayChain</th></tr>
+    <tr><td>Bank holds your data</td><td>You hold your data</td></tr>
+    <tr><td>Bank can freeze/be frozen</td><td>No one can freeze it</td></tr>
+    <tr><td>Bank sets fees</td><td>Gas-based fees (min 1 wei/gas)</td></tr>
+    <tr><td>Takes days to settle</td><td>Final in 1 second</td></tr>
+  </table>
+
+  <hr style="border:none;border-top:1px solid var(--border);margin:36px 0">
+
+  <h1>Developer Walkthrough</h1>
+  <p>Build on the lighthouse. Native Go precompiles. 1-second finality.</p>
+
+  <div class="pipeline">
+    <div class="pipe-step"><div class="pipe-icon">🔨</div><h4>1. Verify Identity</h4><p>Start at /badge. Get Dox_Dev Level 2 to deploy. Level 3 to curate.</p></div>
+    <div class="pipe-step"><div class="pipe-icon">📚</div><h4>2. Read the Book</h4><p>Whitepaper at /whitepaper. 22 chapters. All features documented.</p></div>
+    <div class="pipe-step"><div class="pipe-icon">🔌</div><h4>3. Connect RPC</h4><p>Use https://api.waychain.org. Standard eth_* methods + way_* extensions.</p></div>
+    <div class="pipe-step"><div class="pipe-icon">🚀</div><h4>4. Deploy Smart</h4><p>WayChain requires SHA256 selectors. Ed25519 signatures. See docs.</p></div>
+  </div>
+
+  <h2>Quick Start (Code)</h2>
+  <p><small><em>Example: Using the WayChain Client</em></small></p>
+  <div class="code-block"><pre><code># Install the WayChain client
+curl -sSL https://raw.githubusercontent.com/ThinkIbrokeIt/waychain-client/main/scripts/install.sh | bash
+
+# Check Dox_Dev badge level for an address
+waychain rpc call way_getDoxLevel 0xYourAddress
+
+# Check balance
+waychain rpc call eth_getBalance 0xYourAddress latest</code></pre></div>
+
+  <h2>Key Differences from Standard EVM</h2>
+  <div class="info-box">
+    <h4>WayChain uses SHA256, not keccak256</h4>
+    <p>All function selectors, storage keys, and transaction hashes use SHA256. Standard EVM tooling uses keccak256 — adapt your ABI selectors.</p>
+  </div>
+
+  <table>
+    <tr><th>Feature</th><th>WayChain</th><th>Standard EVM</th></tr>
+    <tr><td>Hash function</td><td>SHA256 everywhere (selectors too). 0x21 is WIFRGantletRewards — not Keccak</td><td>keccak256</td></tr>
+    <tr><td>Signatures</td><td>Ed25519</td><td>ECDSA (secp256k1)</td></tr>
+    <tr><td>Tx format</td><td>Binary (not RLP)</td><td>RLP-encoded</td></tr>
+    <tr><td>Fees</td><td>Gas-based (min 1 wei/gas) / fixed costs for specific ops</td><td>Auction-based</td></tr>
+    <tr><td>Precompiles</td><td>27 at 0x0C-0x26</td><td>0x01-0x0A</td></tr>
+  </table>
+
+  <h2>RPC API</h2>
+  <div class="code-block"><pre><code># Current block
+curl -X POST https://api.waychain.org \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+
+# Check Dox_Dev level
+curl -X POST https://api.waychain.org \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"way_getDoxLevel","params":["0xYourAddress"],"id":1}'
+
+# WebSocket stream
+wss://api.waychain.org/ws</code></pre></div>
+
+  <h2>Native Precompiles (0x0C-0x26)</h2>
+  <table>
+    <tr><th>Address</th><th>Name</th><th>Function</th><th>Status</th></tr>
+    <tr><td><code>0x0C</code></td><td>OracleAggregator</td><td>Price aggregation</td><td>✅ Live</td></tr>
+    <tr><td><code>0x0D</code></td><td>OracleScheduler</td><td>Oracle scheduling</td><td>✅ Live</td></tr>
+    <tr><td><code>0x0E</code></td><td>OracleVerifier</td><td>Single oracle verification</td><td>✅ Live</td></tr>
+    <tr><td><code>0x0F</code></td><td>TLSVerifier</td><td>Notary attestation verification (ed25519)</td><td>✅ Live</td></tr>
+    <tr><td><code>0x10</code></td><td>AggregateSignatureVerify</td><td>ed25519 aggregate signatures</td><td>✅ Live</td></tr>
+    <tr><td><code>0x11</code></td><td>AccountRecovery</td><td>3-guardian signature recovery</td><td>✅ Live</td></tr>
+    <tr><td><code>0x12</code></td><td>StateRentCalc</td><td>Rent calculation</td><td>✅ Live</td></tr>
+    <tr><td><code>0x13</code></td><td>DoxDevBadge</td><td>Identity badge system</td><td>✅ Live</td></tr>
+    <tr><td><code>0x14</code></td><td>BinaryJournal (BIJO)</td><td>Truth anchoring</td><td>✅ Live</td></tr>
+    <tr><td><code>0x15</code></td><td>DeadMansSwitch</td><td>Inheritance protocol</td><td>✅ Live</td></tr>
+    <tr><td><code>0x16</code></td><td>BitcoinRegistry</td><td>BTC address ↔ WayChain mapping (bridge registry)</td><td>✅ Live</td></tr>
+    <tr><td><code>0x17</code></td><td>StorageEndowment</td><td>Perpetual storage funding</td><td>✅ Live</td></tr>
+    <tr><td><code>0x18</code></td><td>TwoWayVault</td><td>Multi-collateral CDP vault</td><td>✅ Live</td></tr>
+    <tr><td><code>0x19</code></td><td>StabilityPool</td><td>Protocol economics</td><td>✅ Live</td></tr>
+    <tr><td><code>0x1A</code></td><td>TrustlessLock</td><td>Liquidity locks</td><td>✅ Live</td></tr>
+    <tr><td><code>0x1B</code></td><td>AccountManager</td><td>3-stage custody</td><td>✅ Live</td></tr>
+    <tr><td><code>0x1C</code></td><td>Privacy</td><td>ZK selective disclosure</td><td>✅ Live</td></tr>
+    <tr><td><code>0x1D</code></td><td>Governance</td><td>Proposals & voting</td><td>✅ Live</td></tr>
+    <tr><td><code>0x1E</code></td><td>StateRent</td><td>Storage fees</td><td>✅ Live</td></tr>
+    <tr><td><code>0x1F</code></td><td>CrossChain</td><td>External attestations</td><td>✅ Live</td></tr>
+    <tr><td><code>0x20</code></td><td>MRT Registry</td><td>Mineral rights</td><td>✅ Live</td></tr>
+    <tr><td><code>0x21</code></td><td>WIFRGantletRewards</td><td>WIFR gauntlet reward distribution</td><td>✅ Live</td></tr>
+    <tr><td><strong><code>0x22</code></strong></td><td><strong>WayStablecoin (1WAY)</strong></td><td><strong>BTC-backed stablecoin</strong><br><small>BTC locked → 1WAY minted (1:1)</small></td><td><strong>✅ Live</strong></td></tr>
+    <tr><td><strong><code>0x23</code></strong></td><td><strong>TaskRegistry</strong></td><td><strong>Professional oracle tasks</strong><br><small>Bounties for geologists, lawyers, surveyors, engineers</small></td><td><strong>✅ Live</strong></td></tr>
+    <tr><td><strong><code>0x24</code></strong></td><td><strong>SWAY Token</strong></td><td><strong>DEX LP incentive</strong><br><small>Minted by 2WAY Vault (0x18) / TaskRegistry (0x23) rewards</small></td><td><strong>✅ Live</strong></td></tr>
+    <tr><td><strong><code>0x25</code></strong></td><td><strong>SwapRoute (DEX)</strong></td><td><strong>Native DEX</strong><br><small>0.3% fee, SWAY rewards to LPs</small></td><td><strong>✅ Live</strong></td></tr>
+    <tr><td><strong><code>0x26</code></strong></td><td><strong>TemplateRegistry</strong></td><td><strong>Safe contract templates</strong><br><small>Class A deployment for Level 2+</small></td><td><strong>✅ Live</strong></td></tr>
+  </table>
+
+  <h2>Web Connection Layer (Live)</h2>
+  <p>The frontend talks to mainnet through a single <strong>shared precompile registry</strong> — one source of truth for all 27 precompiles (0x0C–0x26) and all 128 methods (54 read / 74 write), verified against the Go source on the node. Both the web and mobile wallets use it.</p>
+  <ul>
+    <li><strong>Real Ed25519 auth</strong> — the web wallet derives a 20-byte address (<code>hex(pubkey)[0:40]</code>) matching the chain's canonical format. No fake/placeholder addresses.</li>
+    <li><strong>Live reads</strong> — <code>precompileCall</code> dispatches <code>eth_call</code> to the correct precompile + selector + ABI-encoded args. Proven working against mainnet (e.g. Dox_Dev returns 3 badges on-chain).</li>
+    <li><strong>Write path</strong> — web writes are currently <em>gated</em> (the web transaction signer is still being ported). Mobile already signs and broadcasts; web shows clear “not implemented” rather than a broken send.</li>
+  </ul>
+  <p>Prebuilt UI sections (all reading live chain state): <a href="/tokens">/tokens</a> (BIJO · 1WAY · SWAY · SwapRoute), <a href="/identity">/identity</a> (Dox_Dev · Governance · TaskRegistry), <a href="/defi">/defi</a> (TwoWayVault · StabilityPool · TrustlessLock · AccountRecovery), <a href="/realworld">/realworld</a> (MineralRights · BitcoinRegistry · DeadMansSwitch), <a href="/protocol">/protocol</a> (oracles · privacy · cross-chain · template registry).</p>
+
+  <h2>Dox_Dev Identity Requirements</h2>
+  <ul>
+    <li><strong>Level 1 (Lantern)</strong> — Verified human. Can hold tokens, receive/from transfers.</li>
+    <li><strong>Level 2 (Compass)</strong> — Can deploy contracts. SHA256 selector validation.</li>
+    <li><strong>Level 3 (Lighthouse)</strong> — Can verify others. Curator privileges.</li>
+  </ul>
+
+  <h2>Deploy Gate (3 Layers)</h2>
+  <ol>
+    <li><strong>RPC Layer</strong> — HTTP check before transaction enters pool.</li>
+    <li><strong>Block Production</strong> — Proposer verifies all transactions.</li>
+    <li><strong>EVM Opcode</strong> — Runtime enforcement in every contract call.</li>
+  </ol>
+
+  <div class="footer">
+    ⛓ WAYCHAIN — ILLUMINATE. NAVIGATE. ARRIVE.<br>
+    waychain.org · Chain ID 10008 · Actually Decentralized
+  </div>
+</div>
+
+</body>
+</html>

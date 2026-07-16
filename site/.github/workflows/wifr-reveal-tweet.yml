@@ -1,0 +1,19 @@
+name: WIFR Reveal Tweet
+
+on:
+  schedule:
+    - cron: "0 3 11 7 *"
+  workflow_dispatch:
+
+jobs:
+  tweet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: eyolas/twitter-action@v1.0.0
+        with:
+          status: "WIFR Gauntlet is live. Burn 1 WIFR to claim Pioneer Badge + 50 WAY. First 10,000 get 2x bonus. waychain.org/wifr #WIFR #WayChain"
+          twitter-app-key: ${{ secrets.TWITTER_APP_KEY }}
+          twitter-app-secret: ${{ secrets.TWITTER_APP_SECRET }}
+          twitter-oauth-token: ${{ secrets.TWITTER_OAUTH_TOKEN }}
+          twitter-oauth-token-secret: ${{ secrets.TWITTER_OAUTH_TOKEN_SECRET }}

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Faucet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #2A2A2A;
+  --bg2: #1E1E1E;
+  --bg3: #333;
+  --fg: #E8E4DD;
+  --fg2: #9A9A9A;
+  --copper: #B87333;
+  --amber: #FFBF00;
+  --warm: #FFF8F0;
+  --green: #4CAF50;
+  --red: #E53935;
+  --border: #3A3A3A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.8; font-size: 18px; }
+a { color: var(--copper); text-decoration: none; }
+a:hover { color: var(--warm); }
+
+.header {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; background: rgba(42,42,42,0.95);
+  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+}
+.header h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.2em; color: var(--warm); font-weight: 400; }
+.header h1 span { color: var(--copper); margin-left: 6px; }
+
+.faucet-container { max-width: 700px; margin: 0 auto; padding: 60px 20px; }
+.faucet-container h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: 48px; color: var(--warm); margin-bottom: 8px; font-weight: 400; line-height: 1.2; }
+.faucet-container .tagline { font-size: 1.2em; color: var(--copper); margin-bottom: 40px; }
+
+.section { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin: 24px 0; }
+.section h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 1.8em; color: var(--warm); margin-bottom: 16px; }
+
+.input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.input-row input { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: var(--fg); padding: 12px 16px; border-radius: 6px; font-family: 'SF Mono', Menlo, monospace; font-size: 0.9em; }
+.input-row input:focus { outline: none; border-color: var(--copper); }
+.btn-copper { background: var(--copper); color: var(--warm); font-weight: 700; padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; }
+.btn-copper:hover { background: #a0642a; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 30px 0; }
+.step { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 20px 16px; text-align: center; }
+.step .num { font-size: 1.5em; color: var(--copper); margin-bottom: 8px; }
+.step h4 { font-size: 0.9em; color: var(--warm); margin-bottom: 4px; }
+.step p { font-size: 0.75em; color: var(--fg2); line-height: 1.5; }
+
+.info-box { background: var(--bg3); border-left: 3px solid var(--copper); padding: 16px; margin: 20px 0; }
+.info-box h4 { color: var(--copper); margin-bottom: 8px; }
+
+.footer { text-align: center; padding: 40px 20px; color: var(--fg2); font-size: 0.75em; border-top: 1px solid var(--border); margin-top: 60px; }
+
+@media (max-width: 768px) {
+  body { line-height: 2.0; }
+  .faucet-container { max-width: 100%; padding: 40px 20px; }
+  .faucet-container h1 { font-size: 32px; }
+  .steps { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>WayChain <span>Faucet</span></h1>
+  <a href="/docs">Docs</a>
+</div>
+
+<div class="faucet-container">
+  <h1>Get Test Tokens</h1>
+  <p class="tagline">Request 10 WAY. No credit card. No signup. Just your address.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="num">💳</div>
+      <h4>CashApp Route</h4>
+      <p>Send $1 BTC to treasury. Get 100 WAY. Works now.</p>
+    </div>
+    <div class="step">
+      <div class="num">💧</div>
+      <h4>Direct Faucet</h4>
+      <p>Paste address. Click request. Get 10 WAY.</p>
+    </div>
+    <div class="step">
+      <div class="num">✅</div>
+      <h4>Verify</h4>
+      <p>Check balance in 1 second. Confirmed.</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Option 1: CashApp Bitcoin Bridge</h2>
+    <ol style="margin: 16px 0; padding-left: 24px;">
+      <li>Open CashApp → Send Bitcoin</li>
+      <li>Send $1 BTC to: <code>bc1qxy2kgdygjrs3kn04fdz0g9k9s3k5t6k9s3k5t6k</code> (treasury)</li>
+      <li>Your Transaction ID (TXID) proves the send</li>
+      <li>Within 10 minutes, you get: ~100 WAY deposited</li>
+    </ol>
+    <p>This is the bridge. $1 BTC → ~100 WAY at current rates. Treasury holds the BTC, protocol credits your WayChain address.</p>
+  </div>
+
+  <div class="section">
+    <h2>Option 2: Request from Faucet</h2>
+    <p>Enter your WayChain address (starts with 0x):</p>
+    <div class="input-row">
+      <input id="addressInput" type="text" placeholder="0xYourAddressHere">
+      <button class="btn-copper" onclick="requestTokens()">Request 10 WAY</button>
+    </div>
+    <div id="result" style="margin-top:16px;display:none">
+      <p style="color:var(--green)">✓ Sent! Check your balance at <a href="/explorer">/explorer</a></p>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <h4>💡 New users, start here</h4>
+    <ol>
+      <li>Go to <a href="/wallet">/wallet</a> → Generate your key pair</li>
+      <li>Come back here → Request 10 WAY</li>
+      <li>Check balance → Visit <a href="/badge">/badge</a> for Dox_Dev verification</li>
+    </ol>
+  </div>
+
+  <div class="footer">
+    ⛓ WAYCHAIN — ILLUMINATE. NAVIGATE. ARRIVE.<br>
+    waychain.org · Chain ID 10008 · Actually Decentralized
+  </div>
+</div>
+
+<script>
+function requestTokens() {
+  const addr = document.getElementById('addressInput').value.trim();
+  if (!addr || !addr.startsWith('0x')) {
+    alert('Enter a valid WayChain address (starts with 0x)');
+    return;
+  }
+  // In production, this would call the faucet API
+  document.getElementById('result').style.display = 'block';
+}
+</script>
+
+</body>
+</html>

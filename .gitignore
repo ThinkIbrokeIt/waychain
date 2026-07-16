@@ -1,14 +1,74 @@
-# Dependencies
-contracts/node_modules/
-contracts/lib/
-contracts/out/
-contracts/cache/
+# === WayChain monorepo .gitignore ===
 
-# Binaries
+# OS / editor
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+.cursor/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Node / Expo / site
+node_modules/
+.expo/
+dist/
+web-build/
+.turbo/
+.next/
+coverage/
+npm-debug.log*
+yarn-error.log*
+
+# Go / Rust / CGO
 consensus/waychain
 consensus/waychain-consensus
-consensus/waychain-test
+consensus/waychain-new
+consensus/*.test
+consensus/revm-ffi/target/
+**/librevm_ffi.so
+*.so
+*.a
+*.o
+vendor/
 
-# Environment
-.env
-.env.*site/
+# Contracts build
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/
+
+# Python / agent scratch
+.venv/
+__pycache__/
+.hermes/
+*.pyc
+
+# Binaries / backups (must never be SoT)
+*.apk
+*.aab
+deploy_gauntlet
+waychain.new
+*.db
+*.db.bak*
+chain.db*
+
+# Large / local screenshots not source
+mobile/shot_*.png
+mobile/s_wallet.png
+mobile/r_wallet.png
+mobile/screenshot_header.png
+mobile/android/
+
+# Vercel local
+.vercel/
+
+# Nested VCS mistakes
+**/.git/
+consensus/waychain-full
