@@ -47,10 +47,10 @@ AccountRecovery=0x15, StateRent=0x17, PrivacyZK=0x19, TemplateRegistry=0x26.
 - SolanaChainID sentinel = "solana-waychain" (fixed string for 0x1F source-chain).
 
 ## Open operational gaps (truth-first)
-1. ❌ 1.1M quest pool NOT funded (no questFund yet).
+1. ❌ 1.1M pool NOT funded — REPLACED by 5%-of-live-supply cap (PR #11, issue #10, pending merge).
 2. ❌ Autopilot NOT designated (no questSetAutopilot yet).
 3. ❌ Off-chain autopilot BOT not built (watches chain → calls taskAutoVerify).
-4. ❌ Merged master NOT deployed to AWS (live node still old binary).
+4. ❌ Merged master (#5/#7/#9) + pending PR #11 NOT deployed to AWS (live node still old binary).
 5. ❌ Live 0x03 balance = 0x0 (old node / empty treasury).
 
 ## How to verify a fact (don't trust memory)
