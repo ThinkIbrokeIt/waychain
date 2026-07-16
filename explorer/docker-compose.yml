@@ -1,0 +1,19 @@
+# WayChain Explorer — self-host stack
+# Indexer + API. Point the Phase-2 explorer frontend at http://explorer-api:8080.
+services:
+  explorer-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      WAYCHAIN_NODE_URL: ${WAYCHAIN_NODE_URL:-https://api.waychain.org}
+      WAYCHAIN_DB: /data/explorer.db
+      WAYCHAIN_API_ADDR: ":8080"
+    volumes:
+      - explorer-data:/data
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  explorer-data:
