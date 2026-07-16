@@ -30,6 +30,19 @@ func (ix *Indexer) Run() error {
 	if err := ix.replay(); err != nil {
 		return fmt.Errorf("replay: %w", err)
 	}
+	// Continuous catch-up: replay on a ticker so gaps created while the
+	// service was down/restarting (blocks produced between restarts) get
+	// backfilled. The WS tail only receives heads AFTER subscription, so it
+	// cannot fill a gap that already exists at startup.
+	go func() {
+		ticker := time.NewTicker(15 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := ix.replay(); err != nil {
+				print("replay tick: %v\n", err)
+			}
+		}
+	}()
 	return ix.tail()
 }
 
