@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ThinkIbrokeIt/waychain-explorer/client"
 	"github.com/ThinkIbrokeIt/waychain-explorer/store"
@@ -50,6 +51,9 @@ func (ix *Indexer) replay() error {
 		if err := ix.indexBlock(h); err != nil {
 			return fmt.Errorf("index block %d: %w", h, err)
 		}
+		// Throttle replay: the node enforces 100 req/s/IP (token bucket).
+		// ~2 RPCs/block -> ~30ms keeps us safely under the limit.
+		time.Sleep(30 * time.Millisecond)
 	}
 	return nil
 }
@@ -83,7 +87,7 @@ func (ix *Indexer) tail() error {
 
 // indexBlock fetches a block + each tx receipt and persists them.
 func (ix *Indexer) indexBlock(height int64) error {
-	b, err := ix.node.Block(height)
+	b, err := callWithRetry(func() (*client.Block, error) { return ix.node.Block(height) })
 	if err != nil {
 		return err
 	}
@@ -125,7 +129,7 @@ func (ix *Indexer) indexBlock(height int64) error {
 			Timestamp: int64(ts),
 		}
 		// Real gasUsed + logs come from the receipt (post-EXPL-2).
-		if rc, err := ix.node.Receipt(txRow.Hash); err == nil && rc != nil {
+		if rc, err := callWithRetry(func() (*client.Receipt, error) { return ix.node.Receipt(txRow.Hash) }); err == nil && rc != nil {
 			txRow.GasUsed = int64(mustHexInt(rc.GasUsed))
 			for _, l := range rc.Logs {
 				topics := make([]string, 0, len(l.Topics))
@@ -168,4 +172,30 @@ func mustHexInt(s string) uint64 {
 		return 0
 	}
 	return v
+}
+
+// callWithRetry runs an RPC call, retrying with backoff on rate-limit errors
+// (-32005). The node enforces 100 req/s/IP; the replay throttle keeps us under
+// that, but bursts/tail can still trip it, so we back off and retry.
+func callWithRetry[T any](fn func() (T, error)) (T, error) {
+	var zero T
+	var lastErr error
+	for attempt := 0; attempt < 5; attempt++ {
+		res, err := fn()
+		if err == nil {
+			return res, nil
+		}
+		lastErr = err
+		if !isRateLimitErr(err) {
+			return zero, err
+		}
+		backoff := time.Duration(200*(attempt+1)) * time.Millisecond
+		time.Sleep(backoff)
+	}
+	return zero, lastErr
+}
+
+func isRateLimitErr(err error) bool {
+	return strings.Contains(err.Error(), "rate limit exceeded") ||
+		strings.Contains(err.Error(), "-32005")
 }
