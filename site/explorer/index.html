@@ -164,6 +164,31 @@ tr:hover td { background: var(--bg3); }
   </div>
 
   <div class="section">
+    <h2>⧫ Event Logs</h2>
+    <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">Real EVM logs (precompile + time-task) indexed from the node. Filter by contract address and/or topic0.</p>
+    <div class="search-box" style="margin:8px 0">
+      <input id="logAddr" type="text" placeholder="Contract address (0x…)">
+      <input id="logTopic" type="text" placeholder="topic0 (0x…)">
+      <input id="logFrom" type="text" placeholder="from block" style="max-width:110px">
+      <input id="logTo" type="text" placeholder="to block" style="max-width:110px">
+      <button id="logSearchBtn">Filter</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Address</th><th>Topics</th><th>Data</th><th>Block</th><th>Tx</th>
+        </tr></thead>
+        <tbody id="logsTable"><tr><td colspan="5" style="color:var(--fg2);text-align:center">Loading logs…</td></tr></tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-size:.7em">
+      <button id="logPrev" onclick="logPrev()" style="background:var(--bg3);color:var(--fg2);border:none;padding:4px 10px;border-radius:4px;cursor:pointer">← Prev</button>
+      <span id="logPageLabel" style="margin:0 10px;color:var(--fg2)">Page 1</span>
+      <button id="logMore" onclick="logNext()" style="background:var(--accent);color:var(--bg);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none">Next →</button>
+    </div>
+  </div>
+
+  <div class="section">
     <h2>Activity</h2>
     <div id="log"><div class="info">Explorer initialized</div></div>
   </div>
