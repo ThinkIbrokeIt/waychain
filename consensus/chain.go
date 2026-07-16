@@ -20,11 +20,13 @@ type Transaction struct {
 	Value    *big.Int
 	GasLimit uint64
 	GasPrice uint64
+	GasUsed  uint64   // Actual gas consumed during execution (set in ProduceBlock)
 	Data     []byte   // Calldata or init code
 	Hash     [32]byte
 	Signature []byte  // Ed25519 signature
 	Lane     evm.LaneType // Execution lane (0=consensus, 1=oracle, 2=private)
 	EncryptedData []byte // Encrypted payload for PrivateLane/OracleLane
+	Logs     []*evm.LogEntry // EVM logs emitted by this tx's execution (set in ProduceBlock)
 }
 
 // NewTransaction creates a new transaction
@@ -133,6 +135,7 @@ type BlockWithTx struct {
 	Transactions []Transaction
 	StateRoot   [32]byte  // Hash of EVM state after executing txs
 	Hash        [32]byte
+	Logs        []*evm.LogEntry // All EVM logs emitted in this block (precompile + time-task + contract)
 }
 
 func (b *BlockWithTx) ComputeHash() [32]byte {
@@ -369,6 +372,7 @@ func (c *Chain) SyncTxs(block *BlockWithTx) error {
 			Value:     tx.Value.Bytes(),
 			GasLimit:  tx.GasLimit,
 			GasPrice:  tx.GasPrice,
+			GasUsed:   tx.GasUsed,
 			Data:      tx.Data,
 			Hash:      tx.Hash,
 			Signature: tx.Signature,
@@ -406,6 +410,7 @@ func (c *Chain) LoadTxFromStore(hash [32]byte) (*Transaction, uint64, error) {
 		Value:     new(big.Int).SetBytes(txd.Value),
 		GasLimit:  txd.GasLimit,
 		GasPrice:  txd.GasPrice,
+		GasUsed:   txd.GasUsed,
 		Data:      txd.Data,
 		Hash:      txd.Hash,
 		Signature: txd.Signature,
@@ -486,7 +491,7 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 		// Execute via EVM with transaction's lane
 		// Create EVM instance with correct lane for this transaction
 		txEVM := evm.NewEVM(c.State, tx.Lane, c.Height, uint64(time.Now().Unix()), 10008, tx.GasLimit, "")
-		
+
 		ctx := &evm.CallContext{
 			Caller:   tx.From,
 			Address:  tx.To,
@@ -494,7 +499,11 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 			GasLimit: tx.GasLimit,
 			Calldata: tx.Data,
 		}
+		// Capture only the logs emitted by THIS tx's execution. Precompiles
+		// append to the shared State.Logs slice, so snapshot length before/after.
+		logsBefore := len(c.State.Logs)
 		result := txEVM.Execute(ctx)
+		txLogs := c.State.Logs[logsBefore:]
 
 		// Deduct actual gas cost (not full gas limit)
 		cost := new(big.Int).SetUint64(result.GasUsed * gasPrice)
@@ -507,24 +516,13 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 		}
 
 		// Tx executed successfully — include in block
+		tx.GasUsed = result.GasUsed
+		tx.Logs = txLogs
 		executed = append(executed, *tx)
 	}
 
-	// Compute state root (simplified: hash of all account data)
-	stateHash := sha256.Sum256([]byte(fmt.Sprintf("%v", c.State.Accounts)))
-
-	block := &BlockWithTx{
-		Height:       c.Height,
-		Proposer:     proposer,
-		Timestamp:    time.Now().Unix(),
-		PrevHash:     prevHash,
-		Transactions: executed,
-		StateRoot:    stateHash,
-	}
-	block.Hash = block.ComputeHash()
-	c.Blocks = append(c.Blocks, block)
-
-	// Execute due time-scheduled tasks
+	// Execute due time-scheduled tasks BEFORE assembling the block so their
+	// logs are captured into block.Logs alongside tx logs.
 	te := evm.NewTimeExecution(c.State)
 	dueTasks, _ := te.ExecuteDueTasks(c.Height)
 	if len(dueTasks) > 0 {
@@ -540,6 +538,25 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 			}
 		}
 	}
+
+	// Compute state root (simplified: hash of all account data)
+	stateHash := sha256.Sum256([]byte(fmt.Sprintf("%v", c.State.Accounts)))
+
+	// All logs emitted during this block's execution (tx logs + time-tasks).
+	blockLogs := make([]*evm.LogEntry, len(c.State.Logs))
+	copy(blockLogs, c.State.Logs)
+
+	block := &BlockWithTx{
+		Height:       c.Height,
+		Proposer:     proposer,
+		Timestamp:    time.Now().Unix(),
+		PrevHash:     prevHash,
+		Transactions: executed,
+		StateRoot:    stateHash,
+		Logs:         blockLogs,
+	}
+	block.Hash = block.ComputeHash()
+	c.Blocks = append(c.Blocks, block)
 
 	// Rollover the per-epoch emission cap when a new epoch begins.
 	if c.Staking != nil && c.Staking.EpochLength > 0 && c.Height%c.Staking.EpochLength == 0 {

@@ -584,7 +584,58 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		return nil, nil
 
 	case "eth_getLogs":
-		return []interface{}{}, nil
+		// EXPL-2: return real logs. The node stores per-block logs in
+		// BlockWithTx.Logs (precompile + time-task + contract events that the
+		// FFI surfaces). Filter by fromBlock/toBlock, address, and topics.
+		var filter struct {
+			FromBlock string   `json:"fromBlock"`
+			ToBlock   string   `json:"toBlock"`
+			Address   []string `json:"address"`
+			Topics    [][]string `json:"topics"`
+		}
+		// Params is the JSON-RPC array; the first element is the filter object.
+		if len(params) > 0 {
+			var arr []json.RawMessage
+			if err := json.Unmarshal(params, &arr); err == nil && len(arr) > 0 {
+				_ = json.Unmarshal(arr[0], &filter)
+			}
+		}
+		out := []interface{}{}
+		blocks := rpc.chain.Blocks
+		for bIdx, block := range blocks {
+			// block range filter (hex or "latest")
+			if filter.FromBlock != "" && filter.FromBlock != "latest" {
+				if bn, ok := parseHexBlock(filter.FromBlock); ok && uint64(bIdx) < bn {
+					continue
+				}
+			}
+			if filter.ToBlock != "" && filter.ToBlock != "latest" {
+				if bn, ok := parseHexBlock(filter.ToBlock); ok && uint64(bIdx) > bn {
+					continue
+				}
+			}
+			for _, tx := range block.Transactions {
+				txHash := "0x" + hex.EncodeToString(tx.Hash[:])
+				for li, log := range tx.Logs {
+					if !logMatchesFilter(log, filter.Address, filter.Topics) {
+						continue
+					}
+					out = append(out, LogToRPC(log, uint64(bIdx), txHash, li))
+				}
+			}
+			// also surface block-level logs (time-tasks) without a tx
+			for li, log := range block.Logs {
+				// skip ones already attributed to a tx
+				if logAttributed(block, log) {
+					continue
+				}
+				if !logMatchesFilter(log, filter.Address, filter.Topics) {
+					continue
+				}
+				out = append(out, LogToRPC(log, uint64(bIdx), "", li))
+			}
+		}
+		return out, nil
 
 	case "eth_getBlockTransactionCountByNumber":
 		var p []interface{}
@@ -640,10 +691,13 @@ func createAddress(deployer string, nonce uint64) [20]byte {
 	return addr
 }
 
-// buildReceipt creates a standardized tx receipt map
+// buildReceipt creates a standardized tx receipt map.
+// EXPL-2: reports the real gasUsed (captured in ProduceBlock) and the tx's
+// actual logs — no hardcoded values.
 func buildReceipt(tx Transaction, blockIdx int, blockHash [32]byte) map[string]interface{} {
 	txHex := hex.EncodeToString(tx.Hash[:])
 	bh := fmt.Sprintf("%x", blockHash)
+	logs := txLogsToRPC(tx.Logs, uint64(blockIdx), "0x"+txHex)
 	to := tx.To
 	if to == "" {
 		deployAddr := fmt.Sprintf("%x", createAddress(tx.From, tx.Nonce))
@@ -655,9 +709,9 @@ func buildReceipt(tx Transaction, blockIdx int, blockHash [32]byte) map[string]i
 			"to":                nil,
 			"contractAddress":   "0x" + deployAddr,
 			"status":            "0x1",
-			"gasUsed":           "0x5208",
-			"cumulativeGasUsed": "0x5208",
-			"logs":              []interface{}{},
+			"gasUsed":           fmt.Sprintf("0x%x", tx.GasUsed),
+			"cumulativeGasUsed": fmt.Sprintf("0x%x", tx.GasUsed),
+			"logs":              logs,
 		}
 	}
 	return map[string]interface{}{
@@ -667,10 +721,19 @@ func buildReceipt(tx Transaction, blockIdx int, blockHash [32]byte) map[string]i
 		"from":              "0x" + tx.From,
 		"to":                "0x" + to,
 		"status":            "0x1",
-		"gasUsed":           "0x5208",
-		"cumulativeGasUsed": "0x5208",
-		"logs":              []interface{}{},
+		"gasUsed":           fmt.Sprintf("0x%x", tx.GasUsed),
+		"cumulativeGasUsed": fmt.Sprintf("0x%x", tx.GasUsed),
+		"logs":              logs,
 	}
+}
+
+// txLogsToRPC converts a tx's EVM logs to the Ethereum-compatible receipt shape.
+func txLogsToRPC(logs []*evm.LogEntry, blockNum uint64, txHash string) []interface{} {
+	out := make([]interface{}, 0, len(logs))
+	for i, l := range logs {
+		out = append(out, LogToRPC(l, blockNum, txHash, i))
+	}
+	return out
 }
 
 // min returns the smaller of a and b
@@ -679,6 +742,77 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// parseHexBlock parses a hex ("0x..") or decimal block number string.
+func parseHexBlock(s string) (uint64, bool) {
+	s = strings.TrimPrefix(s, "0x")
+	if s == "" {
+		return 0, false
+	}
+	var n uint64
+	if _, err := fmt.Sscanf(s, "%x", &n); err == nil {
+		return n, true
+	}
+	if _, err := fmt.Sscanf(s, "%d", &n); err == nil {
+		return n, true
+	}
+	return 0, false
+}
+
+// logMatchesFilter checks an EVM log against an eth_getLogs filter.
+// Address filter: log.Address must match one of the requested addresses.
+// Topics filter: positional prefix match (Ethereum semantics) — topic[i] of
+// the log must be in the requested set for position i; nil/empty = any.
+//
+// Both sides are compared WITHOUT a "0x" prefix (raw hex), so the filter
+// accepts addresses/topics with or without the prefix.
+func logMatchesFilter(log *evm.LogEntry, addrs []string, topics [][]string) bool {
+	if len(addrs) > 0 {
+		match := false
+		for _, a := range addrs {
+			if strings.EqualFold(log.Address, strings.TrimPrefix(a, "0x")) {
+				match = true
+				break
+			}
+		}
+		if !match {
+			return false
+		}
+	}
+	for i, set := range topics {
+		if len(set) == 0 {
+			continue // wildcard at this position
+		}
+		if i >= len(log.Topics) {
+			return false
+		}
+		want := hex.EncodeToString(log.Topics[i][:])
+		hit := false
+		for _, t := range set {
+			if strings.EqualFold(want, strings.TrimPrefix(t, "0x")) {
+				hit = true
+				break
+			}
+		}
+		if !hit {
+			return false
+		}
+	}
+	return true
+}
+
+// logAttributed reports whether a block-level log is already covered by a
+// transaction's own log list (so we don't emit it twice in eth_getLogs).
+func logAttributed(block *BlockWithTx, log *evm.LogEntry) bool {
+	for _, tx := range block.Transactions {
+		for _, l := range tx.Logs {
+			if l == log {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // ── WebSocket Handler ──
