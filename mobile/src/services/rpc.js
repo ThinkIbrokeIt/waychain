@@ -132,6 +132,20 @@ export const waychainRPC = {
     });
     return sendRawTransaction(rawHex);
   },
+
+  // ── Quest / TaskRegistry live reads (0x23) ──
+  // Use the way_* RPC methods (public RPC allows these; eth_call to precompiles
+  // is blocked). These make the mobile quest list reflect REAL on-chain state
+  // instead of silently showing "none".
+  questStatus: async (taskIdHex, claimantHex) => {
+    const r = await waychainRPC.call('way_taskStatus', [taskIdHex, claimantHex]);
+    return typeof r === 'string' ? r : 'none';
+  },
+  questPoolRemaining: async () => {
+    const r = await waychainRPC.call('way_questPoolRemaining', []);
+    if (!r || r === '0x' || r === '0x0') return 0;
+    try { return Number(BigInt(r.replace(/^0x/, ''))); } catch { return 0; }
+  },
 };
 
 // Local hex->bytes (rpc.js has no Buffer; precompileCall needs it for tx data).

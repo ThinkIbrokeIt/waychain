@@ -377,6 +377,26 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 			"withdrawn": fmt.Sprintf("0x%x", withdrawn),
 		}, nil
 
+	// ── Quest / TaskRegistry read surfaces (0x23) ──
+	// Expose live quest state without going through eth_call (which the
+	// public RPC blocks for precompiles). Read-only.
+	case "way_taskStatus":
+		var p []string
+		if err := json.Unmarshal(params, &p); err != nil || len(p) < 2 {
+			return nil, fmt.Errorf("invalid params: expected [\"taskId_hex\", \"claimant_hex\"]")
+		}
+		taskId := strings.ToLower(strings.TrimPrefix(p[0], "0x"))
+		claimant := strings.ToLower(strings.TrimPrefix(p[1], "0x"))
+		idBytes, err := hex.DecodeString(taskId)
+		if err != nil {
+			return "none", nil
+		}
+		return evm.TaskStatusOf(rpc.chain.State, idBytes, claimant), nil
+
+	case "way_questPoolRemaining":
+		rem := evm.QuestPoolRemaining(rpc.chain.State)
+		return "0x" + rem.Text(16), nil
+
 	// ── Contract Deployment ──
 	case "way_deployCode":
 		var p []string
