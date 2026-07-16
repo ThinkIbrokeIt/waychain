@@ -130,6 +130,10 @@ func runNode() {
 		chain = gs.Chain
 		chain.Store = store
 
+		// Seed live WAY supply (backs the 5%-of-supply quest cap) on the
+		// canonical genesis chain so it persists via Sync below.
+		chain.SeedQuestSupply()
+
 		// Persist genesis state
 		if err := chain.Sync("genesis", 0, [32]byte{}, [32]byte{}); err != nil {
 			fmt.Printf("  ❌ Failed to persist genesis: %v\n", err)

@@ -247,13 +247,15 @@ func (c *Chain) InitPrecompiles() {
 	if err := (&evm.WIFRGantletRewards{State: c.State}).Initialize(); err != nil {
 		panic(err)
 	}
-
-	// ── Seed live WAY total supply (backs the 5%-of-supply quest cap) ──
-	// Start at the declared starting supply (WAYTotalSupply = 100M). chain.go
-	// increments this as validator block rewards are minted, so it tracks LIVE
-	// minted supply and the 5% cap scales with inflation.
-	evm.QuestAddSupply(c.State, new(big.Int).SetUint64(evm.WAYStartingSupply))
 }
+
+// SeedQuestSupply seeds the live WAY total-supply tracker (slot 0x41 of 0x23)
+	// to the declared starting supply. Called during genesis init (cli.go runNode)
+	// so the 5%-of-supply quest cap has a non-zero base. chain.go increments this
+	// as validator block rewards mint, so the cap scales with inflation.
+	func (c *Chain) SeedQuestSupply() {
+		evm.QuestAddSupply(c.State, new(big.Int).SetUint64(evm.WAYStartingSupply))
+	}
 
 func (c *Chain) issueGenesisBadge(badgeAcc *evm.Account, developer string, level uint8, validityPeriod uint64) {
 	// Pad developer string to 20 bytes to match precompile address encoding
