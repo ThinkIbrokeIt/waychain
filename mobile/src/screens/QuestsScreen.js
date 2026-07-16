@@ -40,6 +40,7 @@ const QUESTS = [
   { id: 'gov-propose',     title: 'Launch a Proposal',          reward: 25,  proof: 'action',   route: 'Governance', desc: 'Create a governance proposal for an improvement. (Top-tier gate.)' },
 
   // Track D — DeFi (stablecoin + DEX + stability)
+  { id: 'wifr-bridge',    title: 'Burn 1 WIFR (The Door)',     reward: 50,  proof: 'action',   desc: 'Burn 1 WIFR on Solana — we witness it on WayChain via CrossChainAttestation, auto-verify opens your Quest. Entry reward.' },
   { id: '1way-mint',       title: 'Mint 1WAY (BTC Vault)',      reward: 300, proof: 'action',   route: 'Stablecoin', desc: 'Create a vault, deposit BTC, mint 1WAY. Gets value onto WayChain.' },
   { id: '1way-burn',       title: 'Burn 1WAY → BTC',            reward: 150, proof: 'action',   route: 'Stablecoin', desc: 'Burn 1WAY back to BTC. Proves the peg unwinds.' },
   { id: '2way-open',       title: 'Open a 2WAY Vault',          reward: 25,  proof: 'action',   desc: 'Open a CDP vault on the two-way peg. Proves DeFi lending.' },

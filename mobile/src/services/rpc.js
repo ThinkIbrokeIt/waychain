@@ -146,6 +146,10 @@ export const waychainRPC = {
     if (!r || r === '0x' || r === '0x0') return 0;
     try { return Number(BigInt(r.replace(/^0x/, ''))); } catch { return 0; }
   },
+  questGetAutopilot: async () => {
+    const r = await waychainRPC.call('way_questGetAutopilot', []);
+    return typeof r === 'string' ? r : '';
+  },
 };
 
 // Local hex->bytes (rpc.js has no Buffer; precompileCall needs it for tx data).
