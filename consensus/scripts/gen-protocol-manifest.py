@@ -16,8 +16,8 @@ import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "evm" / "precompiles.go"
+ROOT = Path(__file__).resolve().parents[2]  # monorepo root (protocol-manifest.json is SoT at root)
+SRC = ROOT / "consensus" / "evm" / "precompiles.go"
 OUT = ROOT / "protocol-manifest.json"
 
 
@@ -72,11 +72,21 @@ def build_manifest(entries: list[dict]) -> dict:
         "eoa_display_address": "20-byte pub[0:40]",
         "precompile_calldata_address": "raw 20-byte",
         "canonical_repos": {
-            "protocol": "ThinkIbrokeIt/waychain-consensus",
-            "site": "ThinkIbrokeIt/waychain-site",
-            "mobile": "ThinkIbrokeIt/waychain-mobile",
-            "client_releases": "ThinkIbrokeIt/waychain-client",
-            "contracts_legacy": "ThinkIbrokeIt/waychain-contracts",
+            "sot": "ThinkIbrokeIt/waychain",
+            "sot_note": "Monorepo is the single source of truth (REPO_LAW.md, founder decision 2026-07-15). All product code lives under it.",
+            "tree": {
+                "protocol": "ThinkIbrokeIt/waychain/consensus",
+                "site": "ThinkIbrokeIt/waychain/site",
+                "mobile": "ThinkIbrokeIt/waychain/mobile",
+                "contracts_legacy": "ThinkIbrokeIt/waychain/contracts",
+                "blueprint": "ThinkIbrokeIt/waychain/blueprint",
+            },
+            "client_releases": "ThinkIbrokeIt/waychain-client (builds FROM consensus/ tags only)",
+            "satellites": {
+                "waychain-consensus": "ARCHIVED MIRROR — do not edit",
+                "waychain-site": "ARCHIVED MIRROR — do not edit",
+                "waychain-mobile": "ARCHIVED MIRROR — do not edit",
+            },
             "live_node": "AWS 3.89.116.45 waychain.service /usr/local/bin/waychain",
         },
         "precompiles": [{"addr": e["addr"], "name": e["name"]} for e in entries],
