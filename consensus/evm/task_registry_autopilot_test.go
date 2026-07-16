@@ -11,6 +11,8 @@ func setupAutopilot() (*StateDB, string, string) {
 	state := NewStateDB()
 	tr := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
 	tr.Balance = big.NewInt(1_100_000)
+	// seed live supply like genesis does (cap = 5% of 100M = 5M)
+	QuestAddSupply(state, big.NewInt(100_000_000))
 	// autopilot = 0xbb..., Dox_Dev L3
 	ap := "00000000000000000000000000000000000000bb"
 	state.GetOrCreateAccount(ap).DoxDevLevel = 3
@@ -90,6 +92,8 @@ func TestAutopilotRejectsSubjectiveQuest(t *testing.T) {
 // TestHumanVerifierStillWorks — the existing human path is untouched.
 func TestHumanVerifierStillWorks(t *testing.T) {
 	state, _, claimant := setupAutopilot()
+	// seed live supply like genesis does, so the cap is non-zero
+	QuestAddSupply(state, big.NewInt(100_000_000))
 	human := "00000000000000000000000000000000000000dd"
 	state.GetOrCreateAccount(human).DoxDevLevel = 2
 	if _, err := taskRegistryPrecompile(append([]byte{0xA1, 0xB2, 0xC3, 0xD4}, padTask("badge-curate")...), claimant, state, 1); err != nil {
@@ -133,4 +137,74 @@ func padTask(s string) []byte {
 	out := make([]byte, 32)
 	copy(out, []byte(s))
 	return out
+}
+
+// TestQuestCapStartsAt5PercentOfSupply — with 100M starting supply, cap = 5M.
+func TestQuestCapStartsAt5PercentOfSupply(t *testing.T) {
+	state := NewStateDB()
+	// seed live supply like genesis does
+	QuestAddSupply(state, big.NewInt(100_000_000))
+	cap := QuestCap(state)
+	if cap.Uint64() != 5_000_000 {
+		t.Fatalf("cap = %d, want 5,000,000 (5%% of 100M)", cap.Uint64())
+	}
+}
+
+// TestQuestCapScalesWithSupply — if live supply grows, the cap rises.
+func TestQuestCapScalesWithSupply(t *testing.T) {
+	state := NewStateDB()
+	QuestAddSupply(state, big.NewInt(100_000_000))
+	before := QuestCap(state).Uint64()
+	QuestAddSupply(state, big.NewInt(100_000_000)) // supply doubles to 200M
+	after := QuestCap(state).Uint64()
+	if after <= before {
+		t.Fatalf("cap should rise with supply: before=%d after=%d", before, after)
+	}
+	if after != 10_000_000 {
+		t.Fatalf("cap = %d, want 10,000,000 (5%% of 200M)", after)
+	}
+}
+
+// TestQuestCapEnforced — once cumulative paid hits 5% of supply, further
+// verifies are rejected (the dead-code bug is fixed).
+func TestQuestCapEnforced(t *testing.T) {
+	state := NewStateDB()
+	QuestAddSupply(state, big.NewInt(100_000_000)) // cap = 5M
+	// fund treasury so payments would succeed IF cap weren't enforced
+	state.GetOrCreateAccount(PrecompileAddrHex(0x03)).Balance = big.NewInt(100_000_000)
+	ap := "00000000000000000000000000000000000000bb"
+	state.GetOrCreateAccount(ap).DoxDevLevel = 3
+	var slot [32]byte
+	copy(slot[12:32], mustHex20(ap))
+	state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{autopilotSlot})] = slot
+
+	// Pay out exactly 5M via repeated 50-WAY wifr-bridge auto-verifies (100k claims).
+	// Use 1 big task instead: temporarily claim via a 5M-reward path is not possible
+	// (rewards are fixed). Instead claim many. To keep the test fast, lower the cap
+	// by using a tiny supply.
+	small := NewStateDB()
+	QuestAddSupply(small, big.NewInt(1_000)) // cap = 50 WAY
+	small.GetOrCreateAccount(PrecompileAddrHex(0x03)).Balance = big.NewInt(1_000_000)
+	small.GetOrCreateAccount(ap).DoxDevLevel = 3
+	var slot2 [32]byte
+	copy(slot2[12:32], mustHex20(ap))
+	small.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{autopilotSlot})] = slot2
+
+	// first-claim (auto-eligible, 50 WAY) -> cap 50, paid 50 -> ok
+	claim := append([]byte{0xA1, 0xB2, 0xC3, 0xD4}, padTask("wifr-bridge")...)
+	if _, err := taskRegistryPrecompile(claim, "00000000000000000000000000000000000000aa", small, 1); err != nil {
+		t.Fatalf("claim: %v", err)
+	}
+	if _, err := taskRegistryPrecompile(autoVerifyInput("wifr-bridge", "00000000000000000000000000000000000000aa"), ap, small, 1); err != nil {
+		t.Fatalf("first autoVerify should pass: %v", err)
+	}
+	// second claim -> would push paid to 100 > cap 50 -> rejected
+	claim2 := append([]byte{0xA1, 0xB2, 0xC3, 0xD4}, padTask("wifr-bridge")...)
+	if _, err := taskRegistryPrecompile(claim2, "00000000000000000000000000000000000000cc", small, 1); err != nil {
+		t.Fatalf("claim: %v", err)
+	}
+	_, err := taskRegistryPrecompile(autoVerifyInput("wifr-bridge", "00000000000000000000000000000000000000cc"), ap, small, 1)
+	if err == nil {
+		t.Fatal("expected cap rejection on 2nd verify (paid 100 > cap 50)")
+	}
 }

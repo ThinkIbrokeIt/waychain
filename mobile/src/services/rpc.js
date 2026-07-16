@@ -150,6 +150,16 @@ export const waychainRPC = {
     const r = await waychainRPC.call('way_questGetAutopilot', []);
     return typeof r === 'string' ? r : '';
   },
+  wayTotalSupply: async () => {
+    const r = await waychainRPC.call('way_wayTotalSupply', []);
+    if (!r) return 0;
+    try { return Number(BigInt(r.replace(/^0x/, ''))); } catch { return 0; }
+  },
+  questCap: async () => {
+    const r = await waychainRPC.call('way_questCap', []);
+    if (!r) return 0;
+    try { return Number(BigInt(r.replace(/^0x/, ''))); } catch { return 0; }
+  },
 };
 
 // Local hex->bytes (rpc.js has no Buffer; precompileCall needs it for tx data).

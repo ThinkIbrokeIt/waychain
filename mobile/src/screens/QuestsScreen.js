@@ -85,6 +85,7 @@ export default function QuestsScreen({ navigation }) {
   const [account, setAccount] = useState(null);
   const [statuses, setStatuses] = useState({});
   const [pool, setPool] = useState(null);
+  const [cap, setCap] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,8 +109,11 @@ export default function QuestsScreen({ navigation }) {
       }
     }));
     try { total = await waychainRPC.questPoolRemaining(); } catch { total = null; }
+    let cap = null;
+    try { cap = await waychainRPC.questCap(); } catch { cap = null; }
     setStatuses(next);
     setPool(total);
+    setCap(cap);
     setLoading(false);
   }, [account]);
 
@@ -167,6 +171,9 @@ export default function QuestsScreen({ navigation }) {
         </Text>
         <Text style={styles.heroPool}>
           {pool == null ? 'Pool: —' : `Reward pool: ${pool.toLocaleString()} WAY remaining`}
+        </Text>
+        <Text style={styles.heroPool}>
+          {cap == null ? 'Cap: —' : `Quest cap: ${cap.toLocaleString()} WAY (5% of live supply)`}
         </Text>
       </View>
 
