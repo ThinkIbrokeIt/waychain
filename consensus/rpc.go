@@ -404,6 +404,12 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		}
 		return ap, nil
 
+	case "way_wayTotalSupply":
+		return "0x" + evm.QuestTotalSupply(rpc.chain.State).Text(16), nil
+
+	case "way_questCap":
+		return "0x" + evm.QuestCap(rpc.chain.State).Text(16), nil
+
 	// ── Contract Deployment ──
 	case "way_deployCode":
 		var p []string

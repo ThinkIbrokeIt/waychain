@@ -62,6 +62,14 @@
       const r = await call('way_questGetAutopilot', []);
       return typeof r === 'string' ? r : '';
     },
+    wayTotalSupply: async () => {
+      const r = await call('way_wayTotalSupply', []);
+      return hexToNum(r);
+    },
+    questCap: async () => {
+      const r = await call('way_questCap', []);
+      return hexToNum(r);
+    },
 
     // ── Per-precompile call layer (issue #11) ──
     // READ for all 27 precompiles via eth_call + the shared registry.

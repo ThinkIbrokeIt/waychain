@@ -18,6 +18,8 @@ func TestWayTaskStatusRPC(t *testing.T) {
 	// Fund treasury 0x03 (the paying pool the RPC reports).
 	tr := state.GetOrCreateAccount(evm.PrecompileAddrHex(0x03))
 	tr.Balance = big.NewInt(1_100_000)
+	// Seed live supply like genesis (cap = 5% of 100M = 5M).
+	evm.QuestAddSupply(state, big.NewInt(100_000_000))
 
 	claimer := "00000000000000000000000000000000000000aa"
 
@@ -31,9 +33,9 @@ func TestWayTaskStatusRPC(t *testing.T) {
 	if r := evm.GetTaskReward(task).Uint64(); r != 300 {
 		t.Fatalf("getTaskReward = %d, want 300", r)
 	}
-	// Pool reflects the funded treasury.
-	if rem := evm.QuestPoolRemaining(state).Uint64(); rem != 1_100_000 {
-		t.Fatalf("pool remaining = %d, want 1_100_000", rem)
+	// Pool reflects the dynamic cap: 5% of 100M seeded supply = 5,000,000.
+	if rem := evm.QuestPoolRemaining(state).Uint64(); rem != 5_000_000 {
+		t.Fatalf("pool remaining = %d, want 5,000,000", rem)
 	}
 
 	// Unknown task pays 0 (guard against UI/chain drift).

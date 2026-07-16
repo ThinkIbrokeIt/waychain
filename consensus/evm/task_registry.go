@@ -39,9 +39,21 @@ import (
 // sha256(signature)[:4] per the protocol convention (no collision with any
 // existing selector).
 const (
-	// QUEST_TOTAL_BUDGET caps cumulative quest payout (WAY). Matches the
-	// existing 1.1M quest pool. Enforced at verify time.
-	QUEST_TOTAL_BUDGET = uint64(1_100_000)
+	// QUEST_TOTAL_BUDGET caps cumulative quest payout as a FRACTION of live WAY
+	// supply (founder decision 2026-07-16, option B): quest payouts may not exceed
+	// 5% of the LIVE total WAY supply, recomputed at each payout so the cap scales
+	// with inflation. The live supply is tracked on-chain (see wayTotalSupply /
+	// QuestTotalSupply) and incremented as validator rewards are minted.
+	QUEST_SUPPLY_PCT = 5 // percent of live WAY supply the quest program may pay out
+
+	// waySupplySlot is the 0x23 storage slot holding the live total WAY supply
+	// (minted supply: genesis + emitted validator rewards). Incremented in
+	// chain.go when block rewards are distributed. Read by QuestTotalSupply.
+	waySupplySlot = byte(0x41)
+
+	// WAYStartingSupply is the declared starting WAY supply (100M). Seeded into
+	// the live-supply tracker at genesis; grows as validator rewards mint.
+	WAYStartingSupply = uint64(100_000_000)
 
 	// autopilotSlot is the 0x23 storage slot holding the designated autopilot
 	// oracle address (left-aligned 20-byte address as string key). Set once by
@@ -277,8 +289,8 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 // MUST match the lists in mobile/src/screens/QuestsScreen.js and (when added) the
 // web quest page. Unknown IDs pay 0 — a silent mismatch is a bug, not a feature.
 //
-// Total of all listed rewards = 1,100,000 WAY (== QUEST_TOTAL_BUDGET), allocated
-// across 6 tracks that exercise every live precompile/use case:
+// Total of all listed per-quest rewards = 2,350 base WAY points across 6 tracks
+// that exercise every live precompile/use case:
 //
 //	Track A — Onboard (wallet + value):        100+10+10+10+25+100          = 255
 //	Track B — Identity (Dox_Dev):               100+200                       = 300
@@ -287,9 +299,12 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 //	Track E — Native apps (BIJO/Locks/MRT/DMS): 100+25+50+150+150            = 475
 //	Track F — Infra (Oracle/Acct/Recovery/Rent/XChain/Template): 150+50+100+50+100+100+100 = 650
 //
-// Sum = 255+300+50+620+475+650 = 2,350 base points. Multipliers below scale to
-// the 1.1M budget: top-tier + completion bonuses push the live pool. The map
-// values ARE the canonical per-quest WAY; the 1.1M cap is enforced at verify.
+// Sum = 2,350 base points. The MAP VALUES are the canonical per-quest WAY.
+// The OVERALL QUEST CAP is NOT a fixed constant — it is 5% of the LIVE total WAY
+// supply (QuestCap), recomputed at each payout so it scales with inflation. With
+// the 100M starting supply the cap opens at 5,000,000 WAY, well above the 2,350
+// base payout, leaving headroom for repetition + future quests. Enforced in
+// verifyAndPay (rejects when cumulative paid would exceed the live 5% cap).
 func taskRewardAmount(taskIdBytes []byte) *big.Int {
 	// taskId is left-aligned ASCII in a 32-byte buffer (mobile + on-chain
 	// convention). Trim trailing zero padding before map lookup.
@@ -422,12 +437,29 @@ func isAutopilot(caller string, state *StateDB) bool {
 // balance; a re-verify with insufficient funds still marks verified (the reward
 // was earned) — matching the existing taskVerify semantics.
 func verifyAndPay(state *StateDB, taskIdBytes []byte, claimantAddr string) error {
+	reward := taskRewardAmount(taskIdBytes)
+
+	// ── Enforce the quest cap: 5% of LIVE total WAY supply (recomputed now) ──
+	// Cumulative paid (slot 0x40) + this reward must not exceed the cap.
+	tr := state.GetOrCreateAccount(PrecompileAddrHex(0x23))
+	paidKey := storageKey([]byte{0x40})
+	paid := readBigInt(tr.Storage[paidKey])
+	if paid == nil {
+		paid = new(big.Int)
+	}
+	cap := QuestCap(state)
+	newPaid := new(big.Int).Add(paid, reward)
+	if newPaid.Cmp(cap) > 0 {
+		// Cap exhausted: do NOT mark verified, do NOT pay. The claim stays
+		// "claimed" so the user can retry later if the cap rises (supply grows).
+		return fmt.Errorf("quest cap reached: %s paid / %s cap", paid.String(), cap.String())
+	}
+
 	claimKey := storageKey(append([]byte{0x10}, []byte(claimantAddr)...))
 	var s [32]byte
 	copy(s[:], taskIdBytes)
 	s[31] = 2 // verified
 	state.GetOrCreateAccount(claimantAddr).Storage[claimKey] = s
-	reward := taskRewardAmount(taskIdBytes)
 	treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
 	if treasury.Balance == nil {
 		treasury.Balance = new(big.Int)
@@ -440,12 +472,13 @@ func verifyAndPay(state *StateDB, taskIdBytes []byte, claimantAddr string) error
 		treasury.Balance.Sub(treasury.Balance, reward)
 		claimantAcc.Balance.Add(claimantAcc.Balance, reward)
 		// Track cumulative paid against the budget (slot 0x40).
-		tr := state.GetOrCreateAccount(PrecompileAddrHex(0x23))
-		paidKey := storageKey([]byte{0x40})
-		paid := readBigInt(tr.Storage[paidKey])
-		if paid == nil {
-			paid = new(big.Int)
-		}
+		paid.Add(paid, reward)
+		var slot [32]byte
+		paid.FillBytes(slot[:])
+		tr.Storage[paidKey] = slot
+	} else {
+		// Treasury underfunded: mark verified (reward earned) but no transfer.
+		// Cumulative paid is still updated so the cap accounts for it.
 		paid.Add(paid, reward)
 		var slot [32]byte
 		paid.FillBytes(slot[:])
@@ -465,7 +498,43 @@ func QuestGetAutopilot(state *StateDB) string {
 	return autopilotAddress(state)
 }
 
-// ── Exported read helpers (used by RPC way_taskStatus / way_questPoolRemaining) ──
+// ── Live WAY total-supply tracker (backs the 5%-of-supply quest cap) ──
+//
+// Genesis seeds this to the genesis WAY supply. chain.go increments it every
+// time validator block rewards are minted (so it tracks LIVE minted supply,
+// which grows with the 7%/yr emission). The quest cap is 5% of THIS value,
+// recomputed at each payout so it scales with inflation.
+
+// QuestTotalSupply returns the live total WAY supply (genesis + emitted).
+func QuestTotalSupply(state *StateDB) *big.Int {
+	s := state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{waySupplySlot})]
+	v := readBigInt(s)
+	if v == nil {
+		v = new(big.Int)
+	}
+	return v
+}
+
+// QuestAddSupply increments the live total supply (called when WAY is minted).
+func QuestAddSupply(state *StateDB, amount *big.Int) {
+	if amount == nil || amount.Sign() <= 0 {
+		return
+	}
+	cur := QuestTotalSupply(state)
+	cur.Add(cur, amount)
+	var slot [32]byte
+	cur.FillBytes(slot[:])
+	state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{waySupplySlot})] = slot
+}
+
+// QuestCap returns the maximum cumulative quest payout = QUEST_SUPPLY_PCT% of
+// the live total WAY supply. Recomputed at every call (scales with inflation).
+func QuestCap(state *StateDB) *big.Int {
+	supply := QuestTotalSupply(state)
+	cap := new(big.Int).Mul(supply, big.NewInt(int64(QUEST_SUPPLY_PCT)))
+	cap.Div(cap, big.NewInt(100))
+	return cap
+}
 
 // TaskStatusOf returns "none"/"claimed"/"verified" for a claimant on a task.
 func TaskStatusOf(state *StateDB, taskId []byte, claimant string) string {
@@ -484,13 +553,20 @@ func TaskStatusOf(state *StateDB, taskId []byte, claimant string) string {
 	return "none"
 }
 
-// QuestPoolRemaining returns the WAY available in the paying treasury (0x03).
+// QuestPoolRemaining returns the remaining quest budget = cap (5% of live
+// supply) minus cumulative paid. This is the real number the UI should show —
+// NOT the treasury balance (the treasury can hold more/less than the quest cap).
 func QuestPoolRemaining(state *StateDB) *big.Int {
-	treasury := state.GetAccount(PrecompileAddrHex(0x03))
-	if treasury == nil || treasury.Balance == nil {
+	cap := QuestCap(state)
+	paid := readBigInt(state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{0x40})])
+	if paid == nil {
+		paid = new(big.Int)
+	}
+	rem := new(big.Int).Sub(cap, paid)
+	if rem.Sign() < 0 {
 		return big.NewInt(0)
 	}
-	return treasury.Balance
+	return rem
 }
 
 // GetTaskReward returns the canonical WAY reward for a taskId (0 if unknown).

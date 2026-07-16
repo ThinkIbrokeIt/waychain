@@ -60,6 +60,8 @@ func TestQuestVerifyPayout(t *testing.T) {
 	// Fund the paying treasury (0x03) with 1_100_000 WAY.
 	treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
 	treasury.Balance = big.NewInt(1_100_000)
+	// Seed live supply like genesis (cap = 5% of 100M = 5M, well above payout).
+	QuestAddSupply(state, big.NewInt(100_000_000))
 
 	claimer := "00000000000000000000000000000000000000aa"
 	verifier := "00000000000000000000000000000000000000bb"
@@ -89,8 +91,9 @@ func TestQuestVerifyPayout(t *testing.T) {
 		t.Errorf("claimer balance = %d, want 300", got)
 	}
 	rem := QuestPoolRemaining(state).Uint64()
-	if rem != 1_100_000-300 {
-		t.Errorf("pool remaining = %d, want %d", rem, 1_100_000-300)
+	// Dynamic cap: 5% of 100M seeded supply = 5,000,000; minus 300 paid.
+	if rem != 5_000_000-300 {
+		t.Errorf("pool remaining = %d, want %d", rem, 5_000_000-300)
 	}
 }
 

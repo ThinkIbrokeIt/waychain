@@ -247,6 +247,12 @@ func (c *Chain) InitPrecompiles() {
 	if err := (&evm.WIFRGantletRewards{State: c.State}).Initialize(); err != nil {
 		panic(err)
 	}
+
+	// ── Seed live WAY total supply (backs the 5%-of-supply quest cap) ──
+	// Start at the declared starting supply (WAYTotalSupply = 100M). chain.go
+	// increments this as validator block rewards are minted, so it tracks LIVE
+	// minted supply and the 5% cap scales with inflation.
+	evm.QuestAddSupply(c.State, new(big.Int).SetUint64(evm.WAYStartingSupply))
 }
 
 func (c *Chain) issueGenesisBadge(badgeAcc *evm.Account, developer string, level uint8, validityPeriod uint64) {
@@ -541,11 +547,18 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 	// Distribute staking rewards for this block (anchored to the 7% annual cap).
 	if c.Staking != nil {
 		rewards := c.Staking.DistributeBlockReward(c.Height)
+		var minted uint64
 		for id, amount := range rewards {
 			if amount > 0 {
 				acc := c.State.GetOrCreateAccount(id.String())
 				acc.Balance.Add(acc.Balance, new(big.Int).SetUint64(amount))
+				minted += amount
 			}
+		}
+		// Track live total WAY supply so the 5%-of-supply quest cap scales
+		// with inflation.
+		if minted > 0 {
+			evm.QuestAddSupply(c.State, new(big.Int).SetUint64(minted))
 		}
 	}
 
