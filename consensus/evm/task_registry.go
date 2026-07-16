@@ -21,19 +21,37 @@ import (
 // what we built proves the code works. The chain stays general; the quest is
 // the frame we put on it.
 //
-// Rewards are paid on verification by a Dox_Dev Level-2+ verifier. Each account
-// may claim a given task once. The total payable budget is capped by
+// Rewards are paid on verification. Verification has TWO paths:
+//   1. HUMAN: a Dox_Dev Level-2+ verifier calls taskVerify (subjective quests —
+//      badge curation, account recovery, privacy proofs, cross-chain witness,
+//      template deploy, MRT, DeadMansSwitch, validator uptime).
+//   2. AUTOPILOT: a founder-designated autopilot oracle (Dox_Dev L3) calls
+//      taskAutoVerify for OBJECTIVE quests — on-chain-provable actions. This is
+//      the initial validator: it lets real users earn WAY from day one with no
+//      human bottleneck, so the quest program becomes a live user-flow test
+//      immediately. As real Dox_Dev verifiers come online, they take over the
+//      subjective tasks; the autopilot keeps the objective ones unattended.
+// Each account may claim a given task once. The total payable budget is capped by
 // QUEST_TOTAL_BUDGET (1.1M WAY); the founder tops up the treasury via questFund.
 //
 // Selector note: existing methods use hand-assigned 4-byte constants that the
 // frontend registry mirrors by convention. NEW methods use the real
 // sha256(signature)[:4] per the protocol convention (no collision with any
 // existing selector).
-
 const (
 	// QUEST_TOTAL_BUDGET caps cumulative quest payout (WAY). Matches the
 	// existing 1.1M quest pool. Enforced at verify time.
 	QUEST_TOTAL_BUDGET = uint64(1_100_000)
+
+	// autopilotSlot is the 0x23 storage slot holding the designated autopilot
+	// oracle address (left-aligned 20-byte address as string key). Set once by
+	// a Dox_Dev L3 via questSetAutopilot. Zero-valued => no autopilot.
+	autopilotSlot = byte(0x50)
+
+	// SolanaChainID is the 32-byte source-chain identifier used by the
+	// CrossChainAttestation precompile (0x1F) to label a Solana event. Fixed
+	// sentinel so the WIFR page, the attester bot, and any future watcher agree.
+	SolanaChainID = "solana-waychain"
 )
 
 func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, error) {
@@ -53,7 +71,7 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 		state.GetOrCreateAccount(caller).Storage[claimKey] = s
 		return []byte{1}, nil
 
-	case 0xB2C3D4E5: // taskVerify(taskId[32], claimant[20])
+	case 0xB2C3D4E5: // taskVerify(taskId[32], claimant[20]) — HUMAN verifier (Dox_Dev L2+)
 		taskIdBytes := input[4:36]
 		claimant := readAddress(input, 36)
 		callerAcc := state.GetAccount(caller)
@@ -61,36 +79,49 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 			return nil, fmt.Errorf("unauthorized: need badge")
 		}
 		claimantAddr := fmt.Sprintf("%x", claimant[:])
-		claimKey := storageKey(append([]byte{0x10}, []byte(claimantAddr)...))
-		var s [32]byte
-		copy(s[:], taskIdBytes)
-		s[31] = 2 // verified
-		state.GetOrCreateAccount(claimantAddr).Storage[claimKey] = s
-		reward := taskRewardAmount(taskIdBytes)
-		treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
-		if treasury.Balance == nil {
-			treasury.Balance = new(big.Int)
-		}
-		claimantAcc := state.GetOrCreateAccount(claimantAddr)
-		if claimantAcc.Balance == nil {
-			claimantAcc.Balance = new(big.Int)
-		}
-		if treasury.Balance.Cmp(reward) >= 0 {
-			treasury.Balance.Sub(treasury.Balance, reward)
-			claimantAcc.Balance.Add(claimantAcc.Balance, reward)
-			// Track cumulative paid against the budget (slot 0x40).
-			tr := state.GetOrCreateAccount(PrecompileAddrHex(0x23))
-			paidKey := storageKey([]byte{0x40})
-			paid := readBigInt(tr.Storage[paidKey])
-			if paid == nil {
-				paid = new(big.Int)
-			}
-			paid.Add(paid, reward)
-			var slot [32]byte
-			paid.FillBytes(slot[:])
-			tr.Storage[paidKey] = slot
+		if err := verifyAndPay(state, taskIdBytes, claimantAddr); err != nil {
+			return nil, err
 		}
 		return []byte{1}, nil
+
+	case 0x04A78446: // taskAutoVerify(bytes32 taskId, address claimant, bytes proof)
+		// AUTOPILOT path: the designated autopilot oracle (Dox_Dev L3, set via
+		// questSetAutopilot) verifies + pays OBJECTIVE (on-chain-provable) quests.
+		// This is the initial validator that lets users earn from day one.
+		taskIdBytes := input[4:36]
+		claimant := readAddress(input, 36)
+		// proof = input[56:] (opaque to the primitive; the off-chain bot decides
+		// what constitutes valid proof — e.g. a 0x1F attestation hash for wifr-bridge).
+		if !isAutopilot(caller, state) {
+			return nil, fmt.Errorf("unauthorized: caller is not the designated autopilot")
+		}
+		if !isAutoEligible(taskIdBytes) {
+			return nil, fmt.Errorf("task is not auto-eligible; use human taskVerify")
+		}
+		claimantAddr := fmt.Sprintf("%x", claimant[:])
+		if err := verifyAndPay(state, taskIdBytes, claimantAddr); err != nil {
+			return nil, err
+		}
+		return []byte{1}, nil
+
+	case 0x7680323F: // questSetAutopilot(address) — founder designates the autopilot oracle (Dox_Dev L3 only)
+		addr := readAddress(input, 4)
+		callerAcc := state.GetAccount(caller)
+		if callerAcc == nil || callerAcc.DoxDevLevel < 3 {
+			return nil, fmt.Errorf("unauthorized: need Dox_Dev L3")
+		}
+		apKey := storageKey([]byte{autopilotSlot})
+		var slot [32]byte
+		copy(slot[12:32], addr[:]) // right-align 20-byte address (same layout readAddress expects)
+		state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[apKey] = slot
+		return []byte{1}, nil
+
+	case 0x79B592DB: // questGetAutopilot() — read the designated autopilot address (hex string)
+		ap := autopilotAddress(state)
+		if ap == "" {
+			return []byte{}, nil
+		}
+		return []byte(ap), nil
 
 	case 0xC3D4E5F6: // taskStatus(taskId[32]) — caller's own status
 		_ = input[4:36]
@@ -290,6 +321,7 @@ func taskRewardAmount(taskIdBytes []byte) *big.Int {
 		"stability-deposit": 50, // deposit to StabilityPool (action)
 		"btc-bridge": 25, // attest BTC commit on BitcoinRegistry (action)
 		"sway-stake": 50, // stake SWAY for LP rewards (action)
+		"wifr-bridge": 50, // burn 1 WIFR on Solana, CrossChainAttestation (0x1F) witnesses it. THE DOOR. (action, auto-eligible)
 
 		// Track E — Native applications (use what we built)
 		"bijo-journal": 100, // write a BinaryJournal entry (action)
@@ -313,8 +345,124 @@ func taskRewardAmount(taskIdBytes []byte) *big.Int {
 	return big.NewInt(0)
 }
 
+// ── Autopilot oracle (resolves the quest chicken-and-egg) ──
+//
+// The autopilot is a founder-designated oracle (Dox_Dev L3) that auto-verifies
+// OBJECTIVE (on-chain-provable) quests, so users earn WAY from day one without
+// waiting for human verifiers to exist. The off-chain autopilot BOT watches the
+// chain, confirms each objective task's on-chain condition, and calls
+// taskAutoVerify. As real Dox_Dev verifiers come online they take the subjective
+// tasks; the autopilot keeps objective ones unattended.
+
+// autoEligibleTasks lists quest IDs the autopilot may verify. These are the
+// on-chain-provable actions. Subjective quests (badge curation, account
+// recovery, privacy proofs, cross-chain witness, template deploy, MRT,
+// DeadMansSwitch, validator uptime) are intentionally EXCLUDED — they need a
+// human Dox_Dev L2+ verifier via taskVerify.
+var autoEligibleTasks = map[string]bool{
+	"first-transfer":  true,
+	"faucet-claim":    true,
+	"receive-way":     true,
+	"governance-vote": true,
+	"gov-propose":     true,
+	"1way-mint":       true,
+	"1way-burn":       true,
+	"2way-open":       true,
+	"first-swap":      true,
+	"add-liquidity":   true,
+	"stability-deposit": true,
+	"btc-bridge":      true,
+	"sway-stake":      true,
+	"wifr-bridge":     true, // THE DOOR: burn WIFR on Solana -> 0x1F attest -> autopilot accepts
+	"bijo-journal":    true,
+	"lock-time":       true,
+	"lock-vesting":    true,
+	"staterent-pay":   true,
+}
+
+func isAutoEligible(taskIdBytes []byte) bool {
+	task := string(taskIdBytes)
+	if i := bytes.IndexByte(taskIdBytes, 0); i >= 0 {
+		task = string(taskIdBytes[:i])
+	}
+	return autoEligibleTasks[task]
+}
+
+func autopilotAddress(state *StateDB) string {
+	acc := state.GetAccount(PrecompileAddrHex(0x23))
+	if acc == nil {
+		return ""
+	}
+	slot := acc.Storage[storageKey([]byte{autopilotSlot})]
+	// address is right-aligned at bytes [12:32]
+	zero := true
+	for _, b := range slot[12:32] {
+		if b != 0 {
+			zero = false
+			break
+		}
+	}
+	if zero {
+		return ""
+	}
+	return fmt.Sprintf("%x", slot[12:32])
+}
+
+func isAutopilot(caller string, state *StateDB) bool {
+	ap := autopilotAddress(state)
+	if ap == "" {
+		return false
+	}
+	return strings.EqualFold(caller, ap)
+}
+
+// verifyAndPay marks a claimant's task verified and pays the reward from the
+// treasury (0x03) if funded. Shared by taskVerify (human) and taskAutoVerify
+// (autopilot). Idempotent on storage slot but the treasury payout is gated by
+// balance; a re-verify with insufficient funds still marks verified (the reward
+// was earned) — matching the existing taskVerify semantics.
+func verifyAndPay(state *StateDB, taskIdBytes []byte, claimantAddr string) error {
+	claimKey := storageKey(append([]byte{0x10}, []byte(claimantAddr)...))
+	var s [32]byte
+	copy(s[:], taskIdBytes)
+	s[31] = 2 // verified
+	state.GetOrCreateAccount(claimantAddr).Storage[claimKey] = s
+	reward := taskRewardAmount(taskIdBytes)
+	treasury := state.GetOrCreateAccount(PrecompileAddrHex(0x03))
+	if treasury.Balance == nil {
+		treasury.Balance = new(big.Int)
+	}
+	claimantAcc := state.GetOrCreateAccount(claimantAddr)
+	if claimantAcc.Balance == nil {
+		claimantAcc.Balance = new(big.Int)
+	}
+	if treasury.Balance.Cmp(reward) >= 0 {
+		treasury.Balance.Sub(treasury.Balance, reward)
+		claimantAcc.Balance.Add(claimantAcc.Balance, reward)
+		// Track cumulative paid against the budget (slot 0x40).
+		tr := state.GetOrCreateAccount(PrecompileAddrHex(0x23))
+		paidKey := storageKey([]byte{0x40})
+		paid := readBigInt(tr.Storage[paidKey])
+		if paid == nil {
+			paid = new(big.Int)
+		}
+		paid.Add(paid, reward)
+		var slot [32]byte
+		paid.FillBytes(slot[:])
+		tr.Storage[paidKey] = slot
+	}
+	return nil
+}
+
 func encodeBytes(b []byte) []byte {
 	return b
+}
+
+// ── Exported helpers (used by RPC) ──
+
+// QuestGetAutopilot returns the designated autopilot oracle address ("" if none).
+func QuestGetAutopilot(state *StateDB) string {
+	return autopilotAddress(state)
 }
 
 // ── Exported read helpers (used by RPC way_taskStatus / way_questPoolRemaining) ──

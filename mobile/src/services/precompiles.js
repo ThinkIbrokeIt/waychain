@@ -276,6 +276,9 @@ export const PRECOMPILES = {
       { name: 'getTaskReward', sel: 'e32481a4', sig: 'getTaskReward(bytes32)', kind: 'read' },
       { name: 'questPoolRemaining', sel: 'df95446f', sig: 'questPoolRemaining()', kind: 'read' },
       { name: 'questFund', sel: 'cea1b2c3', sig: 'questFund(uint256)', kind: 'write' },
+      { name: 'taskAutoVerify', sel: '04a78446', sig: 'taskAutoVerify(bytes32,address,bytes)', kind: 'write' },
+      { name: 'questSetAutopilot', sel: '7680323f', sig: 'questSetAutopilot(address)', kind: 'write' },
+      { name: 'questGetAutopilot', sel: '79b592db', sig: 'questGetAutopilot()', kind: 'read' },
     ],
   },
   '0x24': {

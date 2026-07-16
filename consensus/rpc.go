@@ -397,6 +397,13 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		rem := evm.QuestPoolRemaining(rpc.chain.State)
 		return "0x" + rem.Text(16), nil
 
+	case "way_questGetAutopilot":
+		ap := evm.QuestGetAutopilot(rpc.chain.State)
+		if ap == "" {
+			return "", nil
+		}
+		return ap, nil
+
 	// ── Contract Deployment ──
 	case "way_deployCode":
 		var p []string
