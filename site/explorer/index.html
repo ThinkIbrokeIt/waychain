@@ -210,6 +210,10 @@ tr:hover td { background: var(--bg3); }
   <a href="https://waychain.org">waychain.org</a> · Explorer · data via explorer API
 </div>
 
+<!-- Public explorer API (CORS open). Override with ?api= for local dev.
+     Set explicitly so the deployed frontend works regardless of Vercel
+     rewrite config (see issue #41 re: waychain-site vs monorepo site/). -->
+<script>window.EXPLORER_API_BASE = 'https://api.waychain.org/api';</script>
 <script src="app.js"></script>
 </body>
 </html>
