@@ -283,6 +283,78 @@ window.logPrev = () => { if (logPage > 0) { logPage--; loadLogs(); } };
 window.logNext = () => { logPage++; loadLogs(); };
 window.logReset = () => { logPage = 0; loadLogs(); };
 
+// ── precompiles (Phase 3) ──
+function renderPrecompiles(list) {
+  const tb = $('precompileTable');
+  tb.innerHTML = '';
+  (list.precompiles || []).forEach(p => {
+    const tr = el('tr');
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => showPrecompile(p.Addr);
+    tr.innerHTML = `
+      <td><a>${p.Addr}</a></td>
+      <td>${p.Name}</td>`;
+    tb.appendChild(tr);
+  });
+  $('precompileCount').textContent = '(' + ((list.precompiles || []).length) + ')';
+}
+
+async function loadPrecompiles() {
+  try {
+    const list = await api('/precompiles');
+    renderPrecompiles(list);
+  } catch (e) {
+    $('precompileTable').innerHTML = `<tr><td colspan="2" class="red">${e.message}</td></tr>`;
+  }
+}
+
+// Render a way_* stat value truthfully: hex amounts -> decimal, objects shown as JSON.
+function fmtStat(v) {
+  if (v === null || v === undefined) return '—';
+  if (typeof v === 'string') {
+    const s = v.startsWith('0x') ? v.slice(2) : v;
+    if (/^[0-9a-fA-F]+$/.test(s) && s.length > 0) {
+      try { return BigInt('0x' + s).toString() + ' (0x' + s + ')'; } catch {}
+    }
+    return v || '—';
+  }
+  return JSON.stringify(v);
+}
+
+function showPrecompile(addr) {
+  api('/precompile/' + encodeURIComponent(addr)).then(d => {
+    if (d.error) { openDetail('Precompile', `<div class="red">${d.error}</div>`); return; }
+    let statsHtml = '<div style="color:var(--fg2);font-size:.75em">No live stats for this precompile</div>';
+    const stats = d.stats || {};
+    const keys = Object.keys(stats);
+    if (keys.length) {
+      statsHtml = '<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+      keys.forEach(method => {
+        const val = stats[method];
+        if (val && typeof val === 'object' && val.error) {
+          statsHtml += `<tr><td>${method}</td><td class="red">${val.error}</td></tr>`;
+        } else if (val && typeof val === 'object') {
+          Object.entries(val).forEach(([k, v]) => {
+            statsHtml += `<tr><td>${method}.${k}</td><td class="addr">${fmtStat(v)}</td></tr>`;
+          });
+        } else {
+          statsHtml += `<tr><td>${method}</td><td class="addr">${fmtStat(val)}</td></tr>`;
+        }
+      });
+      statsHtml += '</tbody></table>';
+    }
+    openDetail('⬡ Precompile ' + d.addr, `
+      <div class="detail">
+        <div class="row"><div class="label">Address</div><div class="value hash-value">${d.addr}</div></div>
+        <div class="row"><div class="label">Name</div><div class="value">${d.name}</div></div>
+      </div>
+      <h3 style="margin-top:15px">Live State</h3>
+      ${statsHtml}`);
+  }).catch(e => openDetail('Precompile', `<div class="red">${e.message}</div>`));
+}
+
+window.showPrecompile = showPrecompile;
+
 // ── poll loop ──
 async function refresh() {
   try {
@@ -309,5 +381,6 @@ window.addEventListener('DOMContentLoaded', () => {
   log('Explorer initialized → ' + API_BASE);
   refresh();
   loadLogs();
+  loadPrecompiles();
   setInterval(refresh, REFRESH_MS);
 });

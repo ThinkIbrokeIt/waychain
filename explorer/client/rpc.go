@@ -128,6 +128,11 @@ type Receipt struct {
 	Logs      []Log  `json:"logs"`
 }
 
+// Call performs a raw JSON-RPC method (used to proxy node way_* read RPCs).
+func (c *RPC) Call(method string, params ...interface{}) (json.RawMessage, error) {
+	return c.call(method, params...)
+}
+
 // BlockNumber returns the latest block height (decimal int).
 func (c *RPC) BlockNumber() (int64, error) {
 	r, err := c.call("eth_blockNumber")
