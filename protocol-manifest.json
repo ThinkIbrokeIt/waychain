@@ -13,11 +13,21 @@
   "eoa_display_address": "20-byte pub[0:40]",
   "precompile_calldata_address": "raw 20-byte",
   "canonical_repos": {
-    "protocol": "ThinkIbrokeIt/waychain-consensus",
-    "site": "ThinkIbrokeIt/waychain-site",
-    "mobile": "ThinkIbrokeIt/waychain-mobile",
-    "client_releases": "ThinkIbrokeIt/waychain-client",
-    "contracts_legacy": "ThinkIbrokeIt/waychain-contracts",
+    "sot": "ThinkIbrokeIt/waychain",
+    "sot_note": "Monorepo is the single source of truth (REPO_LAW.md, founder decision 2026-07-15). All product code lives under it.",
+    "tree": {
+      "protocol": "ThinkIbrokeIt/waychain/consensus",
+      "site": "ThinkIbrokeIt/waychain/site",
+      "mobile": "ThinkIbrokeIt/waychain/mobile",
+      "contracts_legacy": "ThinkIbrokeIt/waychain/contracts",
+      "blueprint": "ThinkIbrokeIt/waychain/blueprint"
+    },
+    "client_releases": "ThinkIbrokeIt/waychain-client (builds FROM consensus/ tags only)",
+    "satellites": {
+      "waychain-consensus": "ARCHIVED MIRROR \u2014 do not edit",
+      "waychain-site": "ARCHIVED MIRROR \u2014 do not edit",
+      "waychain-mobile": "ARCHIVED MIRROR \u2014 do not edit"
+    },
     "live_node": "AWS 3.89.116.45 waychain.service /usr/local/bin/waychain"
   },
   "precompiles": [
