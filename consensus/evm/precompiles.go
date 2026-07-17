@@ -195,7 +195,6 @@ func IsPrecompile(addr byte) bool {
 // function is subsumed by the wifr-bridge quest (TaskRegistry 0x23, treasury 0x03).
 // See issues #61/#62/#63.
 
-
 // ExecutePrecompile runs a precompile and returns the result
 func ExecutePrecompile(addr byte, input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, uint64, error) {
 	pc, ok := PrecompilesTable[addr]
@@ -527,7 +526,11 @@ func PrecompileNames() string {
 // Each precompile stores state in its own StateDB account at address
 // format "0000000000000000000000000000000000000013" for 0x13, etc.
 // Storage keys use sha256 for deterministic slot addressing.
-// ABI function selectors use sha256(signature)[:4] instead of keccak256.
+// ABI function selectors: CORE precompiles dispatch on sha256(sig)[:4]; the
+// Solidity APPLICATION LAYER uses keccak256 (see REPO_LAW.md Article X). The
+// keccak primitive is already in the EVM (deploy.go derives contract addresses
+// with sha3.NewLegacyKeccak256). This comment previously claimed all ABI
+// selectors were sha256 — that was stale after the 2026-07-04 keccak decision.
 
 func PrecompileAddrHex(addr byte) string {
 	return fmt.Sprintf("000000000000000000000000000000000000%02x", addr)

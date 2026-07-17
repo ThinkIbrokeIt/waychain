@@ -24,7 +24,7 @@ This is not guidance. This is **law**. Agents and humans who violate it create t
 | `consensus/` | Go L1 protocol only |
 | `site/` | waychain.org frontend |
 | `mobile/` | Expo wallet |
-| `contracts/` | **LEGACY** PulseChain-era Solidity (reference only) |
+| `contracts/` | **Application layer** (Solidity) — in-scope, NOT legacy. Connects to core via keccak (see Article X). |
 | `blueprint/` | Design / plan (not live) |
 | `protocol-manifest.json` | Machine SoT for precompile inventory |
 | `REPO_LAW.md` | This file |
@@ -94,7 +94,7 @@ True backups are labeled backup (e.g. `~/backups/waychain-*`, `chain.db.bak-*`).
    - EOA account key / `tx.from` / `way_getBalance` = **full 64-hex** ed25519 pubkey  
    - 20-byte form = **display only**  
    - Precompile calldata addresses = **raw 20-byte**  
-   - Selectors = `sha256(sig)[:4]`
+   - Core precompile selectors = `sha256(sig)[:4]` (see Article X for the app-layer split)
 
 ---
 
@@ -125,6 +125,17 @@ Platform roots are **folders**, not justification for new repos:
 | AWS binary | **built from** `consensus/` |
 
 Rebind project settings to monorepo paths. Do not “split to make Vercel happy.”
+
+---
+
+## Article X — Layer hash split (core sha256 / app layer keccak256)
+
+Ratified 2026-07-17, correcting stale clauses that read the Solidity app layer as dead. Basis: founder decision 2026-07-04 (add a keccak precompile for the contract layer) and 2026-07-17 ratification ("Go core + Solidity app layer are both in-scope").
+
+1. **Core protocol = sha256.** Blocks, Merkle trees, P2P wire, tx hashes, precompile internal storage keys, and core precompile ABI selectors use `sha256(sig)[:4]`. This is the established, live behavior — do not change it (changing wipes state, per the 2026-07-04 risk assessment).
+2. **Application layer (Solidity contracts) = keccak256.** Contract address derivation already uses keccak256 (`consensus/evm/deploy.go` uses `sha3.NewLegacyKeccak256`). The dedicated keccak precompile (planned 2026-07-04) is tracked separately; its `0x` address is assigned when built (0x21 is taken by WIFRGantletRewards).
+3. **`contracts/` is in-scope application-layer code, NOT legacy.** The "LEGACY / superseded" framing in `contracts/AGENTS.md` is rescinded. Solidity contracts are the app layer; Go precompiles are the core. Both ship.
+4. **Selector mismatch is the open bridge task, not a death sentence.** A standard Solidity contract emits keccak256 selectors; core precompiles dispatch on sha256 selectors. Reconcile via the keccak precompile / app-layer dispatch path — file and track it, do not declare the app layer dead.
 
 ---
 
