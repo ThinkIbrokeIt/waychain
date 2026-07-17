@@ -455,7 +455,8 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 	case "way_1wayTotalSupply":
 		// Live 1WAY stablecoin supply: sums each vault's BTC-locked 1WAY
 		// balance, so it flexes with the Bitcoin committed to vaults (NOT a
-		// fixed constant). Distinct from way_wayTotalSupply (WAY quest token).
+		// fixed constant). Distinct from way_wayTotalSupply, which returns
+		// WAY's total supply (WAY is the native gas token).
 		return "0x" + evm.Get1WayTotalSupply(rpc.chain.State).Text(16), nil
 
 	case "way_questCap":
