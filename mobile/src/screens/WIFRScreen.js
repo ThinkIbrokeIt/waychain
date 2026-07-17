@@ -65,11 +65,15 @@ export default function WIFRScreen() {
       <BrandHeader subtitle="WIFR Door" />
 
       <View style={styles.hero}>
-        <Text style={styles.heroLabel}>Quest Pool Remaining</Text>
+        <Text style={styles.heroLabel}>Treasury (0x03) WAY balance</Text>
         <Text style={styles.heroVal}>
           {loading ? '—' : (pool == null ? 'n/a' : `${pool} WAY`)}
         </Text>
-        <Text style={styles.heroSub}>treasury 0x03 · cap = 5% live supply</Text>
+        <Text style={styles.heroSub}>
+          {pool === '0x0' || pool === 0 || pool === '0' || pool === '0x0000000000000000000000000000000000000000000000000000000000000000'
+            ? 'unfunded on the live node — quest payouts need a treasury top-up (questFund)'
+            : 'pays the wifr-bridge quest (50 WAY / burn). Code cap: 1.1M WAY cumulative.'}
+        </Text>
       </View>
 
       <View style={styles.steps}>
