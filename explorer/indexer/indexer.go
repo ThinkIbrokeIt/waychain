@@ -15,13 +15,20 @@ import (
 
 // Indexer replays + tails a node into a Store.
 type Indexer struct {
-	node  *client.RPC
-	store *store.Store
+	node   *client.RPC
+	store  *store.Store
+	notify func(height int64) // called after each block is indexed (optional)
 }
 
 // New creates an indexer for node -> store.
 func New(node *client.RPC, s *store.Store) *Indexer {
 	return &Indexer{node: node, store: s}
+}
+
+// SetNotifier registers a callback invoked after each successfully indexed
+// block (used to push live WS updates to the API).
+func (ix *Indexer) SetNotifier(fn func(height int64)) {
+	ix.notify = fn
 }
 
 // Run replays from the next unindexed block to head, then tails new heads via
@@ -161,7 +168,19 @@ func (ix *Indexer) indexBlock(height int64) error {
 		}
 		txs = append(txs, txRow)
 	}
-	return ix.store.SaveBlock(block, txs, logs)
+	err = ix.store.SaveBlock(block, txs, logs)
+	if err != nil {
+		return err
+	}
+	ix.afterIndex(height)
+	return nil
+}
+
+// afterIndex notifies subscribers (if any) that a block was indexed.
+func (ix *Indexer) afterIndex(height int64) {
+	if ix.notify != nil {
+		ix.notify(height)
+	}
 }
 
 func normHex(s string) string {

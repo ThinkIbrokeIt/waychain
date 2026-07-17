@@ -55,13 +55,57 @@ func precompileStatCalls(addr string) []string {
 	}
 }
 
+// precompileDesc gives a one-line purpose per precompile (protocol SoT naming).
+// Truth-first: descriptions are factual; we never invent a stat that doesn't
+// exist. A precompile is "accountScoped" when it has no global way_* read
+// (see precompileStatCalls) and must be queried with an address/taskId.
+var precompileDesc = map[string]string{
+	"0x0c": "Aggregates off-chain oracle feeds on-chain.",
+	"0x0d": "Schedules oracle update rounds.",
+	"0x0e": "Verifies oracle submitter signatures and rounds.",
+	"0x0f": "Verifies TLS session proofs (web-proof oracle).",
+	"0x10": "Aggregate / BLS signature verification.",
+	"0x11": "Social and key recovery for accounts.",
+	"0x12": "Computes state rent owed by an account.",
+	"0x13": "Dox_Dev identity and attestation badges (L2/L3).",
+	"0x14": "BinaryJournal (BIJO) — self-sovereign knowledge vault.",
+	"0x15": "Time-locked dead-man's-switch releases.",
+	"0x16": "BitcoinRegistry — BTC bridge registry (committed/withdrawn).",
+	"0x17": "Funds storage for endowed accounts.",
+	"0x18": "TwoWayVault — CDP vault minting 2WAY (debt/vaults).",
+	"0x19": "Stability pool for CDP liquidations.",
+	"0x1a": "TrustlessLock — anti-rug liquidity locks.",
+	"0x1b": "Account abstraction and key management.",
+	"0x1c": "Privacy / confidential transaction support.",
+	"0x1d": "On-chain governance proposals.",
+	"0x1e": "Applies and collects state rent.",
+	"0x1f": "Cross-chain attestations (WIFR→WAY bridge witness).",
+	"0x20": "Mineral-rights RWA token registry.",
+	"0x21": "WIFR gantlet reward pool.",
+	"0x22": "WayStablecoin (1WAY) — BTC-pegged, minted by BTC deposit.",
+	"0x23": "TaskRegistry — quest/task program.",
+	"0x24": "SwayToken (SWAY) — governance/utility token.",
+	"0x25": "DEX swap routing.",
+	"0x26": "TemplateRegistry — deployable contract templates.",
+}
+
 // handlePrecompiles lists all 27 precompiles (SoT metadata).
 func (s *Server) handlePrecompiles(w http.ResponseWriter, r *http.Request) {
 	m := loadManifest()
+	out := make([]map[string]interface{}, 0, len(m.Precompiles))
+	for _, p := range m.Precompiles {
+		statCalls := precompileStatCalls(p.Addr)
+		out = append(out, map[string]interface{}{
+			"addr":          p.Addr,
+			"name":          p.Name,
+			"desc":          precompileDesc[strings.ToLower(p.Addr)],
+			"accountScoped": len(statCalls) == 0,
+		})
+	}
 	writeJSON(w, map[string]interface{}{
-		"chainId":        m.ChainID,
+		"chainId":          m.ChainID,
 		"precompileRange": m.PrecompileRange,
-		"precompiles":    m.Precompiles,
+		"precompiles":     out,
 	})
 }
 
@@ -102,8 +146,11 @@ func (s *Server) handlePrecompile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, map[string]interface{}{
-		"addr":  entry.Addr,
-		"name":  entry.Name,
-		"stats": stats,
+		"addr":          entry.Addr,
+		"name":          entry.Name,
+		"desc":          precompileDesc[addr],
+		"accountScoped": len(precompileStatCalls(addr)) == 0,
+		"statCalls":     precompileStatCalls(addr),
+		"stats":         stats,
 	})
 }

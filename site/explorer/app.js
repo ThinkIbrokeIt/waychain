@@ -90,9 +90,32 @@ function log(msg, cls = 'info') {
   while (box.children.length > 60) box.removeChild(box.lastChild);
 }
 
+// Status pill is driven by two independent signals:
+//   - REST API reachability -> "Connected" (blocks load via polling)
+//   - WebSocket established  -> "Live" (real-time new-block push)
+// A dead WebSocket must NOT flip the pill to "Offline" — polling still
+// serves live data. "Offline" means REST itself is unreachable.
+let restUp = false;
+let restChecked = false;
+let wsLive = false;
+
+function renderStatus() {
+  const dot = $('statusDot'), txt = $('statusText');
+  if (!dot || !txt) return;
+  if (!restChecked) { txt.textContent = 'Connecting…'; return; }
+  if (!restUp) {
+    dot.className = 'status-dot offline';
+    txt.textContent = 'Offline';
+    return;
+  }
+  dot.className = 'status-dot online';
+  txt.textContent = wsLive ? 'Live' : 'Connected';
+}
+
 function setStatus(online) {
-  $('statusDot').className = 'status-dot ' + (online ? 'online' : 'offline');
-  $('statusText').textContent = online ? 'Connected' : 'Offline';
+  restUp = online;
+  restChecked = true;
+  renderStatus();
 }
 
 // ── rendering ──
@@ -290,10 +313,10 @@ function renderPrecompiles(list) {
   (list.precompiles || []).forEach(p => {
     const tr = el('tr');
     tr.style.cursor = 'pointer';
-    tr.onclick = () => showPrecompile(p.Addr);
+    tr.onclick = () => showPrecompile(p.addr);
     tr.innerHTML = `
-      <td><a>${p.Addr}</a></td>
-      <td>${p.Name}</td>`;
+      <td><a>${p.addr}</a></td>
+      <td>${p.name}</td>`;
     tb.appendChild(tr);
   });
   $('precompileCount').textContent = '(' + ((list.precompiles || []).length) + ')';
@@ -324,6 +347,10 @@ function fmtStat(v) {
 function showPrecompile(addr) {
   api('/precompile/' + encodeURIComponent(addr)).then(d => {
     if (d.error) { openDetail('Precompile', `<div class="red">${d.error}</div>`); return; }
+    const descHtml = d.desc ? `<p style="color:var(--fg2);font-size:.9em;margin:8px 0 0">${d.desc}</p>` : '';
+    const scopeHtml = d.accountScoped
+      ? `<div class="row"><div class="label">Scope</div><div class="value" style="color:var(--yellow)">Account-scoped — no global stat; query by address</div></div>`
+      : `<div class="row"><div class="label">Scope</div><div class="value" style="color:var(--green)">Protocol-level — live state below</div></div>`;
     let statsHtml = '<div style="color:var(--fg2);font-size:.75em">No live stats for this precompile</div>';
     const stats = d.stats || {};
     const keys = Object.keys(stats);
@@ -343,17 +370,92 @@ function showPrecompile(addr) {
       });
       statsHtml += '</tbody></table>';
     }
+    const callsHtml = (d.statCalls && d.statCalls.length)
+      ? `<div style="color:var(--fg2);font-size:.72em;margin-top:10px">Backed by node read(s): ${d.statCalls.join(', ')}</div>`
+      : '';
     openDetail('⬡ Precompile ' + d.addr, `
       <div class="detail">
         <div class="row"><div class="label">Address</div><div class="value hash-value">${d.addr}</div></div>
         <div class="row"><div class="label">Name</div><div class="value">${d.name}</div></div>
+        ${scopeHtml}
       </div>
+      ${descHtml}
       <h3 style="margin-top:15px">Live State</h3>
-      ${statsHtml}`);
+      ${statsHtml}
+      ${callsHtml}`);
   }).catch(e => openDetail('Precompile', `<div class="red">${e.message}</div>`));
 }
 
 window.showPrecompile = showPrecompile;
+
+// ── live WebSocket ──
+let ws = null;
+// wsLive is declared up top (shared with the status pill logic).
+
+function wsURL() {
+  const base = API_BASE.replace(/\/$/, '');        // https://api.waychain.org/api
+  const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return scheme + '//' + base.split('://')[1] + '/ws';
+}
+
+function prependBlock(b) {
+  const tb = $('blocksTable');
+  // If the placeholder row is showing, clear it first.
+  if (tb.querySelector('td') && tb.querySelector('td').colSpan) tb.innerHTML = '';
+  const tr = el('tr');
+  tr.style.cursor = 'pointer';
+  tr.onclick = () => showBlock(b.Height);
+  tr.innerHTML = `
+    <td><a>${b.Height?.toLocaleString() ?? '—'}</a></td>
+    <td class="hash">${short(b.Hash, 10)}</td>
+    <td>${b.Proposer || '—'}</td>
+    <td>${b.TxCount ?? 0}</td>
+    <td style="color:var(--fg2)">${ago(hexToNum(b.Timestamp))}</td>`;
+  // Flash the new row so "live" is visible.
+  tr.style.transition = 'background 0.6s';
+  tr.style.background = 'rgba(255,191,0,0.18)';
+  setTimeout(() => { tr.style.background = ''; }, 600);
+  tb.insertBefore(tr, tb.firstChild);
+  // Trim to BLOCKS_TO_SHOW rows.
+  while (tb.children.length > BLOCKS_TO_SHOW) tb.removeChild(tb.lastChild);
+}
+
+function setWsStatus(live) {
+  // A dead WS does NOT mean the explorer is offline — REST polling still
+  // serves live data. Only flip the "Live" tag; never force "Offline" here.
+  wsLive = live;
+  renderStatus();
+}
+
+let wsReconnectAttempts = 0;
+function connectWS() {
+  if (wsReconnectAttempts > 10) {
+    log('WS unavailable (Cloudflare Tunnel on free plan does not proxy WebSocket upgrades) — using polling only', 'err');
+    return;
+  }
+  try {
+    ws = new WebSocket(wsURL());
+  } catch (e) {
+    wsLive = false; renderStatus();
+    return;
+  }
+  ws.onopen = () => { wsReconnectAttempts = 0; setWsStatus(true); log('WS connected (live)', 'ok'); };
+  ws.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    if (msg.type === 'newHead' && msg.block) {
+      if (msg.stats) renderStats(msg.stats);
+      prependBlock(msg.block);
+    }
+  };
+  ws.onclose = () => {
+    wsLive = false; renderStatus();
+    wsReconnectAttempts++;
+    // Back off: the poll loop keeps data fresh meanwhile.
+    setTimeout(connectWS, 15000);
+  };
+  ws.onerror = () => { try { ws.close(); } catch {} };
+}
 
 // ── poll loop ──
 async function refresh() {
@@ -382,5 +484,6 @@ window.addEventListener('DOMContentLoaded', () => {
   refresh();
   loadLogs();
   loadPrecompiles();
-  setInterval(refresh, REFRESH_MS);
+  connectWS();              // live updates; falls back to polling on close
+  setInterval(refresh, REFRESH_MS); // polling keeps data fresh if WS drops
 });

@@ -38,6 +38,12 @@ func main() {
 	}()
 
 	apiSrv := api.New(s, node)
+	go apiSrv.Run() // subscriber hub for live WS broadcasts
+
+	// Wire the indexer to notify the API when a block is indexed, so the
+	// API can push live newHead events to WS subscribers.
+	ix.SetNotifier(func(height int64) { apiSrv.Notify(height) })
+
 	log.Printf("WayChain explorer API listening on %s (node=%s db=%s)", *apiAddr, *nodeURL, *dbPath)
 	if err := http.ListenAndServe(*apiAddr, apiSrv.Handler()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
