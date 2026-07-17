@@ -27,7 +27,7 @@ const ADVANCED = [
 // Wallet-wired DeFi precompiles (have real screens). Tap to open.
 const DEFI = [
   { id: '0x18', name: 'TwoWay Vault', screen: 'TwoWayVault', note: 'Deposit stablecoins, mint/burn 2WAY synthetic USD. Real write ops.' },
-  { id: '0x25', name: 'Swap Route (DEX)', screen: 'DEX', note: 'Swap + add/remove liquidity. Screen present.' },
+  { id: '0x25', name: 'Swap Route (DEX)', screen: 'SwapRoute', note: 'Swap + add liquidity. Screen present (swap/remove pending on-chain finish).' },
   { id: '0x19', name: 'Stability Pool', screen: 'Stake', note: 'Stability ops. Screen present.' },
   { id: '0x1D', name: 'Governance', screen: 'Governance', note: 'Propose / vote. Screen present.' },
 ];
