@@ -16,9 +16,9 @@
 // ?api=https://explorer-api.waychain.org or set window.EXPLORER_API_BASE.
 
 const params = new URLSearchParams(window.location.search);
-const API_BASE = window.EXPLORER_API_BASE
+const API_BASE = (window.EXPLORER_API_BASE
   || params.get('api')
-  || '/api';
+  || '/api').replace(/\/?$/, '/');
 
 const REFRESH_MS = 8000;
 const BLOCKS_TO_SHOW = 20;
