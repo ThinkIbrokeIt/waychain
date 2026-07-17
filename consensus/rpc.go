@@ -42,12 +42,20 @@ type RPCError struct {
 // RPCServer handles JSON-RPC requests for WayChain
 type RPCServer struct {
 	chain       *Chain
+	validators  *ValidatorSet // optional; enables way_validatorCount
 	mu          sync.RWMutex
 	port        int
 	server      *http.Server
 	subs        *SubscriptionManager
 	rateLimiter *RateLimiter
 	p2pNode     *P2PNode
+}
+
+// SetValidators wires the active validator set so the RPC can report
+// way_validatorCount. Called from the node entrypoint after the consensus
+// engine is constructed.
+func (rpc *RPCServer) SetValidators(vs *ValidatorSet) {
+	rpc.validators = vs
 }
 
 // NewRPCServer creates a new RPC server connected to the chain
@@ -356,6 +364,43 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		count := len(rpc.chain.Blocks)
 		rpc.mu.RUnlock()
 		return strconv.Itoa(count), nil
+
+	// ── Network stats read surfaces (EXPL-3 #19) ──
+	case "way_validatorCount":
+		if rpc.validators != nil {
+			return strconv.Itoa(rpc.validators.Count()), nil
+		}
+		return "0", nil
+
+	case "way_accountCount":
+		rpc.mu.RLock()
+		defer rpc.mu.RUnlock()
+		n := 0
+		for _, acc := range rpc.chain.State.Accounts {
+			if acc == nil {
+				continue
+			}
+			// count accounts with any balance or deployed code
+			if (acc.Balance != nil && acc.Balance.Sign() > 0) || len(acc.Code) > 0 {
+				n++
+			}
+		}
+		return strconv.Itoa(n), nil
+
+	case "way_totalTxCount":
+		rpc.mu.RLock()
+		total := 0
+		for _, b := range rpc.chain.Blocks {
+			total += len(b.Transactions)
+		}
+		rpc.mu.RUnlock()
+		return strconv.Itoa(total), nil
+
+	case "way_pendingTxCount":
+		rpc.mu.RLock()
+		pending := rpc.chain.Pool.Len()
+		rpc.mu.RUnlock()
+		return strconv.Itoa(pending), nil
 
 	// ── Wallet P3 panel read surfaces ──
 	// These expose existing precompile READ functions without going through
