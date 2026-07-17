@@ -22,10 +22,10 @@ var tokenMeta = map[string]struct {
 }{
 	"0x22": {
 		Symbol:      "1WAY",
-		Name:        "WayStablecoin",
-		Purpose:     "BTC-pegged stablecoin, minted 1:1 against BTC deposited via the Bitcoin bridge (BitcoinRegistry 0x16).",
+		Name:        "1WAY Stablecoin",
+		Purpose:     "Bitcoin-backed stablecoin (identity: way_1waystablecoin). BTC locked in vaults → 1WAY minted; supply flexes with the BTC committed (not a fixed constant). Mint/burn via 0x22 precompile.",
 		Decimals:    18,
-		LiveSupply:  true, // way_wayTotalSupply (consensus/rpc.go:452)
+		LiveSupply:  true, // way_1wayTotalSupply (consensus/evm/stats_read.go:Get1WayTotalSupply)
 	},
 	"0x24": {
 		Symbol:      "SWAY",
@@ -58,11 +58,16 @@ func (s *Server) handleTokens(w http.ResponseWriter, r *http.Request) {
 			"totalSupply":  nil, // filled below for 1WAY only
 		}
 		if meta.LiveSupply {
-			raw, err := s.node.Call("way_wayTotalSupply")
+			raw, err := s.node.Call("way_1wayTotalSupply")
 			if err == nil {
-				// strip 0x prefix for a clean hex string
-				sup := strings.TrimPrefix(strings.TrimSpace(string(raw)), "\"")
+				// node returns a JSON-quoted string e.g. "\"0x5f5e100\"" — strip
+				// the surrounding quotes and the 0x prefix for a clean hex value.
+				sup := strings.TrimSpace(string(raw))
+				sup = strings.Trim(sup, "\"")
 				sup = strings.TrimPrefix(sup, "0x")
+				if sup == "" {
+					sup = "0"
+				}
 				tok["totalSupply"] = sup
 			}
 		}
