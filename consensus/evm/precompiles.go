@@ -147,9 +147,9 @@ var PrecompilesTable = map[byte]*Precompile{
 	},
 	0x21: {
 		Address: 0x21,
-		Name:    "WayRewardPool",
+		Name:    "Keccak256", // app-layer hashing bridge (as originally intended)
 		Gas:     1000,
-		Fn:      wifrGauntletPrecompile,
+		Fn:      keccak256Precompile,
 	},
 	// ── Token precompiles (0x22–0x26) — ported from waychain-client ──
 	0x22: {
@@ -189,40 +189,11 @@ func IsPrecompile(addr byte) bool {
 	return addr >= 0x0C && addr <= 0x26
 }
 
-// ── 0x21: WayRewardPool (WAY quest reward sink; WIFR-door payouts via 0x1F) ──
-func wifrGauntletPrecompile(input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, error) {
-	if len(input) < 4 {
-		return nil, fmt.Errorf("0x21: input too short")
-	}
-	sel := selectorBytes(input)
-	rewards := &WayRewardPool{State: state}
-
-	switch sel {
-	case 0xCF705883: // initialize()
-		return []byte{1}, rewards.Initialize()
-	case 0x63760E3D: // getRemainingRewards(uint64)
-		if len(input) < 36 {
-			return nil, fmt.Errorf("0x21: getRemainingRewards input too short")
-		}
-		poolID := new(big.Int).SetBytes(input[4:36]).Uint64()
-		out := writeUint64(rewards.GetRemainingRewards(poolID))
-		return out[:], nil
-	case 0x8AA238FA: // claimPioneer(address)
-		if len(input) < 24 {
-			return nil, fmt.Errorf("0x21: claimPioneer input too short")
-		}
-		addr := fmt.Sprintf("%x", input[4:24])
-		if err := rewards.ClaimPioneer(addr); err != nil {
-			return nil, err
-		}
-		return []byte{1}, nil
-	case 0x100678AA: // getTotalRemaining()
-		out := writeUint64(rewards.GetTotalRemaining())
-		return out[:], nil
-	default:
-		return nil, fmt.Errorf("0x21: unknown selector 0x%08X", sel)
-	}
-}
+// ── 0x21: Keccak256 (app-layer hashing bridge) ──
+// Implemented in keccak_precompile.go (keccak256Precompile).
+// Was temporarily WIFRGantletRewards; that reward pool is removed — its
+// function is subsumed by the wifr-bridge quest (TaskRegistry 0x23, treasury 0x03).
+// See issues #61/#62/#63.
 
 // ExecutePrecompile runs a precompile and returns the result
 func ExecutePrecompile(addr byte, input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, uint64, error) {

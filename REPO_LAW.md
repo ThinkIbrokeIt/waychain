@@ -81,7 +81,10 @@ True backups are labeled backup (e.g. `~/backups/waychain-*`, `chain.db.bak-*`).
 
 1. Precompile inventory: **`protocol-manifest.json`** generated from `consensus/evm/precompiles.go`.
 2. Count is **27** addresses **0x0C–0x26**. Claims of 20/21/22 without reconciling the manifest are illegal.
-3. **0x21 = WIFRGantletRewards**, never Keccak256.
+3. **0x21 = Keccak256** precompile (app-layer hashing bridge). It was temporarily
+   WIFRGantletRewards; that reward pool is RETIRED (function subsumed by the
+   wifr-bridge quest at TaskRegistry 0x23, paid from treasury 0x03). Selection
+   of this address for Keccak256 is the originally-intended July 4 design.
 4. Run before claiming protocol consistency:
    ```bash
    cd consensus && bash scripts/audit-consistency.sh
@@ -141,6 +144,24 @@ Ratified 2026-07-17, correcting stale clauses that read the Solidity app layer a
 1. Only the founder amends this law (or an agent under explicit “amend REPO_LAW” order with a PR).
 2. Soft docs (handoffs, audits, marketing) **never** override REPO_LAW or `protocol-manifest.json`.
 3. If law and convenience conflict, **law wins**. Convenience that recreates dual trees is forbidden.
+
+---
+
+## Article X — Hash law (core sha256 / app keccak256)
+
+Ratified 2026-07-17 (founder directive; work in #59/#60/#63):
+
+1. **CORE protocol = sha256.** All native precompile *selectors* and dispatch use
+   `sha256(sig)[:4]`. On-chain storage keys may use any scheme but native
+   precompiles MUST NOT rely on keccak for dispatch.
+2. **APP LAYER (Solidity) = keccak256.** Contracts under `contracts/` and the
+   mobile/web app layer speak Ethereum-compatible keccak256. To let on-chain
+   Solidity compute keccak deterministically, the core exposes the
+   **Keccak256 precompile at 0x21** (`hash(bytes)` → bytes32, `hash4(bytes)` → bytes4).
+   Its *own* selector still uses the core sha256 convention.
+3. A mismatch between a Solidity selector (keccak) and a core precompile selector
+   (sha256) is **expected and correct** — it is the layer boundary, not a bug.
+   Do NOT "fix" it by forcing one hash everywhere.
 
 ---
 
