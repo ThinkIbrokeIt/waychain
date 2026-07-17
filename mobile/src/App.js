@@ -22,6 +22,7 @@ import IdentityScreen from './screens/IdentityScreen';
 import LocksScreen from './screens/LocksScreen';
 import TwoWayVaultScreen from './screens/TwoWayVaultScreen';
 import SwapRouteScreen from './screens/SwapRouteScreen';
+import StabilityPoolScreen from './screens/StabilityPoolScreen';
 import ProtocolScreen from './screens/ProtocolScreen';
 import AppLock from './components/AppLock';
 import { COLORS } from './theme';
@@ -87,6 +88,7 @@ export default function App() {
           <Stack.Screen name="Locks" component={LocksScreen} />
           <Stack.Screen name="TwoWayVault" component={TwoWayVaultScreen} />
           <Stack.Screen name="SwapRoute" component={SwapRouteScreen} />
+          <Stack.Screen name="StabilityPool" component={StabilityPoolScreen} />
           <Stack.Screen name="Protocol" component={ProtocolScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
