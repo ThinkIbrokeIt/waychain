@@ -27,9 +27,16 @@ const ADVANCED = [
 // Wallet-wired DeFi precompiles (have real screens). Tap to open.
 const DEFI = [
   { id: '0x18', name: 'TwoWay Vault', screen: 'TwoWayVault', note: 'Deposit stablecoins, mint/burn 2WAY synthetic USD. Real write ops.' },
-  { id: '0x25', name: 'Swap Route (DEX)', screen: 'SwapRoute', note: 'Swap + add liquidity. Screen present (swap/remove pending on-chain finish).' },
   { id: '0x19', name: 'Stability Pool', screen: 'StabilityPool', note: 'Absorb 2WAY liquidation debt; earn WAY+SWAY. Real deposit/withdraw/claim.' },
-  { id: '0x1D', name: 'Governance', screen: 'Governance', note: 'Propose / vote. Screen present.' },
+  { id: '0x1D', name: 'Governance', screen: 'Governance', note: 'Propose / vote (Direct/Quadratic/Futarchy). Real.' },
+  { id: '0x25', name: 'Swap Route (DEX)', screen: 'SwapRoute', note: 'Add liquidity (mints SWAY). Swap/remove pending on-chain finish.' },
+  { id: '0x16', name: 'Bitcoin Registry', screen: 'BitcoinRegistry', note: 'BTC bridge backing 1WAY. Commit / withdraw.' },
+  { id: '0x15', name: "Dead Man's Switch", screen: 'DeadMansSwitch', note: 'Truth-disclosure heir switch. Create/heartbeat/claim.' },
+  { id: '0x1B', name: 'Account Manager', screen: 'AccountManager', note: 'Identity lifecycle, key rotation, freeze. Real.' },
+  { id: '0x1E', name: 'State Rent', screen: 'StateRent', note: 'Pay/check rent (burn/validator/treasury split).' },
+  { id: '0x20', name: 'Mineral Rights', screen: 'MineralRights', note: 'Tokenized mineral claims (Dox_Dev L2+).' },
+  { id: '0x26', name: 'Template Registry', screen: 'TemplateRegistry', note: 'Clone-to-deploy contract templates.' },
+  { id: '0x21', name: 'Keccak256', screen: 'Keccak256', note: 'App-layer hash bridge (read-only demo).' },
 ];
 
 export default function ProtocolScreen() {
