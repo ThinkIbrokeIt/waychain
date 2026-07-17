@@ -383,6 +383,14 @@ function showPrecompile(addr) {
     const callsHtml = (d.statCalls && d.statCalls.length)
       ? `<div style="color:var(--fg2);font-size:.72em;margin-top:10px">Backed by node read(s): ${d.statCalls.join(', ')}</div>`
       : '';
+    const acctHtml = d.accountScoped
+      ? `<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+           <div style="font-size:.8em;color:var(--fg2);margin-bottom:6px">Query by address (${d.addr === '0x13' ? 'Dox_Dev level' : 'balance'})</div>
+           <input id="pcAddr" placeholder="0x… (64-hex key or 20-byte)" style="width:100%;padding:6px;background:var(--bg3);color:var(--fg);border:1px solid var(--border);border-radius:4px;font-family:monospace">
+           <button onclick="queryPrecompileAccount('${d.addr}')" style="margin-top:6px;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer">Query</button>
+           <div id="pcResult" style="margin-top:8px"></div>
+         </div>`
+      : '';
     openDetail('⬡ Precompile ' + d.addr, `
       <div class="detail">
         <div class="row"><div class="label">Address</div><div class="value hash-value">${d.addr}</div></div>
@@ -392,9 +400,35 @@ function showPrecompile(addr) {
       ${descHtml}
       <h3 style="margin-top:15px">Live State</h3>
       ${statsHtml}
-      ${callsHtml}`);
+      ${callsHtml}
+      ${acctHtml}`);
   }).catch(e => openDetail('Precompile', `<div class="red">${e.message}</div>`));
 }
+
+function queryPrecompileAccount(addr) {
+  const q = $('pcAddr').value.trim();
+  if (!q) return;
+  const box = $('pcResult');
+  box.innerHTML = '<div style="color:var(--fg2);font-size:.75em">querying…</div>';
+  api('/precompile/' + encodeURIComponent(addr) + '/account?address=' + encodeURIComponent(q)).then(d => {
+    if (d.error) { box.innerHTML = `<div class="red">${d.error}</div>`; return; }
+    const res = d.results || {};
+    const keys = Object.keys(res);
+    if (!keys.length) { box.innerHTML = '<div style="color:var(--fg2)">no data</div>'; return; }
+    let h = '<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+    keys.forEach(label => {
+      const v = res[label];
+      if (v && typeof v === 'object' && v.error) {
+        h += `<tr><td>${label}</td><td class="red">${v.error}</td></tr>`;
+      } else {
+        h += `<tr><td>${label}</td><td class="addr">${fmtStat(v)}</td></tr>`;
+      }
+    });
+    h += '</tbody></table>';
+    box.innerHTML = h;
+  }).catch(e => { box.innerHTML = `<div class="red">${e.message}</div>`; });
+}
+window.queryPrecompileAccount = queryPrecompileAccount;
 
 window.showPrecompile = showPrecompile;
 window.showAddress = showAddress;
