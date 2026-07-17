@@ -370,7 +370,7 @@ async function loadTokens() {
       tr.style.cursor = 'pointer';
       tr.onclick = () => showPrecompile(t.addr);
       const supply = t.totalSupply != null
-        ? toWAY('0x' + t.totalSupply) + ' ' + t.symbol
+        ? hexToNum(t.totalSupply).toLocaleString() + ' ' + t.symbol
         : '— <span style="color:var(--fg2)">(not exposed)</span>';
       tr.innerHTML = `
         <td><strong>${t.symbol}</strong></td>
