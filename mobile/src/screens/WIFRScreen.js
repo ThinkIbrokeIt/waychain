@@ -72,7 +72,7 @@ export default function WIFRScreen() {
         <Text style={styles.heroSub}>
           {pool === '0x0' || pool === 0 || pool === '0' || pool === '0x0000000000000000000000000000000000000000000000000000000000000000'
             ? 'unfunded on the live node — quest payouts need a treasury top-up (questFund)'
-            : 'pays the wifr-bridge quest (50 WAY / burn). Code cap: 1.1M WAY cumulative.'}
+            : 'treasury 0x03 · cap = 5% live supply'}
         </Text>
       </View>
 
