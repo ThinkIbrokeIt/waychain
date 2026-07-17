@@ -574,9 +574,18 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 				minted += amount
 			}
 		}
-		// Track live total WAY supply so the 5%-of-supply quest cap scales
-		// with inflation.
+		// #71: route a share of the emission to the quest treasury (0x03) so the
+		// quest budget auto-replenishes (funds for new users). The 5%-of-live-
+		// supply quest CAP (QuestCap) already scales with inflation.
 		if minted > 0 {
+			treasuryShare := TreasuryShareOf(minted)
+			if treasuryShare > 0 {
+				treasury := c.State.GetOrCreateAccount(evm.PrecompileAddrHex(0x03))
+				if treasury.Balance == nil {
+					treasury.Balance = new(big.Int)
+				}
+				treasury.Balance.Add(treasury.Balance, new(big.Int).SetUint64(treasuryShare))
+			}
 			evm.QuestAddSupply(c.State, new(big.Int).SetUint64(minted))
 		}
 	}
