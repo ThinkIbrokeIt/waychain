@@ -210,6 +210,8 @@ func runNode() {
 	// ── Start JSON-RPC server (with WebSocket support) ──
 	rpcAddr := getEnv("WAYCHAIN_RPC_LISTEN", ":9545")
 	rpc := RunRPCServer(rpcAddr, chain)
+	// Expose the validator set so way_validatorCount reports the live count.
+	rpc.SetValidators(vs)
 	// Wire P2P node to RPC server for tx/block broadcasting
 	rpc.SetP2PNode(p2pNode)
 	fmt.Printf("  🌐 RPC server (HTTP+WS) on %s\n", rpcAddr)
