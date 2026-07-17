@@ -89,6 +89,32 @@ var precompileDesc = map[string]string{
 	"0x26": "TemplateRegistry — deployable contract templates.",
 }
 
+// accountScopedCalls maps an account-scoped precompile address to the node
+// way_* read(s) that take an account argument. Truth-first: only methods that
+// actually exist on the node (consensus/rpc.go:303+) are listed. The node
+// lowercases + trims "0x" itself, and keys accounts by the 64-hex pubkey
+// (or whatever form was stored). We pass the user-supplied address through.
+func accountScopedCalls(addr string) []struct {
+	Method string
+	Label  string
+} {
+	switch strings.ToLower(addr) {
+	case "0x13":
+		return []struct {
+			Method string
+			Label  string
+		}{{Method: "way_getDoxLevel", Label: "Dox_Dev level"}}
+	default:
+		// Every account has a balance; way_getBalance is universal.
+		return []struct {
+			Method string
+			Label  string
+		}{{Method: "way_getBalance", Label: "Balance"}}
+	}
+}
+
+// handlePrecompileAccount returns live account-scoped state for a precompile
+// given a query address (?address=0x..). Used by the explorer's precompile
 // handlePrecompiles lists all 27 precompiles (SoT metadata).
 func (s *Server) handlePrecompiles(w http.ResponseWriter, r *http.Request) {
 	m := loadManifest()
@@ -110,9 +136,18 @@ func (s *Server) handlePrecompiles(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePrecompile returns one precompile's metadata + live way_* stats.
+// Also serves /api/precompile/:addr/account?address=0x.. for account-scoped
+// precompiles (see handlePrecompileAccountQuery).
 func (s *Server) handlePrecompile(w http.ResponseWriter, r *http.Request) {
-	addr := strings.TrimPrefix(r.URL.Path[len("/api/precompile/"):], "/")
-	addr = strings.ToLower(addr)
+	rest := strings.TrimPrefix(r.URL.Path[len("/api/precompile/"):], "/")
+	rest = strings.Trim(rest, "/")
+	parts := strings.Split(rest, "/")
+	// /:addr/account?address=... -> account-scoped query
+	if len(parts) == 2 && parts[1] == "account" {
+		s.handlePrecompileAccountQuery(w, r, parts[0])
+		return
+	}
+	addr := strings.ToLower(parts[0])
 	m := loadManifest()
 
 	var entry *struct {
@@ -152,5 +187,52 @@ func (s *Server) handlePrecompile(w http.ResponseWriter, r *http.Request) {
 		"accountScoped": len(precompileStatCalls(addr)) == 0,
 		"statCalls":     precompileStatCalls(addr),
 		"stats":         stats,
+	})
+}
+
+// handlePrecompileAccountQuery returns live account-scoped state for a
+// precompile given a query address. Used by the explorer's precompile detail
+// panel for the 21 account-scoped precompiles.
+func (s *Server) handlePrecompileAccountQuery(w http.ResponseWriter, r *http.Request, addr string) {
+	addr = strings.ToLower(addr)
+	qaddr := strings.TrimSpace(r.URL.Query().Get("address"))
+	if qaddr == "" {
+		writeJSON(w, map[string]interface{}{"error": "address query param required"})
+		return
+	}
+
+	m := loadManifest()
+	var found bool
+	for i := range m.Precompiles {
+		if strings.EqualFold(m.Precompiles[i].Addr, addr) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		writeJSON(w, map[string]interface{}{"error": "unknown precompile " + addr})
+		return
+	}
+
+	results := map[string]interface{}{}
+	for _, c := range accountScopedCalls(addr) {
+		raw, err := s.node.Call(c.Method, qaddr)
+		if err != nil {
+			results[c.Label] = map[string]string{"error": err.Error()}
+			continue
+		}
+		var v interface{}
+		if err := json.Unmarshal(raw, &v); err != nil {
+			results[c.Label] = string(raw)
+		} else {
+			results[c.Label] = v
+		}
+	}
+
+	writeJSON(w, map[string]interface{}{
+		"addr":          addr,
+		"query":         qaddr,
+		"accountScoped": true,
+		"results":       results,
 	})
 }
