@@ -147,7 +147,7 @@ var PrecompilesTable = map[byte]*Precompile{
 	},
 	0x21: {
 		Address: 0x21,
-		Name:    "WIFRGantletRewards",
+		Name:    "WayRewardPool",
 		Gas:     1000,
 		Fn:      wifrGauntletPrecompile,
 	},
@@ -189,27 +189,27 @@ func IsPrecompile(addr byte) bool {
 	return addr >= 0x0C && addr <= 0x26
 }
 
-// ── 0x21: WIFR Gauntlet Rewards ──
+// ── 0x21: WayRewardPool (WAY quest reward sink; WIFR-door payouts via 0x1F) ──
 func wifrGauntletPrecompile(input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, error) {
 	if len(input) < 4 {
-		return nil, fmt.Errorf("WIFR: input too short")
+		return nil, fmt.Errorf("0x21: input too short")
 	}
 	sel := selectorBytes(input)
-	rewards := &WIFRGantletRewards{State: state}
+	rewards := &WayRewardPool{State: state}
 
 	switch sel {
 	case 0xCF705883: // initialize()
 		return []byte{1}, rewards.Initialize()
 	case 0x63760E3D: // getRemainingRewards(uint64)
 		if len(input) < 36 {
-			return nil, fmt.Errorf("WIFR: getRemainingRewards input too short")
+			return nil, fmt.Errorf("0x21: getRemainingRewards input too short")
 		}
 		poolID := new(big.Int).SetBytes(input[4:36]).Uint64()
 		out := writeUint64(rewards.GetRemainingRewards(poolID))
 		return out[:], nil
 	case 0x8AA238FA: // claimPioneer(address)
 		if len(input) < 24 {
-			return nil, fmt.Errorf("WIFR: claimPioneer input too short")
+			return nil, fmt.Errorf("0x21: claimPioneer input too short")
 		}
 		addr := fmt.Sprintf("%x", input[4:24])
 		if err := rewards.ClaimPioneer(addr); err != nil {
@@ -220,7 +220,7 @@ func wifrGauntletPrecompile(input []byte, caller string, state *StateDB, blockNu
 		out := writeUint64(rewards.GetTotalRemaining())
 		return out[:], nil
 	default:
-		return nil, fmt.Errorf("WIFR: unknown selector 0x%08X", sel)
+		return nil, fmt.Errorf("0x21: unknown selector 0x%08X", sel)
 	}
 }
 
