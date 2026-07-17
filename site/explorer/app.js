@@ -90,9 +90,32 @@ function log(msg, cls = 'info') {
   while (box.children.length > 60) box.removeChild(box.lastChild);
 }
 
+// Status pill is driven by two independent signals:
+//   - REST API reachability -> "Connected" (blocks load via polling)
+//   - WebSocket established  -> "Live" (real-time new-block push)
+// A dead WebSocket must NOT flip the pill to "Offline" — polling still
+// serves live data. "Offline" means REST itself is unreachable.
+let restUp = false;
+let restChecked = false;
+let wsLive = false;
+
+function renderStatus() {
+  const dot = $('statusDot'), txt = $('statusText');
+  if (!dot || !txt) return;
+  if (!restChecked) { txt.textContent = 'Connecting…'; return; }
+  if (!restUp) {
+    dot.className = 'status-dot offline';
+    txt.textContent = 'Offline';
+    return;
+  }
+  dot.className = 'status-dot online';
+  txt.textContent = wsLive ? 'Live' : 'Connected';
+}
+
 function setStatus(online) {
-  $('statusDot').className = 'status-dot ' + (online ? 'online' : 'offline');
-  $('statusText').textContent = online ? 'Connected' : 'Offline';
+  restUp = online;
+  restChecked = true;
+  renderStatus();
 }
 
 // ── rendering ──
@@ -357,7 +380,7 @@ window.showPrecompile = showPrecompile;
 
 // ── live WebSocket ──
 let ws = null;
-let wsLive = false;
+// wsLive is declared up top (shared with the status pill logic).
 
 function wsURL() {
   const base = API_BASE.replace(/\/$/, '');        // https://api.waychain.org/api
@@ -388,26 +411,25 @@ function prependBlock(b) {
 }
 
 function setWsStatus(live) {
+  // A dead WS does NOT mean the explorer is offline — REST polling still
+  // serves live data. Only flip the "Live" tag; never force "Offline" here.
   wsLive = live;
-  const dot = $('statusDot'), txt = $('statusText');
-  if (!dot || !txt) return;
-  if (live) {
-    dot.className = 'status-dot online';
-    txt.textContent = 'Live';
-  } else {
-    dot.className = 'status-dot offline';
-    txt.textContent = 'Offline';
-  }
+  renderStatus();
 }
 
+let wsReconnectAttempts = 0;
 function connectWS() {
+  if (wsReconnectAttempts > 10) {
+    log('WS unavailable (Cloudflare Tunnel on free plan does not proxy WebSocket upgrades) — using polling only', 'err');
+    return;
+  }
   try {
     ws = new WebSocket(wsURL());
   } catch (e) {
-    setWsStatus(false);
+    wsLive = false; renderStatus();
     return;
   }
-  ws.onopen = () => { setWsStatus(true); log('WS connected (live)', 'ok'); };
+  ws.onopen = () => { wsReconnectAttempts = 0; setWsStatus(true); log('WS connected (live)', 'ok'); };
   ws.onmessage = (ev) => {
     let msg;
     try { msg = JSON.parse(ev.data); } catch { return; }
@@ -417,10 +439,10 @@ function connectWS() {
     }
   };
   ws.onclose = () => {
-    setWsStatus(false);
-    log('WS closed — falling back to polling', 'err');
-    // Reconnect after a short delay (the poll loop keeps data fresh meanwhile).
-    setTimeout(connectWS, 5000);
+    wsLive = false; renderStatus();
+    wsReconnectAttempts++;
+    // Back off: the poll loop keeps data fresh meanwhile.
+    setTimeout(connectWS, 15000);
   };
   ws.onerror = () => { try { ws.close(); } catch {} };
 }
