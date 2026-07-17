@@ -6,14 +6,15 @@
 
 ## 1. Purpose
 
-This repository contains **Solidity smart contracts** for WayChain's protocol components. They were originally written for deployment on **PulseChain**. The contracts implement on-chain attestations, tokenomics, Bitcoin bridging, DEX mechanics, identity badges, inheritance, and perpetual storage funding.
+This repository contains **Solidity smart contracts** for WayChain's application layer. They were originally written targeting deployment on **PulseChain** and are being re-pointed at WayChain's app layer. The contracts implement on-chain attestations, tokenomics, Bitcoin bridging, DEX mechanics, identity badges, inheritance, and perpetual storage funding.
 
-**Important:** These Solidity contracts are now **largely superseded** by native Go-based precompile implementations in the [`waychain-consensus`](https://github.com/waychain/waychain-consensus) repository (under `evm/`). The Go precompiles are the canonical, production implementations of WayChain's protocol. This Solidity codebase is maintained primarily for:
+**Status (corrected 2026-07-17 per REPO_LAW.md Article X):** These Solidity contracts are the **application layer** of WayChain — **in-scope, NOT legacy/superseded.** The Go precompiles in `consensus/evm/` are the **core protocol**; Solidity contracts are the layer above it (Ethereum-equivalent: Geth core + Solidity dapps). Both ship.
 
-- Cross-chain attestation compatibility
-- Reference / audit trail
-- Historical record
+- The application layer that sits above the Go core precompiles (Ethereum-equivalent: Geth core + Solidity dapps).
+- Cross-chain attestation contracts compatible with other EVM chains.
+- Reference / audit trail for what the Go precompiles implement.
 
+> **Selector note:** WayChain's CORE precompiles dispatch on `sha256(sig)[:4]`; Solidity contracts in this repo use standard **keccak256** selectors. A bridge (keccak precompile / app-layer dispatch) reconciles the two — tracked, not "dead."
 ---
 
 ## 2. Project Structure
@@ -127,31 +128,20 @@ npx hardhat run scripts/deploy.js --network pulsetestnet
 
 ## 6. ⚠️ Pitfalls & Warnings
 
-### Critical: Selector Differences
+### Selector Differences (bridge task, NOT a dead end)
 
-**WayChain uses SHA256 for ABI selectors, NOT keccak256.**
+WayChain's CORE precompiles dispatch on `sha256(sig)[:4]`; these Solidity contracts use standard **keccak256** selectors (Ethereum-equivalent app layer).
 
-- These Solidity contracts use **keccak256** (standard EVM) for function selectors and event signatures.
-- WayChain's native EVM uses **SHA256** for selector computation.
-- **Consequence:** These contracts **will not work directly on WayChain**. Calls will hash to the wrong 4-byte selectors and fail.
-- **Do not** attempt to deploy these `.sol` files on WayChain without adapting all ABI selectors to SHA256.
-
-### These Are PulseChain Contracts
-
-| Attribute | Value |
-|-----------|-------|
-| Target chain | PulseChain (EVM-compatible) |
-| Selector hash | keccak256 |
-| Current status | Superseded by Go precompiles |
-| Production deployment | `waychain-consensus/evm/` (Go) |
+- This repo is the **application layer** of WayChain (see REPO_LAW.md Article X) — in-scope, not legacy.
+- **Current gap:** a standard Solidity contract's keccak256 selector does not match the core precompile's sha256 dispatch. This is a tracked bridge task (keccak precompile + app-layer dispatch), **not** a reason to discard the contracts.
+- **Do not** deploy these `.sol` files on WayChain mainnet until the selector bridge lands (tracked in the repo's open issues). Until then they are reference + cross-chain-attestation contracts.
 
 ### Deployment Guidance
 
 - ✅ **Safe to deploy on:** PulseChain, Ethereum, Sepolia, Goerli, or any standard keccak256 EVM.
-- ❌ **Do NOT deploy on:** WayChain mainnet/testnet without selector adaptation.
+- ⏳ **WayChain mainnet:** pending the selector-bridge task (keccak precompile). Do NOT deploy until that lands.
 - ✅ **Safe to reference for:** Understanding the protocol design, auditing Go precompiles, writing cross-chain attestation contracts.
-- ❌ **Do NOT treat as:** The canonical WayChain protocol implementation.
-
+- ✅ **This IS** the WayChain application layer (alongside the Go core). Both ship.
 ---
 
 ## 7. Related Repositories
