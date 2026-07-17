@@ -130,6 +130,7 @@ tr:hover td { background: var(--bg3); }
     <div class="nav">
       <span><span class="status-dot offline" id="statusDot"></span><span id="statusText">Connecting…</span></span>
       <a href="https://waychain.org">Dashboard</a>
+      <a href="/explorer/#tokens" onclick="showTokens()">Tokens</a>
       <a href="/badge">Badge</a>
     </div>
   </div>
@@ -154,7 +155,7 @@ tr:hover td { background: var(--bg3); }
     <div id="detailContent"></div>
   </div>
 
-  <div class="section">
+  <div class="section" id="blocksSection">
     <h2>⧫ Latest Blocks</h2>
     <div style="overflow-x:auto">
       <table>
@@ -166,7 +167,7 @@ tr:hover td { background: var(--bg3); }
     </div>
   </div>
 
-  <div class="section">
+  <div class="section" id="logsSection">
     <h2>⧫ Event Logs</h2>
     <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">Real EVM logs (precompile + time-task) indexed from the node. Filter by contract address and/or topic0.</p>
     <div class="search-box" style="margin:8px 0">
@@ -191,7 +192,7 @@ tr:hover td { background: var(--bg3); }
     </div>
   </div>
 
-  <div class="section">
+  <div class="section" id="precompileSection">
     <h2>⬡ Precompiles <span id="precompileCount" style="color:var(--fg2);font-weight:400"></span></h2>
     <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">WayChain's 27 protocol precompiles (source of truth: protocol-manifest.json). Click for live on-chain state via node way_* reads.</p>
     <div style="overflow-x:auto">
@@ -202,7 +203,19 @@ tr:hover td { background: var(--bg3); }
     </div>
   </div>
 
-  <div class="section">
+  <div class="section" id="tokensSection" style="display:none">
+    <h2>🪙 Tokens <span id="tokenCount" style="color:var(--fg2);font-weight:400"></span></h2>
+    <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">Protocol tokens (1WAY / SWAY / BIJO). 1WAY total supply is live from the node; SWAY/BIJO supply is not yet exposed via a node read (shown as —, never fabricated). Click a token's address to open its precompile panel.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Symbol</th><th>Name</th><th>Address</th><th>Total Supply</th><th>Purpose</th></tr></thead>
+        <tbody id="tokenTable"><tr><td colspan="5" style="color:var(--fg2);text-align:center">Loading tokens…</td></tr></tbody>
+      </table>
+    </div>
+    <p style="margin-top:10px"><a href="#" onclick="hideTokens();return false;" style="color:var(--accent)">← Back to explorer</a></p>
+  </div>
+
+  <div class="section" id="activitySection">
     <h2>Activity</h2>
     <div id="log"><div class="info">Explorer initialized</div></div>
   </div>
