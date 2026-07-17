@@ -37,7 +37,7 @@ var tokenMeta = map[string]struct {
 	"0x25": {
 		Symbol:      "BIJO",
 		Name:        "BinaryJournal (BIJO)",
-		Purpose:     "Storage/data incentive token — epoch-based release to node operators who store data. NOTE: protocol-manifest.json labels 0x25 'SwapRoute'; code (precompiles.go:173) names it BinaryJournal. Manifest↔code drift — verify before relying.",
+		Purpose:     "Immutable journal token (self-sovereign knowledge vault). NOTE: 0x25 is SwapRoute (DEX swap+LP, per precompiles.go:173 + protocol-manifest.json); BinaryJournal is precompile 0x11. The explorer tokens map keeps 0x25 as BIJO for historical display only — verify before relying on it.",
 		Decimals:    18,
 		LiveSupply:  false, // epoch-based release, no single stored total exposed via way_*
 	},

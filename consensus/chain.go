@@ -243,13 +243,10 @@ func (c *Chain) InitPrecompiles() {
 	new(big.Int).SetUint64(startTime).FillBytes(st[:])
 	endowAcc.Storage[[32]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2}] = st
 
-	// ── WIFR Gauntlet (0x21): create account and initialize pools ──
-	wifrAddr := evm.PrecompileAddrHex(0x21)
-	wifrAcc := c.State.GetOrCreateAccount(wifrAddr)
-	_ = wifrAcc
-	if err := (&evm.WIFRGantletRewards{State: c.State}).Initialize(); err != nil {
-		panic(err)
-	}
+	// ── 0x21 Keccak256 precompile account (app-layer hashing bridge) ──
+	// No genesis state required; account is created so the precompile address
+	// exists. Reward-pool init removed (WIFRGantletRewards retired — see #61/#62/#63).
+	_ = c.State.GetOrCreateAccount(evm.PrecompileAddrHex(0x21))
 }
 
 // SeedQuestSupply seeds the live WAY total-supply tracker (slot 0x41 of 0x23)
@@ -316,9 +313,8 @@ func (c *Chain) OpenStore(dbPath string) (*store.Store, error) {
 		c.Height = s.Height()
 		// Rebuild EVM with loaded state
 		c.EVM = evm.NewEVM(state, evm.ConsensusLane, c.Height+1, uint64(time.Now().Unix()), 10008, 30_000_000, "")
-		if err := (&evm.WIFRGantletRewards{State: c.State}).EnsureInitialized(); err != nil {
-			return nil, fmt.Errorf("chain: init wifr: %w", err)
-		}
+		// 0x21 Keccak256 precompile: no lazy init needed (stateless).
+		// (Formerly WIFRGantletRewards.EnsureInitialized — retired, see #61/#62/#63.)
 
 		// Log latest blocks
 		blocks, _ := s.LatestBlocks(5)
