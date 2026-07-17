@@ -290,10 +290,10 @@ function renderPrecompiles(list) {
   (list.precompiles || []).forEach(p => {
     const tr = el('tr');
     tr.style.cursor = 'pointer';
-    tr.onclick = () => showPrecompile(p.Addr);
+    tr.onclick = () => showPrecompile(p.addr);
     tr.innerHTML = `
-      <td><a>${p.Addr}</a></td>
-      <td>${p.Name}</td>`;
+      <td><a>${p.addr}</a></td>
+      <td>${p.name}</td>`;
     tb.appendChild(tr);
   });
   $('precompileCount').textContent = '(' + ((list.precompiles || []).length) + ')';
@@ -355,6 +355,76 @@ function showPrecompile(addr) {
 
 window.showPrecompile = showPrecompile;
 
+// ── live WebSocket ──
+let ws = null;
+let wsLive = false;
+
+function wsURL() {
+  const base = API_BASE.replace(/\/$/, '');        // https://api.waychain.org/api
+  const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return scheme + '//' + base.split('://')[1] + '/ws';
+}
+
+function prependBlock(b) {
+  const tb = $('blocksTable');
+  // If the placeholder row is showing, clear it first.
+  if (tb.querySelector('td') && tb.querySelector('td').colSpan) tb.innerHTML = '';
+  const tr = el('tr');
+  tr.style.cursor = 'pointer';
+  tr.onclick = () => showBlock(b.Height);
+  tr.innerHTML = `
+    <td><a>${b.Height?.toLocaleString() ?? '—'}</a></td>
+    <td class="hash">${short(b.Hash, 10)}</td>
+    <td>${b.Proposer || '—'}</td>
+    <td>${b.TxCount ?? 0}</td>
+    <td style="color:var(--fg2)">${ago(hexToNum(b.Timestamp))}</td>`;
+  // Flash the new row so "live" is visible.
+  tr.style.transition = 'background 0.6s';
+  tr.style.background = 'rgba(255,191,0,0.18)';
+  setTimeout(() => { tr.style.background = ''; }, 600);
+  tb.insertBefore(tr, tb.firstChild);
+  // Trim to BLOCKS_TO_SHOW rows.
+  while (tb.children.length > BLOCKS_TO_SHOW) tb.removeChild(tb.lastChild);
+}
+
+function setWsStatus(live) {
+  wsLive = live;
+  const dot = $('statusDot'), txt = $('statusText');
+  if (!dot || !txt) return;
+  if (live) {
+    dot.className = 'status-dot online';
+    txt.textContent = 'Live';
+  } else {
+    dot.className = 'status-dot offline';
+    txt.textContent = 'Offline';
+  }
+}
+
+function connectWS() {
+  try {
+    ws = new WebSocket(wsURL());
+  } catch (e) {
+    setWsStatus(false);
+    return;
+  }
+  ws.onopen = () => { setWsStatus(true); log('WS connected (live)', 'ok'); };
+  ws.onmessage = (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    if (msg.type === 'newHead' && msg.block) {
+      if (msg.stats) renderStats(msg.stats);
+      prependBlock(msg.block);
+    }
+  };
+  ws.onclose = () => {
+    setWsStatus(false);
+    log('WS closed — falling back to polling', 'err');
+    // Reconnect after a short delay (the poll loop keeps data fresh meanwhile).
+    setTimeout(connectWS, 5000);
+  };
+  ws.onerror = () => { try { ws.close(); } catch {} };
+}
+
 // ── poll loop ──
 async function refresh() {
   try {
@@ -382,5 +452,6 @@ window.addEventListener('DOMContentLoaded', () => {
   refresh();
   loadLogs();
   loadPrecompiles();
-  setInterval(refresh, REFRESH_MS);
+  connectWS();              // live updates; falls back to polling on close
+  setInterval(refresh, REFRESH_MS); // polling keeps data fresh if WS drops
 });

@@ -20,8 +20,12 @@ type Server struct {
 	store *store.Store
 	node  *client.RPC
 	upg   websocket.Upgrader
-	// live subscribers for WS broadcasts
-	subMu   chan *wsClient
+
+	// live subscriber hub
+	subs     map[*wsClient]bool
+	subAdd   chan *wsClient
+	subDel   chan *wsClient
+	broadcast chan []byte
 }
 
 type wsClient struct {
@@ -32,9 +36,62 @@ type wsClient struct {
 // New creates the API server.
 func New(s *store.Store, node *client.RPC) *Server {
 	return &Server{
-		store: s,
-		node:  node,
-		upg:   websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+		store:     s,
+		node:      node,
+		upg:       websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }},
+		subs:      make(map[*wsClient]bool),
+		subAdd:    make(chan *wsClient),
+		subDel:    make(chan *wsClient),
+		broadcast: make(chan []byte, 64),
+	}
+}
+
+// Run starts the subscriber hub. Call once (e.g. in main) before serving.
+func (s *Server) Run() {
+	for {
+		select {
+		case c := <-s.subAdd:
+			s.subs[c] = true
+		case c := <-s.subDel:
+			if _, ok := s.subs[c]; ok {
+				delete(s.subs, c)
+				close(c.send)
+			}
+		case msg := <-s.broadcast:
+			for c := range s.subs {
+				select {
+				case c.send <- msg:
+				default:
+					// drop if client is slow; don't block the hub
+				}
+			}
+		}
+	}
+}
+
+// Notify is called by the indexer after a block is indexed. It loads the
+// block from the store and broadcasts a newHead event to WS subscribers.
+func (s *Server) Notify(height int64) {
+	b, err := s.store.Block(height)
+	if err != nil || b == nil {
+		return
+	}
+	blocks, txs, addrs, _ := s.store.Stats()
+	msg, err := json.Marshal(map[string]interface{}{
+		"type":  "newHead",
+		"block": b,
+		"stats": map[string]interface{}{
+			"blocks":       blocks,
+			"transactions": txs,
+			"addresses":    addrs,
+		},
+	})
+	if err != nil {
+		return
+	}
+	select {
+	case s.broadcast <- msg:
+	default:
 	}
 }
 
@@ -232,14 +289,28 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := &wsClient{conn: conn, send: make(chan []byte, 16)}
-	go c.writePump()
-	// For now: echo a welcome; real streams (newHeads, pendingTx, largeTx)
-	// are wired from the indexer's tail in a later revision.
+	s.subAdd <- c
 	c.send <- []byte(`{"type":"welcome","msg":"WayChain explorer WS"}`)
+	// read pump: detect client disconnect, then deregister
+	go func() {
+		defer func() {
+			s.subDel <- c
+			c.conn.Close()
+		}()
+		for {
+			if _, _, err := c.conn.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
+	go c.writePump(s.subDel)
 }
 
-func (c *wsClient) writePump() {
-	defer c.conn.Close()
+func (c *wsClient) writePump(subDel chan *wsClient) {
+	defer func() {
+		subDel <- c
+		c.conn.Close()
+	}()
 	for msg := range c.send {
 		if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
 			return
@@ -250,12 +321,17 @@ func (c *wsClient) writePump() {
 // ── helpers ──
 
 func writeJSON(w http.ResponseWriter, v interface{}) {
+	// CORS is owned exclusively by the reverse proxy (nginx) via
+	// `add_header Access-Control-Allow-Origin "*" always`. Do NOT set it here:
+	// a duplicated ACAO header is invalid per spec and causes browsers to
+	// reject the response with a network-level "Failed to fetch" (curl ignores
+	// it, which is why the bug was invisible server-side).
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	json.NewEncoder(w).Encode(v)
 }
 
 func writeErr(w http.ResponseWriter, err error) {
+	// CORS owned by nginx (add_header ... always). Do not set ACAO here.
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
 	json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
