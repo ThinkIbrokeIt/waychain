@@ -83,6 +83,15 @@ function short(h, len = 10) {
   return '0x' + s.slice(0, len) + '…' + s.slice(-len);
 }
 
+// addrLink renders a clickable address (→ showAddress). Truth-first: an empty
+// value (contract creation) renders as plain text, never a dead link.
+function addrLink(addr, len = 8) {
+  if (!addr) return '—';
+  const a = String(addr);
+  if (a.startsWith('<span')) return a; // already-rendered placeholder
+  return `<a class="addr clickable" onclick="showAddress('${encodeURIComponent(a)}')">${short(a, len)}</a>`;
+}
+
 function log(msg, cls = 'info') {
   const box = $('log');
   const d = el('div', cls, `[${new Date().toLocaleTimeString()}] ${msg}`);
@@ -158,8 +167,8 @@ function showBlock(n) {
       txs.forEach(t => {
         txHtml += `<tr onclick="showTx('${t.Hash}')" style="cursor:pointer">
           <td class="hash clickable">${short(t.Hash, 10)}</td>
-          <td class="addr">${short(t.From, 8)}</td>
-          <td class="addr">${short(t.To, 8) || '—'}</td>
+          <td class="addr">${addrLink(t.From, 8)}</td>
+          <td class="addr">${addrLink(t.To, 8)}</td>
           <td>${toWAY(t.Value)} WAY</td></tr>`;
       });
       txHtml += '</tbody></table>';
@@ -169,7 +178,7 @@ function showBlock(n) {
         <div class="row"><div class="label">Height</div><div class="value">${b.Height?.toLocaleString()}</div></div>
         <div class="row"><div class="label">Hash</div><div class="value hash-value">${b.Hash || '—'}</div></div>
         <div class="row"><div class="label">Parent</div><div class="value hash-value">${b.Parent || '—'}</div></div>
-        <div class="row"><div class="label">Proposer</div><div class="value">${b.Proposer || '—'}</div></div>
+        <div class="row"><div class="label">Proposer</div><div class="value">${addrLink(b.Proposer, 12) || '—'}</div></div>
         <div class="row"><div class="label">Time</div><div class="value">${ago(hexToNum(b.Timestamp))}</div></div>
         <div class="row"><div class="label">Txs</div><div class="value">${b.TxCount ?? 0}</div></div>
       </div>
@@ -190,7 +199,8 @@ function showTx(hash) {
     if (logs.length) {
       logHtml = '<table><thead><tr><th>Address</th><th>Topics</th><th>Data</th></tr></thead><tbody>';
       logs.forEach(l => {
-        logHtml += `<tr><td class="addr">${short(l.Address, 8)}</td>
+        logHtml += `<tr>
+          <td class="addr">${addrLink(l.Address, 8)}</td>
           <td class="addr">${(l.Topics || []).map(x => short(x, 6)).join('<br>')}</td>
           <td class="addr">${short(l.Data, 6)}</td></tr>`;
       });
@@ -199,8 +209,8 @@ function showTx(hash) {
     openDetail('⧫ Transaction', `
       <div class="detail">
         <div class="row"><div class="label">Hash</div><div class="value hash-value">${t.Hash}</div></div>
-        <div class="row"><div class="label">From</div><div class="value hash-value">${t.From}</div></div>
-        <div class="row"><div class="label">To</div><div class="value hash-value">${t.To || '<span class="yellow">Contract Creation</span>'}</div></div>
+        <div class="row"><div class="label">From</div><div class="value hash-value">${addrLink(t.From, 12)}</div></div>
+        <div class="row"><div class="label">To</div><div class="value hash-value">${t.To ? addrLink(t.To, 12) : '<span class="yellow">Contract Creation</span>'}</div></div>
         <div class="row"><div class="label">Value</div><div class="value">${toWAY(t.Value)} WAY</div></div>
         <div class="row"><div class="label">Nonce</div><div class="value">${t.Nonce ?? '—'}</div></div>
         <div class="row"><div class="label">Gas Used</div><div class="value">${(t.GasUsed ?? 0).toLocaleString()}</div></div>
@@ -220,8 +230,8 @@ function showAddress(addr) {
     const rows = (d.txs || []).map(t => `
       <tr onclick="showTx('${t.Hash}')" style="cursor:pointer">
         <td class="hash clickable">${short(t.Hash, 10)}</td>
-        <td class="addr">${short(t.From, 8)}</td>
-        <td class="addr">${short(t.To, 8) || '—'}</td>
+        <td class="addr">${addrLink(t.From, 8)}</td>
+        <td class="addr">${addrLink(t.To, 8)}</td>
         <td>${toWAY(t.Value)} WAY</td>
         <td style="color:var(--fg2)">${ago(hexToNum(t.Timestamp))}</td>
       </tr>`).join('');
@@ -286,11 +296,11 @@ function loadLogs() {
     rows.forEach(l => {
       const tr = el('tr');
       tr.innerHTML = `
-        <td class="addr">${short(l.Address, 8)}</td>
+        <td class="addr">${addrLink(l.Address, 8)}</td>
         <td class="addr">${(l.Topics || []).map(x => short(x, 6)).join('<br>')}</td>
         <td class="addr">${short(l.Data, 6)}</td>
         <td><a onclick="showBlock(${l.Block})" style="cursor:pointer">${l.Block?.toLocaleString()}</a></td>
-        <td style="color:var(--fg2)">${short(l.TxHash, 8)}</td>`;
+        <td><a class="addr clickable" onclick="showTx('${encodeURIComponent(l.TxHash)}')">${short(l.TxHash, 8)}</a></td>`;
       tb.appendChild(tr);
     });
     $('logPrev').disabled = logPage === 0;
@@ -387,6 +397,7 @@ function showPrecompile(addr) {
 }
 
 window.showPrecompile = showPrecompile;
+window.showAddress = showAddress;
 
 // ── live WebSocket ──
 let ws = null;
