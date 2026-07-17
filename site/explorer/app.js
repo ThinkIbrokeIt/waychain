@@ -347,6 +347,10 @@ function fmtStat(v) {
 function showPrecompile(addr) {
   api('/precompile/' + encodeURIComponent(addr)).then(d => {
     if (d.error) { openDetail('Precompile', `<div class="red">${d.error}</div>`); return; }
+    const descHtml = d.desc ? `<p style="color:var(--fg2);font-size:.9em;margin:8px 0 0">${d.desc}</p>` : '';
+    const scopeHtml = d.accountScoped
+      ? `<div class="row"><div class="label">Scope</div><div class="value" style="color:var(--yellow)">Account-scoped — no global stat; query by address</div></div>`
+      : `<div class="row"><div class="label">Scope</div><div class="value" style="color:var(--green)">Protocol-level — live state below</div></div>`;
     let statsHtml = '<div style="color:var(--fg2);font-size:.75em">No live stats for this precompile</div>';
     const stats = d.stats || {};
     const keys = Object.keys(stats);
@@ -366,13 +370,19 @@ function showPrecompile(addr) {
       });
       statsHtml += '</tbody></table>';
     }
+    const callsHtml = (d.statCalls && d.statCalls.length)
+      ? `<div style="color:var(--fg2);font-size:.72em;margin-top:10px">Backed by node read(s): ${d.statCalls.join(', ')}</div>`
+      : '';
     openDetail('⬡ Precompile ' + d.addr, `
       <div class="detail">
         <div class="row"><div class="label">Address</div><div class="value hash-value">${d.addr}</div></div>
         <div class="row"><div class="label">Name</div><div class="value">${d.name}</div></div>
+        ${scopeHtml}
       </div>
+      ${descHtml}
       <h3 style="margin-top:15px">Live State</h3>
-      ${statsHtml}`);
+      ${statsHtml}
+      ${callsHtml}`);
   }).catch(e => openDetail('Precompile', `<div class="red">${e.message}</div>`));
 }
 
