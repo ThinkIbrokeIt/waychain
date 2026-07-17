@@ -243,13 +243,11 @@ export const PRECOMPILES = {
     ],
   },
   '0x21': {
-    name: 'WIFRGantletRewards',
-    file: 'evm/precompiles.go',
+    name: 'Keccak256', // app-layer hashing bridge (as originally intended, #65)
+    file: 'evm/keccak_precompile.go',
     methods: [
-      { name: 'initialize', sel: 'cf705883', sig: 'initialize()', kind: 'write' },
-      { name: 'getRemainingRewards', sel: '63760e3d', sig: 'getRemainingRewards(uint64)', kind: 'read', args: ['poolId'] },
-      { name: 'getTotalRemaining', sel: '100678aa', sig: 'getTotalRemaining()', kind: 'read' },
-      { name: 'claimPioneer', sel: '8aa238fa', sig: 'claimPioneer(address)', kind: 'write', args: ['pioneer'] },
+      { name: 'hash', sel: '1901a39a', sig: 'hash(bytes)', kind: 'read', args: ['data'] },
+      { name: 'hash4', sel: '6963203c', sig: 'hash4(bytes)', kind: 'read', args: ['data'] },
     ],  },
   '0x22': {
     name: 'WayStablecoin',

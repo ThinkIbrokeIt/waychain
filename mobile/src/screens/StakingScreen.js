@@ -48,8 +48,8 @@ export default function StakingScreen({ route }) {
       {!loading && pending && (
         <FeaturePending
           title="Staking arrives with the network upgrade"
-          detail="The TwoWayVault precompile (0x18) is deployed on-chain. Delegation and WAY staking UI will activate here once the public RPC exposes a read method. Your keys already control any stake you authorize."
-          precompile="0x18 · TwoWayVault"
+          detail="WAY delegation/staking is not yet a live precompile. (Note: TwoWayVault 0x18 is deployed and has its own screen — this Stake tab is for WAY staking, which is planned.) The UI activates here once the staking precompile ships. Your keys already control any stake you authorize."
+          precompile="planned · WAY staking"
         />
       )}
     </ScrollView>

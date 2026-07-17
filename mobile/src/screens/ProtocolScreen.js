@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
+import { useNavigation } from '@react-navigation/native';
 
 // C5: honest visibility for the precompiles that have NO wallet UI because they
 // require off-chain crypto tooling (not faked buttons). Truth-first: every entry
@@ -23,10 +24,39 @@ const ADVANCED = [
   { id: '0x1F', name: 'Cross-Chain Attestation', note: 'Witnesses external-chain events (witnessEvent/getAttestation). SHA-256 proofs, not keccak. Requires relayed chain proofs.' },
 ];
 
+// Wallet-wired DeFi precompiles (have real screens). Tap to open.
+const DEFI = [
+  { id: '0x18', name: 'TwoWay Vault', screen: 'TwoWayVault', note: 'Deposit stablecoins, mint/burn 2WAY synthetic USD. Real write ops.' },
+  { id: '0x19', name: 'Stability Pool', screen: 'StabilityPool', note: 'Absorb 2WAY liquidation debt; earn WAY+SWAY. Real deposit/withdraw/claim.' },
+  { id: '0x1D', name: 'Governance', screen: 'Governance', note: 'Propose / vote (Direct/Quadratic/Futarchy). Real.' },
+  { id: '0x25', name: 'Swap Route (DEX)', screen: 'SwapRoute', note: 'Add liquidity (mints SWAY). Swap/remove pending on-chain finish.' },
+  { id: '0x16', name: 'Bitcoin Registry', screen: 'BitcoinRegistry', note: 'BTC bridge backing 1WAY. Commit / withdraw.' },
+  { id: '0x15', name: "Dead Man's Switch", screen: 'DeadMansSwitch', note: 'Truth-disclosure heir switch. Create/heartbeat/claim.' },
+  { id: '0x1B', name: 'Account Manager', screen: 'AccountManager', note: 'Identity lifecycle, key rotation, freeze. Real.' },
+  { id: '0x1E', name: 'State Rent', screen: 'StateRent', note: 'Pay/check rent (burn/validator/treasury split).' },
+  { id: '0x20', name: 'Mineral Rights', screen: 'MineralRights', note: 'Tokenized mineral claims (Dox_Dev L2+).' },
+  { id: '0x26', name: 'Template Registry', screen: 'TemplateRegistry', note: 'Clone-to-deploy contract templates.' },
+  { id: '0x21', name: 'Keccak256', screen: 'Keccak256', note: 'App-layer hash bridge (read-only demo).' },
+];
+
 export default function ProtocolScreen() {
+  const navigation = useNavigation();
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <BrandHeader subtitle="Protocol & Advanced Precompiles" />
+
+      <Text style={styles.section}>DeFi precompiles (wallet-wired)</Text>
+      {DEFI.map((p) => (
+        <TouchableOpacity key={p.id} style={styles.card} onPress={() => navigation.navigate(p.screen)}>
+          <View style={styles.head}>
+            <Text style={styles.name}>{p.name}</Text>
+            <Text style={styles.addr}>{p.id} ›</Text>
+          </View>
+          <Text style={styles.note}>{p.note}</Text>
+        </TouchableOpacity>
+      ))}
+
+      <Text style={styles.section}>Advanced precompiles (off-device tooling)</Text>
       <Text style={styles.intro}>These precompiles are live on WayChain but require off-device cryptography (signed oracle reports, ZK proofs, or relayed chain witnesses). They are intentionally not exposed as wallet buttons — honest scope, not missing functionality.</Text>
 
       {ADVANCED.map((p) => (
@@ -48,6 +78,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.parchment },
   container: { flexGrow: 1, padding: 20, paddingBottom: 40 },
   intro: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, lineHeight: 18, marginTop: 8, marginBottom: 14 },
+  section: { fontFamily: FONTS.bold, fontSize: 13, color: COLORS.copper, textTransform: 'uppercase', letterSpacing: 1, marginTop: 18, marginBottom: 4 },
   card: { backgroundColor: COLORS.card, borderRadius: 12, padding: 16, marginTop: 12, borderWidth: 1, borderColor: COLORS.border, borderLeftWidth: 4, borderLeftColor: COLORS.amber },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   name: { fontFamily: FONTS.bold, fontSize: 16, color: COLORS.charcoal },
