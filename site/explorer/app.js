@@ -341,6 +341,51 @@ async function loadPrecompiles() {
   }
 }
 
+// ── Tokens view (#53) ──────────────────────────────────────
+function showTokens() {
+  // hide the main explorer sections, show tokens
+  const main = document.querySelectorAll('#blocksSection, #logsSection, #precompileSection, #activitySection');
+  main.forEach(s => { if (s) s.style.display = 'none'; });
+  $('tokensSection').style.display = 'block';
+  loadTokens();
+  window.scrollTo(0, 0);
+}
+
+function hideTokens() {
+  $('tokensSection').style.display = 'none';
+  ['blocksSection', 'logsSection', 'precompileSection', 'activitySection'].forEach(id => {
+    const s = $(id); if (s) s.style.display = 'block';
+  });
+  window.scrollTo(0, 0);
+}
+
+async function loadTokens() {
+  const tb = $('tokenTable');
+  tb.innerHTML = '<tr><td colspan="5" style="color:var(--fg2);text-align:center">Loading tokens…</td></tr>';
+  try {
+    const tokens = await api('/tokens');
+    tb.innerHTML = '';
+    (tokens || []).forEach(t => {
+      const tr = el('tr');
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => showPrecompile(t.addr);
+      const supply = t.totalSupply != null
+        ? hexToNum(t.totalSupply).toLocaleString() + ' ' + t.symbol
+        : '— <span style="color:var(--fg2)">(not exposed)</span>';
+      tr.innerHTML = `
+        <td><strong>${t.symbol}</strong></td>
+        <td>${t.name}</td>
+        <td><a>${t.addr}</a></td>
+        <td>${supply}</td>
+        <td style="font-size:.8em;color:var(--fg2);max-width:420px">${t.purpose}</td>`;
+      tb.appendChild(tr);
+    });
+    $('tokenCount').textContent = '(' + (tokens || []).length + ')';
+  } catch (e) {
+    tb.innerHTML = `<tr><td colspan="5" class="red">${e.message}</td></tr>`;
+  }
+}
+
 // Render a way_* stat value truthfully: hex amounts -> decimal, objects shown as JSON.
 function fmtStat(v) {
   if (v === null || v === undefined) return '—';
