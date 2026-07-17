@@ -73,14 +73,19 @@ export const waychainRPC = {
     };
   },
 
-  // WayChain native balance method (per AGENTS.md RPC endpoints)
-  getBalance: async (address) => {
+  // WayChain native balance method (per AGENTS.md RPC endpoints).
+  // TRUTH-FIX 2026-07-17: the chain's way_getBalance expects the FULL 64-hex
+  // Ed25519 pubkey (EVM account key = pub64), NOT the 20-byte display address.
+  // Passing the 20-byte form returns 0x0 (latent "shows 0" outage). Callers
+  // must pass account.publicKey, which is already the 0x-prefixed 64-hex.
+  getBalance: async (addressOrAccount) => {
+    const pub64 = addressOrAccount?.publicKey || addressOrAccount;
     try {
-      const res = await waychainRPC.call('way_getBalance', [address]);
+      const res = await waychainRPC.call('way_getBalance', [pub64]);
       return res;
     } catch {
       // fallback to eth_call on BIJO precompile (sha256 selector)
-      const addrHex = address.replace(/^0x/, '').toLowerCase().padStart(64, '0');
+      const addrHex = pub64.replace(/^0x/, '').toLowerCase().padStart(64, '0');
       const data = SELECTORS.balanceOf + addrHex;
       return waychainRPC.call('eth_call', [{ to: PRECOMPILES.BIJO, data }]);
     }
