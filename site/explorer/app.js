@@ -214,7 +214,7 @@ function showTx(hash) {
         <div class="row"><div class="label">Value</div><div class="value">${toWAY(t.Value)} WAY</div></div>
         <div class="row"><div class="label">Nonce</div><div class="value">${t.Nonce ?? '—'}</div></div>
         <div class="row"><div class="label">Gas Used</div><div class="value">${(t.GasUsed ?? 0).toLocaleString()}</div></div>
-        <div class="row"><div class="label">Gas Price</div><div class="value">${t.GasPrice ?? '—'}</div></div>
+        <div class="row"><div class="label">Gas Price</div><div class="value">${hexToNum(t.GasPrice).toLocaleString()} wei</div></div>
         <div class="row"><div class="label">Fee (native)</div><div class="value">${feeStr}</div></div>
         <div class="row"><div class="label">Fiat</div><div class="value">—</div></div>
       </div>
