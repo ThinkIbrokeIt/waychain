@@ -8,6 +8,7 @@ import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from '@scure/b
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { getPublicKeyAsync, signAsync } from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
+import { sha256 } from '@noble/hashes/sha256';
 import { HDKey } from '@scure/bip32';
 import { address as btcAddress, payments, networks } from 'bitcoinjs-lib';
 
@@ -118,6 +119,32 @@ export async function sign(privateKeyHex, messageBytes) {
   return '0x' + bytesToHex(sig);
 }
 
+// ── WayChain tx hash + sign (mirrors consensus/serialize.go + crypto.go) ──
+// Wire hashInput (EXACT, do not change):
+//   "<nonce>:<from>:<to>:<value>:<gasLimit>:<lane>:<len(data)>:<data hex>:<encData hex>"
+// where from = 64-hex Ed25519 pubkey (UTF-8), to = hex address or "".
+// hash = sha256(hashInput); sig = Ed25519.sign(priv, hash). Same as the node.
+export function waychainTxHashInput({ nonce, from, to, value, gasLimit, lane, data, encData }) {
+  const v = typeof value === 'bigint' ? value : BigInt(value || '0');
+  const d = data || new Uint8Array(0);
+  const e = encData || new Uint8Array(0);
+  return `${nonce}:${from}:${to}:${v.toString()}:${gasLimit}:${lane}:${d.length}:${bytesToHex(d)}:${bytesToHex(e)}`;
+}
+
+export function waychainTxHash(input) {
+  return '0x' + bytesToHex(sha256(new TextEncoder().encode(waychainTxHashInput(input))));
+}
+
+// Build + sign a WayChain tx (Ed25519) from fields. Returns { hash, sig } (both hex).
+// Air-gapped: the signed tx is returned for the companion to broadcast (#84).
+export async function signWaychainTx(fields, privateKeyHex) {
+  const input = waychainTxHashInput(fields);
+  const hash = sha256(new TextEncoder().encode(input));
+  const priv = hexToBytes(privateKeyHex.replace(/^0x/, ''));
+  const sig = await signAsync(hash, priv);
+  return { hash: '0x' + bytesToHex(hash), sig: '0x' + bytesToHex(sig) };
+}
+
 // ---- SecureStore-backed multi-account persistence ----
 
 export async function loadAccounts() {
@@ -188,6 +215,8 @@ export const wallet = {
   deriveFromPrivateKey,
   deriveBtcFromMnemonic,
   signBtcPsbt,
+  signWaychainTx,
+  waychainTxHash,
   sign,
   loadAccounts,
   saveAccounts,
