@@ -484,6 +484,21 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 			"grantBps": p.GrantBps,
 		}, nil
 
+	// ── SWAY emission projection (READ-ONLY telemetry) ──
+	// Founder 2026-07-18: "we will need to see the numbers before that gets
+	// hard coded." This shows what 3%-of-GBP emission would produce, with NO
+	// mint authority. Does not change supply.
+	case "way_swayEmissionProjection":
+		gbp := evm.EconoGBPEquiv()
+		proj3 := evm.SwayProjectedEmissionFromGBP(300) // 3% of yearly earnings
+		return map[string]interface{}{
+			"gdpEquivalentThisEpoch": gbp,
+			"proposedPctBps":        300,
+			"projectedSwayPerYear":  proj3.String(),
+			"hardCeiling":           evm.SwayHardCeiling,
+			"note":                  "READ-ONLY projection. 3% is a proposed figure, not yet hardcoded or minted.",
+		}, nil
+
 	// ── Contract Deployment ──
 	case "way_deployCode":
 		var p []string
