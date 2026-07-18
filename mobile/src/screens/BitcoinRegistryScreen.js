@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
@@ -184,7 +185,12 @@ export default function BitcoinRegistryScreen({ navigation }) {
       <View style={styles.card}>
         <Text style={styles.label}>Your vault BTC wallet</Text>
         <Text style={styles.addr}>{vaultAddr || '— create a vault to populate —'}</Text>
-        <Text style={styles.hint}>This address is derived from your vault ID (sha256). Send REAL BTC here.</Text>
+        {vaultAddr ? (
+          <View style={styles.qrWrap}>
+            <QRCode value={vaultAddr} size={148} color="#000000" backgroundColor="#FFFFFF" />
+          </View>
+        ) : null}
+        <Text style={styles.hint}>Scan this with any BTC wallet to send REAL BTC. Address is derived from your vault ID (sha256).</Text>
         <Button label={busy === 'Create' ? 'Creating…' : (hasVault ? 'Vault exists' : 'Create Vault')}
           onPress={createVault} disabled={!!busy || hasVault} style={styles.btn} />
       </View>
@@ -224,6 +230,7 @@ const styles = StyleSheet.create({
   card: { backgroundColor: COLORS.card, borderRadius: 14, padding: 18, marginTop: 14, borderWidth: 1, borderColor: COLORS.border },
   label: { fontFamily: FONTS.medium, fontSize: 13, color: COLORS.muted, textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 },
   addr: { fontFamily: FONTS.mono, fontSize: 11, color: COLORS.copper, marginTop: 6, flexWrap: 'wrap' },
+  qrWrap: { alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 10, padding: 10, marginTop: 10, alignSelf: 'flex-start' },
   input: { backgroundColor: COLORS.parchment, color: COLORS.charcoal, padding: 12, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: COLORS.border, fontSize: 13 },
   btn: { marginTop: 12 },
   hint: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginTop: 6, marginBottom: 4 },
