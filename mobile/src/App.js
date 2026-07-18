@@ -31,6 +31,7 @@ import Keccak256Screen from './screens/Keccak256Screen';
 import ProtocolScreen from './screens/ProtocolScreen';
 import CommunityTasksScreen from './screens/CommunityTasksScreen';
 import DoxDevScreen from './screens/DoxDevScreen';
+import ScanPayScreen from './screens/ScanPayScreen';
 import AppLock from './components/AppLock';
 import { COLORS } from './theme';
 import { markBackground } from './services/secure';
@@ -106,6 +107,7 @@ export default function App() {
           <Stack.Screen name="Protocol" component={ProtocolScreen} />
           <Stack.Screen name="CommunityTasks" component={CommunityTasksScreen} />
           <Stack.Screen name="DoxDev" component={DoxDevScreen} />
+          <Stack.Screen name="ScanPay" component={ScanPayScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
