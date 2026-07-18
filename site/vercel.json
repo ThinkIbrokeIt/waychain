@@ -33,6 +33,8 @@
     { "source": "/doxdev/", "destination": "/doxdev/index.html" },
     { "source": "/oracle", "destination": "/oracle/index.html" },
     { "source": "/oracle/", "destination": "/oracle/index.html" },
+    { "source": "/trade", "destination": "/trade/index.html" },
+    { "source": "/trade/", "destination": "/trade/index.html" },
     { "source": "/bridge", "destination": "/dex/bridge.html" },
     { "source": "/dex/bridge", "destination": "/dex/bridge.html" },
     { "source": "/wifr", "destination": "/wifr.html" },
