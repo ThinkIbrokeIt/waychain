@@ -254,10 +254,14 @@ export const PRECOMPILES = {
     file: 'evm/way_stablecoin.go',
     methods: [
       { name: 'createVault', sel: 'a2b1c3d4', sig: 'createVault(bytes32)', kind: 'write' },
-      { name: 'depositBTC', sel: 'b3c2d4e5', sig: 'depositBTC(...)', kind: 'write' },
-      { name: 'mint1Way', sel: 'c4d3e5f6', sig: 'mint1Way(...)', kind: 'write' },
-      { name: 'burn1Way', sel: 'd5e4f6a7', sig: 'burn1Way(...)', kind: 'write' },
+      // TRUSTLESS ABI (2026-07-18): depositBTC(bytes32 vaultID, uint256 amount, bytes32 txid, uint64 outIndex, bytes toAddr)
+      // Requires a sha256 proof that real BTC landed at the vault's derived address. UI supplies the proof.
+      { name: 'depositBTC', sel: 'b3c2d4e5', sig: 'depositBTC(bytes32,uint256,bytes32,uint64,bytes)', kind: 'write' },
+      { name: 'mint1Way', sel: 'c4d3e5f6', sig: 'mint1Way(bytes32,uint256)', kind: 'write' },
+      { name: 'burn1Way', sel: 'd5e4f6a7', sig: 'burn1Way(bytes32,uint256)', kind: 'write' },
       { name: 'getUserVault', sel: 'a8b7c9d0', sig: 'getUserVault()', kind: 'read' },
+      // getVault(bytes32) -> (btc[32], debt[32], creatorPresent[32]) — drives the lock light
+      { name: 'getVault', sel: '9eb29ef0', sig: 'getVault(bytes32)', kind: 'read' },
       { name: 'getPrice', sel: 'b9c8d0e1', sig: 'getPrice()', kind: 'read' },
       { name: 'getTotalSupply', sel: 'cad9e0f2', sig: 'getTotalSupply()', kind: 'read' },
       { name: 'updateBTCPrice', sel: 'dbc0f1a2', sig: 'updateBTCPrice()', kind: 'write' },
