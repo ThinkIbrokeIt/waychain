@@ -217,7 +217,7 @@ These were enforced at genesis. Governance cannot change them:
 - Fiat-pegged fee model (peg mechanism cannot be removed)
 - No pre-mine / no pre-sale (cannot be added after genesis)
 - Burn mechanisms exist (percentages adjustable, mechanisms cannot be removed)
-- Genesis distribution = equal per verified human (cannot be redistributed)
+- ~~Genesis distribution = equal per verified human (cannot be redistributed)~~ — SHELVED (founder 2026-07-17). Live code (`consensus/genesis.go`) seeds treasury+ecosystem, defers rest to inflation. Founder's 95M-treasury/5%-live decision (2026-07-18) NOT yet coded. See `DECISIONS-LEDGER.md`.
 
 ---
 

@@ -124,8 +124,12 @@ export const PRECOMPILES = {
   '0x17': {
     name: 'StorageEndowment',
     file: 'evm/precompiles.go',
-    noSelector: true,
-    methods: [{ name: 'endow', sig: 'endow() — raw input layout', kind: 'write' }],
+    methods: [
+      { name: 'registerOperator', sel: '13e4f0a2', sig: 'registerOperator(uint256)', kind: 'write' },
+      { name: 'unregisterOperator', sel: '24b5d1c3', sig: 'unregisterOperator()', kind: 'write' },
+      { name: 'getOperatorInfo', sel: '35c6e2d4', sig: 'getOperatorInfo(address)', kind: 'read' },
+      { name: 'getOperatorCount', sel: 'a8a012f7', sig: 'getOperatorCount()', kind: 'read' },
+    ],
   },
   '0x18': {
     name: 'TwoWayVault',

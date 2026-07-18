@@ -703,7 +703,7 @@ WayChain provides community-driven safety mechanisms:
 | Validator set size (100-300) | Fiat-pegged fee model |
 | Treasury allocation % | No pre-mine / no pre-sale |
 | State rent burn % | Burn mechanisms exist |
-| Slash percentages | Genesis distribution = equal per human |
+| Slash percentages | ~~Genesis distribution = equal per human~~ — SHELVED (founder 2026-07-17). Live code: treasury+ecosystem seeded, rest via inflation. See `DECISIONS-LEDGER.md`. |
 
 ---
 
