@@ -35,6 +35,7 @@ const (
 	selWayGetUserVault   uint32 = 0xA8B7C9D0
 	selWayGetPrice       uint32 = 0xB9C8D0E1
 	selWayGetTotalSupply uint32 = 0xCAD9E0F2
+	selWayGetVault       uint32 = 0x9EB29EF0 // getVault(bytes32) -> (btc[32], debt[32], creatorPresent[32])
 	selWayUpdateBTCPrice uint32 = 0xDBC0F1A2
 )
 
@@ -55,6 +56,8 @@ func wayStablecoinPrecompile(input []byte, caller string, state *StateDB, blockN
 		return wayBurn1Way(input, caller, state, blockNum)
 	case selWayGetUserVault:
 		return wayGetUserVault(input, caller, state)
+	case selWayGetVault:
+		return wayGetVault(input, state)
 	case selWayGetPrice:
 		return wayGetPrice(input, caller, state)
 	case selWayGetTotalSupply:
@@ -274,6 +277,40 @@ func wayGetUserVault(input []byte, caller string, state *StateDB) ([]byte, error
 		output[0] = 1
 	}
 	return output, nil
+}
+
+// ── Get vault state (BTC + debt + creator) for the lock-light UI ──
+// Returns 96 bytes: vaultBTC[32] || vaultDebt[32] || creatorPresent[32].
+// Light logic (mobile Bridge tab):
+//   OFF   = vaultBTC == 0
+//   RED   = vaultBTC > 0 && vaultDebt > 0   ("DEBT")
+//   GREEN = vaultBTC > 0 && vaultDebt == 0  ("1WAY")
+func wayGetVault(input []byte, state *StateDB) ([]byte, error) {
+	if len(input) < 36 {
+		return nil, fmt.Errorf("1WAY: getVault input too short")
+	}
+	vaultID := input[4:36]
+	addr := PrecompileAddrHex(0x22)
+	acc := state.GetOrCreateAccount(addr)
+
+	btcKey := storageKey(append([]byte{WaySlotVaultBTC}, vaultID...))
+	btc := readBigInt(acc.Storage[btcKey])
+
+	debtKey := storageKey(append([]byte{WaySlotVault1Way}, vaultID...))
+	debt := readBigInt(acc.Storage[debtKey])
+
+	creatorKey := storageKey(append([]byte{WaySlotVaultCreator}, vaultID...))
+	creatorPresent := uint64(0)
+	if acc.Storage[creatorKey] != [32]byte{} {
+		creatorPresent = 1
+	}
+
+	out := make([]byte, 96)
+	btc.FillBytes(out[0:32])
+	debt.FillBytes(out[32:64])
+	cp := writeUint64(creatorPresent)
+	copy(out[64:96], cp[:])
+	return out, nil
 }
 
 // ── Get BTC/USD price ──
