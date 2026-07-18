@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle — WayChain Duty Management</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:18px}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);text-decoration:none}
+a:hover{color:var(--warm)}
+.nav{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.2em;color:var(--warm);letter-spacing:1px}
+.nav-logo span{color:var(--copper)}
+.nav-links{display:flex;gap:4px}
+.nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px}
+.nav-links a:hover{color:var(--warm);background:var(--slate2)}
+.hero{text-align:center;padding:64px 24px 44px;background:linear-gradient(180deg,#1a1a2e 0%,var(--slate) 100%)}
+.hero h1{font-size:3em;color:var(--warm);margin-bottom:8px;letter-spacing:2px}
+.hero .tagline{font-size:.8em;color:var(--copper);letter-spacing:4px;text-transform:uppercase}
+.hero .divider{width:50px;height:1px;background:var(--copper);margin:12px auto 16px}
+.hero p{color:var(--muted);font-size:.85em;max-width:560px;margin:0 auto}
+.container{max-width:760px;margin:0 auto;padding:0 24px}
+.card{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:24px;margin:20px 0}
+.card h3{color:var(--copper);font-size:.85em;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.btn{background:var(--copper);color:var(--warm);font-weight:700;padding:12px 28px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn:hover{background:#a0642a}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:9px 18px;font-size:.78em}
+.wallet-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:20px 0}
+.wallet-bar .addr{font-size:.75em;color:var(--muted);font-family:monospace;word-break:break-all}
+.level-line{font-size:.9em;color:var(--copper);margin-bottom:12px}
+.level-val{font-family:'Playfair Display',serif;font-size:1.4em;color:var(--warm)}
+.gate{display:none;background:rgba(229,57,53,.1);border:1px solid var(--red);border-radius:8px;padding:16px;margin:20px 0;color:#FF8A80;font-size:.85em}
+.field{margin-top:12px}
+.field label{display:block;font-size:.78em;color:var(--copper);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.field input,.field textarea{width:100%;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:11px 14px;border-radius:6px;font-size:.82em;font-family:'Inter',sans-serif;outline:none}
+.field input:focus,.field textarea:focus{border-color:var(--copper)}
+.row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.status{font-size:.82em;margin-top:10px;min-height:1.2em;white-space:pre-wrap}
+.status.err{color:var(--red)} .status.ok{color:var(--green)} .status.info{color:var(--copper)}
+.note{color:var(--muted);font-size:.78em;margin-top:10px;line-height:1.6}
+.duty{padding:12px 0;border-bottom:1px solid var(--border)}
+.duty:last-child{border-bottom:none}
+.duty .t{color:var(--warm);font-weight:600;font-size:.9em}
+.duty .d{color:var(--muted);font-size:.78em;margin-top:2px}
+.foot{color:var(--muted);font-size:.78em;margin-top:16px;line-height:1.6}
+.footer{text-align:center;color:var(--muted);font-size:.8em;padding:32px 24px}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="nav-logo">Way<span>Chain</span></div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/wallet">Wallet</a>
+    <a href="/doxdev">Dox_Dev</a>
+    <a href="/wifr/bridge">WIFR</a>
+    <a href="/dex">DEX</a>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Oracle</h1>
+  <div class="tagline">Duty Management</div>
+  <div class="divider"></div>
+  <p>Manage attestation duties, sign reports, and observe assignments (BTC vault arrival, price feeds). Real Ed25519-signed attestations to the on-chain oracle precompiles.</p>
+</div>
+
+<div class="container">
+
+  <div class="wallet-bar">
+    <button class="btn" id="connectBtn" onclick="connect()">Connect Wallet</button>
+    <span class="addr" id="walletAddr"></span>
+  </div>
+
+  <div class="level-line">Dox_Dev level: <span class="level-val" id="levelVal">—</span></div>
+  <div class="gate" id="gate">Oracles require <strong>Dox_Dev Level 2+</strong>. Verify L1 (WIFR Door) then apply for L2 to become an oracle. Visit <a href="/doxdev">Dox_Dev</a>.</div>
+
+  <div id="tools" style="display:none">
+
+    <div class="card">
+      <h3>Verify Attestation (0x0E)</h3>
+      <p class="note">Sign a 32-byte dataHash with your oracle key and submit to OracleVerifier. Returns valid/invalid (requires Dox_Dev L2+ on-chain).</p>
+      <div class="field">
+        <label>Data hash (64-hex, 32 bytes)</label>
+        <input id="vhHash" placeholder="0x… 64 hex">
+      </div>
+      <button class="btn" onclick="verifyAttestation()">Sign &amp; Verify</button>
+      <div class="status" id="vhStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3>Aggregate Reports (0x0C)</h3>
+      <p class="note">Assemble N oracle records [pubkey(32)][value(32)][hash(32)][sig(64)] into the aggregator format and submit. Returns confidence + median.</p>
+      <div class="field">
+        <label>Your value (decimal, e.g. BTC price 68000)</label>
+        <input id="agValue" placeholder="68000">
+      </div>
+      <div class="field">
+        <label>Data hash for your report (64-hex)</label>
+        <input id="agHash" placeholder="0x… 64 hex">
+      </div>
+      <button class="btn" onclick="aggregate()">Sign &amp; Submit Aggregate</button>
+      <div class="status" id="agStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3>Schedule Recurring Feed (0x0D)</h3>
+      <p class="note">Schedule a recurring oracle attestation. Interval min 100 blocks. Rewards paid from treasury on execution.</p>
+      <div class="row">
+        <div class="field" style="flex:1"><label>Feed ID (64-hex)</label><input id="scFeed" placeholder="0x… 64 hex"></div>
+        <div class="field" style="width:120px"><label>Interval (blocks)</label><input id="scInterval" placeholder="100"></div>
+        <div class="field" style="width:120px"><label>Max exec</label><input id="scMax" placeholder="10"></div>
+      </div>
+      <div class="field"><label>Reward (WAY per exec)</label><input id="scReward" placeholder="50"></div>
+      <button class="btn" onclick="scheduleFeed()">Schedule</button>
+      <div class="status" id="scStatus"></div>
+    </div>
+
+    <div class="card">
+      <h3>Your Duties</h3>
+      <p class="note">Assigned tasks from the TaskRegistry (0x23) where role = oracle. Reads live; shows honestly.</p>
+      <button class="btn btn-sm" onclick="loadDuties()">Refresh Duties</button>
+      <div id="dutyList" class="status" style="margin-top:12px"></div>
+    </div>
+
+  </div>
+
+  <p class="foot">Truth-first: attestations are signed client-side with your unlocked oracle key (Ed25519, ephemeral — cleared on lock). The chain verifies the signature and requires Dox_Dev L2+. No fake reports are ever submitted.</p>
+
+</div>
+
+<div class="footer">
+  <p>Oracle — WayChain's attestation duty protocol. Chain ID 10008.</p>
+  <p style="margin-top:8px"><a href="https://waychain.org">waychain.org</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+<script src="/js/precompiles.js"></script>
+<script>
+// Oracle dApp (issue #107). Reuses the verified web wallet (64-hex) + WayChainRPC.
+// Wire formats verified vs consensus/evm/precompiles.go:
+//   0x0E Verifier:  [pubkey(32)][hash(32)][sig(64)]            -> [valid(1)]
+//   0x0C Aggregator: [count(1)] + N×[pubkey(32)][value(32)][hash(32)][sig(64)] -> [confidence(1)][median(32)]
+//   0x0D Scheduler: [interval(8)][startBlock(8)][feedId(32)][maxExec(8)][reward(8)] -> [taskId(32)][nextBlock(8)]
+
+const PC = (h) => '0x' + '0'.repeat(24) + h.replace(/^0x/, '').toLowerCase(); // precompile address
+const hexToBytes = (h) => { h = h.replace(/^0x/, ''); const o = new Uint8Array(h.length/2); for (let i=0;i<o.length;i++) o[i]=parseInt(h.substr(i*2,2),16); return o; };
+const bytesToHex = (b) => { let s=''; for (let i=0;i<b.length;i++) s+=b[i].toString(16).padStart(2,'0'); return s; };
+const u32 = (n) => { const a=new Uint8Array(32); BigInt(n).toString(16).padStart(64,'0').match(/../g).forEach((x,i)=>a[i]=parseInt(x,16)); return a; };
+function setStatus(el, msg, type){ el.textContent = msg; el.className = 'status ' + (type||''); }
+
+async function connect() {
+  if (!window.WayChainWallet) { window.location.href = '/wallet'; return; }
+  try {
+    const acc = await WayChainWallet.connect();
+    document.getElementById('walletAddr').textContent = acc.address;
+    const lvl = await WayChainRPC.getDoxLevel(acc);
+    document.getElementById('levelVal').textContent = lvl;
+    if (lvl >= 2) {
+      document.getElementById('tools').style.display = 'block';
+      document.getElementById('gate').style.display = 'none';
+    } else {
+      document.getElementById('tools').style.display = 'none';
+      document.getElementById('gate').style.display = 'block';
+    }
+  } catch (e) { alert('Connect failed: ' + e.message); window.location.href = '/wallet'; }
+}
+
+async function verifyAttestation() {
+  const s = document.getElementById('vhStatus');
+  if (!WayChainWallet.isUnlocked()) { setStatus(s, 'Unlock the wallet first.', 'err'); return; }
+  let hash;
+  try { hash = hexToBytes(document.getElementById('vhHash').value.trim()); } catch { setStatus(s, 'Data hash must be 64-hex (32 bytes).', 'err'); return; }
+  if (hash.length !== 32) { setStatus(s, 'Data hash must be exactly 32 bytes.', 'err'); return; }
+  try {
+    const acc = window.waychainAccount;
+    const pub = hexToBytes(acc.publicKey); // 64-hex ed25519 pubkey
+    const sig = WayChainWallet.signEd25519(hash); // 64-byte ed25519 sig over hash
+    const data = '0x' + bytesToHex(pub) + bytesToHex(hash) + bytesToHex(sig);
+    setStatus(s, 'Submitting to OracleVerifier (0x0E)…', 'info');
+    const r = await WayChainWallet.sendTx({ to: PC('0x0E'), data, gasLimit: 120000, gasPrice: 1 });
+    setStatus(s, '✅ Submitted. Tx: ' + (r.txHash||'pending').slice(0,24) + '…\nThe chain verifies your sig + Dox_Dev L2 and returns valid(1)/invalid(0).', 'ok');
+  } catch (e) { setStatus(s, 'Error: ' + e.message, 'err'); }
+}
+
+async function aggregate() {
+  const s = document.getElementById('agStatus');
+  if (!WayChainWallet.isUnlocked()) { setStatus(s, 'Unlock the wallet first.', 'err'); return; }
+  const valStr = document.getElementById('agValue').value.trim();
+  if (!/^\d+$/.test(valStr)) { setStatus(s, 'Value must be a non-negative integer.', 'err'); return; }
+  let hash;
+  try { hash = hexToBytes(document.getElementById('agHash').value.trim()); } catch { setStatus(s, 'Data hash must be 64-hex (32 bytes).', 'err'); return; }
+  if (hash.length !== 32) { setStatus(s, 'Data hash must be exactly 32 bytes.', 'err'); return; }
+  try {
+    const acc = window.waychainAccount;
+    const pub = hexToBytes(acc.publicKey);
+    const sig = WayChainWallet.signEd25519(hash);
+    const count = 1;
+    const rec = new Uint8Array(160);
+    rec.set(pub, 0); rec.set(u32(valStr), 32); rec.set(hash, 64); rec.set(sig, 96);
+    const data = '0x' + bytesToHex(new Uint8Array([count])) + bytesToHex(rec);
+    setStatus(s, 'Submitting to OracleAggregator (0x0C)…', 'info');
+    const r = await WayChainWallet.sendTx({ to: PC('0x0C'), data, gasLimit: 200000, gasPrice: 1 });
+    setStatus(s, '✅ Submitted. Tx: ' + (r.txHash||'pending').slice(0,24) + '…\nChain verifies your sig, requires Dox_Dev L2+, returns [confidence(1)][median(32)].', 'ok');
+  } catch (e) { setStatus(s, 'Error: ' + e.message, 'err'); }
+}
+
+async function scheduleFeed() {
+  const s = document.getElementById('scStatus');
+  if (!WayChainWallet.isUnlocked()) { setStatus(s, 'Unlock the wallet first.', 'err'); return; }
+  let feed;
+  try { feed = hexToBytes(document.getElementById('scFeed').value.trim()); } catch { setStatus(s, 'Feed ID must be 64-hex (32 bytes).', 'err'); return; }
+  if (feed.length !== 32) { setStatus(s, 'Feed ID must be 32 bytes.', 'err'); return; }
+  const interval = parseInt(document.getElementById('scInterval').value.trim() || '0', 10);
+  const maxExec = parseInt(document.getElementById('scMax').value.trim() || '0', 10);
+  const reward = parseInt(document.getElementById('scReward').value.trim() || '0', 10);
+  if (interval < 100) { setStatus(s, 'Interval must be ≥ 100 blocks.', 'err'); return; }
+  try {
+    const u8 = (n) => { const a=new Uint8Array(8); BigInt(n).toString(16).padStart(16,'0').match(/../g).forEach((x,i)=>a[i]=parseInt(x,16)); return a; };
+    const data = '0x' + bytesToHex(u8(interval)) + bytesToHex(u8(0)) + bytesToHex(feed) + bytesToHex(u8(maxExec)) + bytesToHex(u8(reward));
+    setStatus(s, 'Scheduling via OracleScheduler (0x0D)…', 'info');
+    const r = await WayChainWallet.sendTx({ to: PC('0x0D'), data, gasLimit: 200000, gasPrice: 1 });
+    setStatus(s, '✅ Scheduled. Tx: ' + (r.txHash||'pending').slice(0,24) + '…\nReturns [taskId(32)][nextBlock(8)].', 'ok');
+  } catch (e) { setStatus(s, 'Error: ' + e.message, 'err'); }
+}
+
+async function loadDuties() {
+  const el = document.getElementById('dutyList');
+  el.className = 'status info'; el.textContent = 'Loading duties from TaskRegistry (0x23)…';
+  try {
+    // TaskRegistry live read: list tasks tagged for oracle role. Uses way_* RPC
+    // (public RPC blocks eth_call to precompiles). Honest: show what's returned.
+    const tasks = await WayChainRPC.call('way_taskList', [window.waychainAccount.publicKey]);
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      el.className = 'status'; el.textContent = 'No oracle duties assigned yet. Apply for L2 (Dox_Dev) and check the Community Tasks portal.';
+      return;
+    }
+    el.className = 'status';
+    el.innerHTML = tasks.map(t => `<div class="duty"><div class="t">${t.id||t.taskId||'task'}</div><div class="d">${t.desc||''} ${t.reward?('· reward '+t.reward+' WAY'):''}</div></div>`).join('');
+  } catch (e) {
+    el.className = 'status info';
+    el.textContent = 'Duty list reads from TaskRegistry (0x23). Endpoint ' + e.message + ' — wire to the on-chain task list when finalized (issue #107).';
+  }
+}
+
+window.addEventListener('load', async () => {
+  if (window.WayChainWallet && window.waychainAccount) {
+    const acc = window.waychainAccount;
+    document.getElementById('walletAddr').textContent = acc.address;
+    try {
+      const lvl = await WayChainRPC.getDoxLevel(acc);
+      document.getElementById('levelVal').textContent = lvl;
+      if (lvl >= 2) { document.getElementById('tools').style.display='block'; } else { document.getElementById('gate').style.display='block'; }
+    } catch {}
+  }
+});
+</script>
+</body>
+</html>
