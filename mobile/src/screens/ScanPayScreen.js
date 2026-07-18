@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Camera, useCameraPermission, useCameraDevice, useCameraFormat, useCodeScanner } from 'react-native-vision-camera';
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
@@ -49,7 +49,18 @@ function parseQr(data) {
 }
 
 export default function ScanPayScreen({ navigation }) {
-  const [perm, requestPerm] = useCameraPermissions();
+  const { hasPermission: cameraPermission, requestPermission: requestCameraPermission } = useCameraPermission();
+  const device = useCameraDevice('back');
+  const format = useCameraFormat(device, [
+    { videoResolution: { width: 1280, height: 720 } },
+  ]);
+  const codeScanner = useCodeScanner({
+    codeTypes: ['qr'],
+    onCodeScanned: (codes) => {
+      if (scanned || !codes || !codes.length) return;
+      onScan({ data: codes[0].value });
+    },
+  });
   const [scanned, setScanned] = useState(false);
   const [chain, setChain] = useState('');
   const [target, setTarget] = useState('');
@@ -160,15 +171,12 @@ export default function ScanPayScreen({ navigation }) {
     } finally { setBusy(''); }
   };
 
-  if (!perm) {
-    return <View style={styles.screen}><ActivityIndicator color={COLORS.copper} /></View>;
-  }
-  if (!perm.granted) {
+  if (!cameraPermission) {
     return (
       <View style={styles.screen}>
         <BrandHeader subtitle="Scan to Pay" />
         <View style={styles.card}><Text style={styles.hint}>Camera permission is required to scan BTC QRs.</Text>
-          <Button label="Grant camera" onPress={requestPerm} style={styles.btn} /></View>
+          <Button label="Grant camera" onPress={requestCameraPermission} style={styles.btn} /></View>
       </View>
     );
   }
@@ -181,7 +189,17 @@ export default function ScanPayScreen({ navigation }) {
         <View style={styles.card}>
           <Text style={styles.label}>Scan a Bitcoin or WayChain QR</Text>
           <View style={styles.camWrap}>
-            <CameraView style={styles.cam} onBarcodeScanned={scanned ? undefined : onScan} barcodeScannerSettings={{ barcodeTypes: ['qr'] }} />
+            {device && format ? (
+              <Camera
+                style={styles.cam}
+                device={device}
+                format={format}
+                isActive={!scanned}
+                codeScanner={scanned ? undefined : codeScanner}
+              />
+            ) : (
+              <View style={styles.cam}><ActivityIndicator color={COLORS.copper} /></View>
+            )}
           </View>
           {scanned && <Button label="Scan again" onPress={() => setScanned(false)} variant="secondary" style={styles.btn} />}
         </View>
