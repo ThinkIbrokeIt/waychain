@@ -127,6 +127,9 @@ func rentPay(input []byte, caller string, state *StateDB, blockNum uint64) ([]by
 		commitHash,
 	}, amount.Bytes(), blockNum)
 
+	// ── Economic Health: state rent is recurring economic output ──
+	EconoAccrueRent(amount.Uint64(), blockNum)
+
 	return boolResult(true), nil
 }
 

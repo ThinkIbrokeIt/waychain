@@ -557,6 +557,12 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 	// Rollover the per-epoch emission cap when a new epoch begins.
 	if c.Staking != nil && c.Staking.EpochLength > 0 && c.Height%c.Staking.EpochLength == 0 {
 		c.Staking.RolloverEpoch()
+		// ── Economic Health: freeze the window, compute phase, run the
+		// automated feedback loop (expansion burn / consolidation stimulus).
+		// Truth-first: computed by the chain from real payout events, hard-
+		// capped so the token cannot be destabilized by the loop.
+		evm.AccrueEcono(c.State, c.Height)
+		evm.ApplyEconoPolicy(c.State)
 	}
 
 	// Distribute staking rewards for this block (anchored to the 7% annual cap).

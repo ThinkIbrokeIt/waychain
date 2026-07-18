@@ -476,6 +476,13 @@ func verifyAndPay(state *StateDB, taskIdBytes []byte, claimantAddr string) error
 		var slot [32]byte
 		paid.FillBytes(slot[:])
 		tr.Storage[paidKey] = slot
+		// ── Economic Health: emit sha256-core TaskPaid event + accrue ──
+		// This is the on-chain signal the app-layer EconoAnalytics oracle
+		// watches. Gasless event; truth lives in the Go core, not the mirror.
+		state.AddLog(PrecompileAddrHex(0x23),
+			[][32]byte{EconoTaskPaidTopic(), sha256SumBytes(taskIdBytes)},
+			reward.Bytes(), 0)
+		EconoAccruePayout(reward.Uint64(), isProTask(taskIdBytes), 0)
 	} else {
 		// Treasury underfunded: mark verified (reward earned) but no transfer.
 		// Cumulative paid is still updated so the cap accounts for it.

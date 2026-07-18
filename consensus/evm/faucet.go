@@ -126,7 +126,7 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 
 	case selFaucetSetDripAmount:
 		// founder-tunable: only treasury (0x03) or a curator may set
-		if !isFaucetAdmin(caller) {
+		if !isFaucetAdmin(caller, state) {
 			return nil, fmt.Errorf("GasFaucet: setDripAmount requires admin")
 		}
 		amt := readUint256(input, 4)
@@ -134,7 +134,7 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 		return []byte{1}, nil
 
 	case selFaucetSetCooldown:
-		if !isFaucetAdmin(caller) {
+		if !isFaucetAdmin(caller, state) {
 			return nil, fmt.Errorf("GasFaucet: setCooldown requires admin")
 		}
 		cd := readUint64FromInput(input, 4)
@@ -147,7 +147,7 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 }
 
 // isFaucetAdmin: treasury (0x03) or a Dox_Dev L3 curator may tune the faucet.
-func isFaucetAdmin(caller string) bool {
+func isFaucetAdmin(caller string, state *StateDB) bool {
 	cb := []byte(caller)
 	var callerAddr [20]byte
 	if len(cb) >= 4 && cb[0] == '0' && cb[1] == 'x' {
