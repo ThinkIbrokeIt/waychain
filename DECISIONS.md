@@ -47,3 +47,22 @@ Doctrine: one source of truth, truth-first, no silent drift.
   not the source of truth.
 - Source: founder chat 2026-07-18 ("deploy real Solidity contracts" + "sha256 stays core
   hashing — not an app-layer luxury"). See PR #95 / issue #93.
+
+## 2026-07-18 — First dapps deployed: Mission Control + real DEX (founder "Go!")
+- Founder 2026-07-18: "web 3 is all about apps or dapps. we havent touched the
+  surface of that yet" then "Go!" — web wallet + a really good DEX are TOP priority.
+- Deployed to Vercel (waychain-site project) via `vercel deploy --prod --project
+  waychain-site` from site/:
+  - Mission Control (/mission-control): live economy dashboard, reads way_econo*
+    RPCs directly. PR #99 (merged to master).
+  - DEX (/dex): REBUILT as a real dapp — swap + addLiquidity call SwapRoute 0x25
+    on-chain with verified calldata. PR #102 (merged to master).
+  - Web wallet (/wallet): audited, already correct (js/wallet.js uses 64-hex
+    pubkey; BIJO 0x14 is a distinct token from SWAY 0x24 — no rename). Issue #100
+    closed verified-OK.
+- CAVEAT (truth-first): the live node (api.waychain.org) must run the PR #95
+  binary for way_econo* RPCs + current swap_route.go to be live. Site pages deploy
+  regardless; they show "node unreachable" until the node is redeployed with #95.
+  Node redeploy is a SEPARATE step — held pending explicit founder go (prior
+  founder has stopped redeploys mid-flight).
+- Source: founder chat 2026-07-18 ("Go!" x2 on dapps + deploy).

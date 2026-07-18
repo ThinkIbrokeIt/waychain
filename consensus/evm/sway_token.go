@@ -34,7 +34,7 @@ import (
 // SWAY monetary constants (DECISIONS.md 2026-07-18).
 const (
 	SwayInitialSupply uint64 = 1_000_000_000 // 1B at genesis
-	SwayHardCeiling   uint64 = 10_000_000_000 // 10B safety rail (cannot cross)
+	SwayHardCeiling   uint64 = 5_000_000_000 // 5B safety rail (founder 2026-07-18: "cap it at 5 billion sway")
 
 	// Allocation of the initial 1B (percent of initial supply).
 	// ALL SWAY is REWARDS — earned by participation. No insider/team/backer
@@ -134,6 +134,37 @@ func SwayEmissionBps() uint64 {
 		rate = 0
 	}
 	return uint64(rate)
+}
+
+// SwayProjectedEmissionFromGBP is a READ-ONLY telemetry function. It computes
+// what SWAY emission WOULD be if rewards were minted as `pctBps` of the
+// economy's yearly earnings (GBP), using the live EconoGBPEquiv accumulator.
+//
+// It has NO mint authority — it is a projection only, so the founder can see
+// the real numbers before any percentage is hardcoded (DECISIONS.md 2026-07-18:
+// "we will need to see the numbers before that gets hard coded").
+//
+// Model: yearlyEarnings = EconoGBPEquiv() * epochsPerYear
+//        projectedSWAY = yearlyEarnings * pctBps / 10000
+// Returns projected SWAY per year at the given percentage.
+func SwayProjectedEmissionFromGBP(pctBps uint64) *big.Int {
+	gbpThisWindow := EconoGBPEquiv() // uint64, WAY-denominated output this epoch
+	if gbpThisWindow == 0 {
+		return big.NewInt(0)
+	}
+	// Self-contained year math (3s blocks, 10k-block epoch = consensus defaults).
+	const blockTimeSec = 3
+	const epochLen = 10_000
+	secondsPerYear := uint64(365 * 24 * 3600)
+	epochsPerYear := secondsPerYear / (blockTimeSec * epochLen)
+
+	yearlyEarnings := new(big.Int).Mul(
+		new(big.Int).SetUint64(gbpThisWindow),
+		new(big.Int).SetUint64(epochsPerYear),
+	)
+	proj := new(big.Int).Mul(yearlyEarnings, new(big.Int).SetUint64(pctBps))
+	proj.Div(proj, big.NewInt(10_000))
+	return proj
 }
 
 // swayMintInternal mints `amount` SWAY to `to`, enforcing the hard ceiling and
