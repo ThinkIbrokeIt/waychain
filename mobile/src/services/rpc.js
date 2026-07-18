@@ -91,6 +91,15 @@ export const waychainRPC = {
     }
   },
 
+  // Dox_Dev badge level (0 unverified → 1 basic → 2 professional → 3p/3t governed/task).
+  // Chain RPC: way_getDoxLevel(address) returns hex level.
+  getDoxLevel: async (addressOrAccount) => {
+    const pub64 = addressOrAccount?.publicKey || addressOrAccount;
+    const res = await waychainRPC.call('way_getDoxLevel', [pub64]);
+    const n = parseInt(res, 16);
+    return Number.isFinite(n) ? n : 0;
+  },
+
   getAddressFromKey: (privateKey) => {
     // Delegate to real derivation; caller should use wallet.deriveFromPrivateKey instead.
     return privateKey;

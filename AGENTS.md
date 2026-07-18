@@ -33,7 +33,7 @@ waychain/
 |---|---|
 | Chain ID | 10008 (`0x2718`) |
 | Precompiles | **27** @ **0x0C–0x26** |
-| 0x21 | **WIFRGantletRewards** (not Keccak) |
+| 0x21 | **Keccak256** (SHA-3 precompile; was mislabeled WIFRGantletRewards pre-#65) |
 | Selectors | `sha256(sig)[:4]` |
 | EOA key / balance / tx.from | **64-hex** pubkey; 20-byte display only |
 | Live node | AWS **3.89.116.45** `waychain.service` |

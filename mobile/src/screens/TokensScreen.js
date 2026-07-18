@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import AmountField from '../components/AmountField';
 import { wallet } from '../services/wallet';
 import { waychainRPC } from '../services/rpc';
 
@@ -129,8 +130,7 @@ export default function TokensScreen({ navigation }) {
         <Text style={styles.row}><Text style={styles.k}>Your balance</Text>
           <Text style={[styles.v, !swayBal && styles.unavail]}>{swayBal ? formatWay(swayBal) + ' SWAY' : (loading ? '—' : 'unavailable')}</Text></Text>
         <Text style={styles.note}>SWAY getBalance is temporarily unavailable on the public RPC (node error). burn is offered but may also error until fixed.</Text>
-        <TextInput value={burnAmt} onChangeText={setBurnAmt} placeholder="amount to burn" placeholderTextColor={COLORS.muted}
-          style={styles.input} keyboardType="decimal-pad" />
+        <AmountField label="" value={burnAmt} onChange={setBurnAmt} placeholder="0.0 SWAY" />
         <Button label={busy === 'Burn SWAY' ? 'Submitting…' : 'Burn SWAY'} onPress={burnSway} disabled={!!busy || loading} style={styles.btn} />
       </View>
 

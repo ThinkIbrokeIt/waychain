@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import AmountField from '../components/AmountField';
 import { wallet } from '../services/wallet';
 import { waychainRPC } from '../services/rpc';
 
@@ -17,7 +18,7 @@ import { waychainRPC } from '../services/rpc';
 // shows the last tx result honestly. 2WAY balance is minted here; read via token
 // registry when exposed (#68 follow-up).
 
-const SYMBOLS = ['USDC', 'USDT', 'DAI', '1WAY']; // accepted collateral (isAcceptedCollateral)
+const STABLES = ['USDC', 'USDT', 'DAI']; // user-picked stable; 1WAY is the fixed second collateral
 
 function pad32(h) { return h.replace(/^0x/, '').padStart(64, '0'); }
 function encodeUint256(v) {
@@ -36,9 +37,9 @@ function defaultVaultId(address) { return pad32(address); } // one vault per add
 export default function TwoWayVaultScreen() {
   const [account, setAccount] = useState(null);
   const [vaultId, setVaultId] = useState('');
-  const [symbol, setSymbol] = useState(SYMBOLS[0]);
-  const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [stable, setStable] = useState(STABLES[0]);   // user-selected stablecoin
+  const [amtStable, setAmtStable] = useState('');      // amount of stable
+  const [amt1way, setAmt1way] = useState('');          // amount of 1WAY (symbol fixed)
   const [busy, setBusy] = useState('');
   const [last, setLast] = useState(null);
 
@@ -50,14 +51,64 @@ export default function TwoWayVaultScreen() {
   }, []);
   useEffect(() => { loadAccount(); }, [loadAccount]);
 
-  const write = async (label, buildArgs) => {
+  // Deposit TWO collaterals: 1WAY (fixed) + user stable. Two on-chain deposit calls.
+  const depositDual = async () => {
     if (!account) { Alert.alert('No wallet', 'Create or import a wallet to transact.'); return; }
     const id = vaultId.trim().replace(/^0x/, '');
     if (!/^[0-9a-fA-F]{64}$/.test(id)) { Alert.alert('Invalid vault ID', 'Enter a 32-byte (64 hex) vault ID.'); return; }
-    const amt = encodeUint256(amount || '0');
-    if (BigInt(amount || '0') <= 0n) { Alert.alert('Enter an amount', 'Amount must be greater than 0.'); return; }
+    const a1 = BigInt(amt1way || '0'), aS = BigInt(amtStable || '0');
+    if (a1 <= 0n || aS <= 0n) { Alert.alert('Enter both amounts', 'Provide 1WAY amount AND stable amount.'); return; }
+    setBusy('Deposit');
+    try {
+      // 1) deposit 1WAY
+      await waychainRPC.precompileCall('0x18', 'deposit', pad32(id) + encodeSymbol('1WAY') + encodeUint256(amt1way), {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      // 2) deposit stable
+      const res = await waychainRPC.precompileCall('0x18', 'deposit', pad32(id) + encodeSymbol(stable) + encodeUint256(amtStable), {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      setLast({ label: 'Deposit (1WAY + ' + stable + ')', tx: ((res && res.txHash) || 'pending').slice(0, 20) });
+      Alert.alert('Deposit submitted', 'Deposited 1WAY + ' + stable + '. Now mint 2WAY.');
+    } catch (e) {
+      setLast({ label: 'Deposit', err: e?.message || 'Unknown error' });
+      Alert.alert('Deposit failed', e?.message || 'Unknown error');
+    } finally { setBusy(''); }
+  };
+
+  const mint = () => writeSingle('Mint', (id, amt) => pad32(id) + amt);
+  const burn = () => writeSingle('Burn', (id, amt) => pad32(id) + amt);
+  // Withdraw TWO collaterals (mirror deposit): 1WAY + stable.
+  const withdrawDual = async () => {
+    if (!account) { Alert.alert('No wallet'); return; }
+    const id = vaultId.trim().replace(/^0x/, '');
+    if (!/^[0-9a-fA-F]{64}$/.test(id)) { Alert.alert('Invalid vault ID'); return; }
+    const a1 = BigInt(amt1way || '0'), aS = BigInt(amtStable || '0');
+    if (a1 <= 0n || aS <= 0n) { Alert.alert('Enter both amounts', 'Provide 1WAY amount AND stable amount.'); return; }
+    setBusy('Withdraw');
+    try {
+      await waychainRPC.precompileCall('0x18', 'withdraw', pad32(id) + encodeSymbol('1WAY') + encodeUint256(amt1way), {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      const res = await waychainRPC.precompileCall('0x18', 'withdraw', pad32(id) + encodeSymbol(stable) + encodeUint256(amtStable), {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      setLast({ label: 'Withdraw (1WAY + ' + stable + ')', tx: ((res && res.txHash) || 'pending').slice(0, 20) });
+      Alert.alert('Withdraw submitted', 'Withdrew 1WAY + ' + stable + '.');
+    } catch (e) {
+      setLast({ label: 'Withdraw', err: e?.message || 'Unknown error' });
+      Alert.alert('Withdraw failed', e?.message || 'Unknown error');
+    } finally { setBusy(''); }
+  };
+
+  const writeSingle = async (label, buildArgs) => {
+    if (!account) { Alert.alert('No wallet', 'Create or import a wallet to transact.'); return; }
+    const id = vaultId.trim().replace(/^0x/, '');
+    if (!/^[0-9a-fA-F]{64}$/.test(id)) { Alert.alert('Invalid vault ID', 'Enter a 32-byte (64 hex) vault ID.'); return; }
+    if (BigInt(amtStable || '0') <= 0n && BigInt(amt1way || '0') <= 0n) { Alert.alert('Enter an amount', 'Amount must be greater than 0.'); return; }
     setBusy(label);
     try {
+      const amt = encodeUint256(amtStable || amt1way);
       const args = buildArgs(id, amt);
       const res = await waychainRPC.precompileCall('0x18', label.toLowerCase(), args, {
         write: true, privHex: account.privateKey, pub64: account.publicKey,
@@ -67,15 +118,9 @@ export default function TwoWayVaultScreen() {
     } catch (e) {
       setLast({ label, err: e?.message || 'Unknown error' });
       Alert.alert(label + ' failed', e?.message || 'Unknown error');
-    } finally {
-      setBusy('');
-    }
+    } finally { setBusy(''); }
   };
 
-  const deposit = () => write('Deposit', (id, amt) => pad32(id) + encodeSymbol(symbol) + amt);
-  const mint = () => write('Mint', (id, amt) => pad32(id) + amt);
-  const withdraw = () => write('Withdraw', (id, amt) => pad32(id) + encodeSymbol(symbol) + amt);
-  const burn = () => write('Burn', (id, amt) => pad32(id) + amt);
   const liquidate = () => {
     const id = vaultId.trim().replace(/^0x/, '');
     if (!/^[0-9a-fA-F]{64}$/.test(id)) { Alert.alert('Invalid vault ID', 'Enter a 32-byte (64 hex) vault ID.'); return; }
@@ -96,25 +141,27 @@ export default function TwoWayVaultScreen() {
         <TextInput value={vaultId} onChangeText={setVaultId} placeholder="0x… 64 hex (default = your address)" placeholderTextColor={COLORS.muted}
           style={styles.input} autoCapitalize="none" />
 
-        <Text style={styles.label}>Collateral symbol</Text>
+        <Text style={styles.label}>1WAY amount (fixed collateral)</Text>
+        <AmountField label="" value={amt1way} onChange={setAmt1way} placeholder="0.0 WAY" />
+
+        <Text style={styles.label}>Stablecoin</Text>
         <View style={styles.symbolRow}>
-          {SYMBOLS.map(s => (
-            <TouchableOpacity key={s} style={[styles.symBtn, symbol === s && styles.symActive]} onPress={() => setSymbol(s)}>
-              <Text style={[styles.symTxt, symbol === s && styles.symTxtActive]}>{s}</Text>
+          {STABLES.map(s => (
+            <TouchableOpacity key={s} style={[styles.symBtn, stable === s && styles.symActive]} onPress={() => setStable(s)}>
+              <Text style={[styles.symTxt, stable === s && styles.symTxtActive]}>{s}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>Amount (18 decimals)</Text>
-        <TextInput value={amount} onChangeText={setAmount} placeholder="e.g. 1000000000000000000" placeholderTextColor={COLORS.muted}
-          style={styles.input} keyboardType="decimal-pad" />
+        <Text style={styles.label}>Stable amount ({stable})</Text>
+        <AmountField label="" value={amtStable} onChange={setAmtStable} placeholder="0.0 WAY" />
 
         <View style={styles.actions}>
-          <Button label={busy === 'Deposit' ? '…' : 'Deposit'} onPress={deposit} disabled={!!busy} variant="secondary" style={styles.actBtn} />
+          <Button label={busy === 'Deposit' ? '…' : 'Deposit (1WAY+Stable)'} onPress={depositDual} disabled={!!busy} variant="secondary" style={styles.actBtn} />
           <Button label={busy === 'Mint' ? '…' : 'Mint 2WAY'} onPress={mint} disabled={!!busy} variant="secondary" style={styles.actBtn} />
         </View>
         <View style={styles.actions}>
-          <Button label={busy === 'Withdraw' ? '…' : 'Withdraw'} onPress={withdraw} disabled={!!busy} variant="secondary" style={styles.actBtn} />
+          <Button label={busy === 'Withdraw' ? '…' : 'Withdraw (1WAY+Stable)'} onPress={withdrawDual} disabled={!!busy} variant="secondary" style={styles.actBtn} />
           <Button label={busy === 'Burn' ? '…' : 'Burn 2WAY'} onPress={burn} disabled={!!busy} variant="secondary" style={styles.actBtn} />
         </View>
         <Button label={busy === 'Liquidate' ? 'Liquidating…' : 'Liquidate Vault'} onPress={liquidate} disabled={!!busy || !account} style={styles.liqBtn} />
@@ -129,9 +176,7 @@ export default function TwoWayVaultScreen() {
         </View>
       )}
 
-      <Text style={styles.note}>TwoWayVault (0x18): deposit stablecoins, mint/burn 2WAY synthetic USD against collateral. Selectors verified vs evm/two_way.go. Vault read state is via chain logs (no read selector yet); last tx result shown above. Collateral symbols accepted on-chain: USDC/USDT/DAI/1WAY.</Text>
-
-      {loading && <ActivityIndicator color={COLORS.copper} style={{ marginTop: 12 }} />}
+      <Text style={styles.note}>TwoWay Vault (0x18): borrow 2WAY (synthetic USD) by locking up collateral. You put in 1WAY plus a stablecoin, and the vault lets you mint 2WAY against them — useful for spending USD-value without selling your 1WAY. Repay and withdraw your collateral later.</Text>
     </ScrollView>
   );
 }

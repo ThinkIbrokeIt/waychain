@@ -8,7 +8,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "node test/precompiles.test.mjs && node test/precompile-call.test.mjs && node test/precompile-selectors.test.mjs && node test/balance-64hex.test.mjs"
+    "test": "node scripts/check-missing-imports.mjs && node test/precompiles.test.mjs && node test/precompile-call.test.mjs && node test/precompile-selectors.test.mjs && node test/balance-64hex.test.mjs",
+    "guard": "node scripts/check-missing-imports.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
