@@ -21,8 +21,8 @@ export default function BrandHeader({ subtitle, tagline }) {
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', paddingTop: 28, paddingBottom: 16 },
   logo: { width: 88, height: 88 },
-  brand: { fontFamily: FONTS.display, fontSize: 28, color: COLORS.warm, letterSpacing: 2, marginTop: 8 },
-  subtitle: { fontFamily: FONTS.medium, fontSize: 14, color: COLORS.copper, textTransform: 'uppercase', letterSpacing: 3, marginTop: 4 },
+  brand: { fontFamily: FONTS.display, fontSize: 28, color: COLORS.warm, letterSpacing: 2, marginTop: 8, textAlign: 'center' },
+  subtitle: { fontFamily: FONTS.medium, fontSize: 14, color: COLORS.copper, textTransform: 'uppercase', letterSpacing: 3, marginTop: 4, textAlign: 'center' },
   rule: { width: 44, height: 2, backgroundColor: COLORS.copper, marginTop: 10, marginBottom: 8 },
   tagline: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, letterSpacing: 0.5, textAlign: 'center', paddingHorizontal: 20 },
 });
