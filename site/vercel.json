@@ -39,6 +39,8 @@
     { "source": "/wifr/quest", "destination": "/wifr/quests.html" },
     { "source": "/wif", "destination": "/wif.html" },
     { "source": "/docs/run-a-node", "destination": "/docs/run-a-node.html" },
+    { "source": "/mission-control", "destination": "/mission-control/index.html" },
+    { "source": "/mission-control/", "destination": "/mission-control/index.html" },
     { "source": "/gauntlet", "destination": "/gauntlet/index.html" },
     { "source": "/gauntlet/", "destination": "/gauntlet/index.html" },
     { "source": "/gauntlet/leaderboard", "destination": "/gauntlet/leaderboard/index.html" },
