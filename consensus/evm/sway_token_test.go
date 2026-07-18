@@ -18,9 +18,9 @@ func TestSwayInitSeedsSupplyAndBuckets(t *testing.T) {
 	if SwayCirculating(s).Uint64() != SwayInitialSupply {
 		t.Fatalf("SwayInit not idempotent: %d", SwayCirculating(s).Uint64())
 	}
-	// Buckets sum to initial supply (45+20+15+12+8 = 100%).
+	// Buckets sum to initial supply (45+20+35 = 100%).
 	sum := new(big.Int)
-	for _, b := range []string{"futureTasks", "dexLP", "ecosystem", "team", "backers"} {
+	for _, b := range []string{"futureTasks", "dexLP", "ecosystem"} {
 		sum.Add(sum, SwayBucketBalance(s, b))
 	}
 	if sum.Uint64() != SwayInitialSupply {

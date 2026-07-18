@@ -6,22 +6,27 @@ import (
 )
 
 // ══════════════════════════════════════════════════════════════════════
-// SWAY Token (0x24) — WayChain Ecosystem Incentive Token
+// SWAY Token (0x24) — WayChain REWARDS Token
 //
-// ROLE (DECISIONS.md 2026-07-18): SWAY is the ecosystem incentive token for
-// ALL FUTURE USERS (task economy + DEX LP + onboarding). WAY (100M fixed) is
-// reserved for genesis dev + base user only. SWAY is the "a lot more" token.
+// ROLE (DECISIONS.md 2026-07-18, refined): 
+//   - WAY = the PAYMENT token for the economy (pay for tasks/fees/services).
+//     Genesis dev + base user got the initial WAY allocation; WAY flows to all
+//     participants as payment for economic activity (e.g. task payouts from
+//     treasury 0x03).
+//   - SWAY = the REWARDS token. Earned by PARTICIPATION (completing tasks,
+//     providing DEX liquidity, community contribution). NO insider allocation,
+//     NO cliff-vesting, NO veModel. Everyone earns SWAY the same way.
 //
 // MONETARY POLICY (approved model):
 //   - Initial supply: 1,000,000,000 (1B) = 10× WAY
 //   - Hard ceiling:   10,000,000,000 (10B) = safety rail, CANNOT be crossed
 //   - Base emission:  ~2–3%/yr of circulating, ADJUSTED by the econo phase
 //     engine (econo_loop.go): Expansion → less emission + more burn;
-//     Consolidation → more emission (stimulus for future-user task rewards).
+//     Consolidation → more emission (stimulus for future-user rewards).
 //   - Burn flywheel: swap-fee share + task-fee share → buyback & burn.
 //
 // This is INFLATIONARY-ADAPTIVE with a hard ceiling, NOT a rigid small cap
-// (which would run out of bullets for future-user incentives) and NOT unbounded
+// (which would run out of bullets for future-user rewards) and NOT unbounded
 // (which would dilute holders). The econo phase engine is the "governance knob"
 // the DEX-framework literature recommends — and it already exists on WayChain.
 // ══════════════════════════════════════════════════════════════════════
@@ -32,11 +37,11 @@ const (
 	SwayHardCeiling   uint64 = 10_000_000_000 // 10B safety rail (cannot cross)
 
 	// Allocation of the initial 1B (percent of initial supply).
-	SwayAllocFutureTasks uint64 = 45 // future-user task incentives
+	// ALL SWAY is REWARDS — earned by participation. No insider/team/backer
+	// carve-out (that is the VC-world pattern; rejected — DECISIONS.md).
+	SwayAllocFutureTasks uint64 = 45 // task-completion rewards
 	SwayAllocDEXLP       uint64 = 20 // DEX LP rewards
-	SwayAllocEcosystem   uint64 = 15 // community / grants / onboarding
-	SwayAllocTeam        uint64 = 12 // core team & contributors (vested)
-	SwayAllocBackers     uint64 = 8  // early backers (vested)
+	SwayAllocEcosystem   uint64 = 35 // community / grants / onboarding / contributor rewards
 
 	// Base annual emission (basis points of circulating supply).
 	SwayBaseEmissionBps uint64 = 250 // 2.5%/yr baseline
@@ -88,8 +93,6 @@ func SwayInit(state *StateDB) {
 		{"futureTasks", SwayAllocFutureTasks},
 		{"dexLP", SwayAllocDEXLP},
 		{"ecosystem", SwayAllocEcosystem},
-		{"team", SwayAllocTeam},
-		{"backers", SwayAllocBackers},
 	}
 	for _, b := range buckets {
 		amt := new(big.Int).Mul(total, new(big.Int).SetUint64(b.pct))
