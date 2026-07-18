@@ -1334,6 +1334,9 @@ func storageEndowmentPrecompile(input []byte, caller string, state *StateDB, blo
 				storageKey([]byte("OperatorRegistered")),
 			}, []byte(caller), blockNum)
 
+			// ── Economic Health: data-storage economy — capital committed ──
+			EconoAccrueStorage(stakeAmount.Uint64(), blockNum)
+
 			return []byte{1}, nil
 
 		case selSEUnregisterOperator:

@@ -1,7 +1,15 @@
 # WayChain Supply & Roadmap — v1.0
 
+> **⚠️ SUPERSEDED — see `DECISIONS-LEDGER.md` (repo root) for current truth.**
+> The "Equal per Dox_Dev-verified human" genesis distribution described below was
+> **SHELVED** (founder, 2026-07-17: "thats because it doesnt make sense and why it
+> got shelved"). The live code (`consensus/genesis.go`) seeds treasury 10M + ecosystem
+> 13.5M and defers the rest to inflation — it does NOT equal-distribute to humans.
+> Additionally, the "95M treasury" the founder decided (2026-07-18) is NOT yet in code.
+> This doc is reference/history, not current spec. Treat `DECISIONS-LEDGER.md` as SoT.
+
 **Genesis supply:** 100,000,000 WAY
-**Distribution:** Equal per Dox_Dev-verified human
+**Distribution:** ~~Equal per Dox_Dev-verified human~~ — SHELVED (see ledger). Live code: treasury + ecosystem seeded, rest via inflation.
 **No pre-mine, no pre-sale, no VC allocation.**
 
 ---
@@ -46,10 +54,16 @@ adoption. A successful chain at $1.00/WAY in year 10 pays validators
 pays $200/year. The economics are self-reinforcing: adoption → value →
 validator retention → more adoption.
 
-### 1.2 Genesis Distribution
+### 1.2 Genesis Distribution — SHELVED
 
-**100M WAY at genesis.** Every Dox_Dev-verified human receives an
-equal share. The per-human amount depends on the genesis cohort size:
+> **SUPERSEDED.** The equal-per-human model below was **shelved** (founder, 2026-07-17).
+> Live code (`consensus/genesis.go`) seeds `treasury` (10M) + `ecosystem` (13.5M) and
+> defers the rest to inflation. It does NOT equal-distribute to humans. The later
+> founder decision (2026-07-18) is **95M treasury + 5% live** — also NOT yet in code.
+> See `DECISIONS-LEDGER.md`. The table below is historical reference only.
+
+**100M WAY at genesis.** ~~Every Dox_Dev-verified human receives an
+equal share.~~ (SHELVED) The per-human amount depends on the genesis cohort size:
 
 | Genesis Cohort | Per Human | Usable For |
 |---------------|-----------|-----------|
@@ -148,8 +162,7 @@ This is the most volatile price driver. It's also the most powerful.
 | Genesis cohort recruitment | Month 6 | 200+ verified humans with hardware |
 | **Mainnet genesis** | **Month 6** | **Chain launches with 200 validators** |
 
-**Phase 0 supply:** 100M WAY genesis. Equal distribution to verified humans.
-Treasury holds 10M WAY reserve. Inflation at 7%.
+**Phase 0 supply:** 100M WAY genesis. ~~Equal distribution to verified humans.~~ (SHELVED — see ledger) Treasury holds 10M WAY reserve (live code); founder's 95M-treasury/5%-live decision NOT yet coded. Inflation at 7%.
 
 **Phase 0 validator econ:** Validators earn ~29,750 WAY/yr from issuance.
 Treasury subsidy covers VPS ($50/mo) for all active validators.
@@ -307,6 +320,6 @@ These are locked at genesis. Governance cannot change them.
 3. **Progressive staking curve exists.** Brackets adjust. Curve cannot be removed.
 4. **Fees are fiat-pegged.** Stay cheap in real terms.
 5. **No pre-mine, no pre-sale.** Ever.
-6. **Genesis distribution is equal per verified human.** No exceptions.
+6. ~~**Genesis distribution is equal per verified human.**~~ SHELVED (founder, 2026-07-17). Live code seeds treasury+ecosystem, defers rest to inflation. See `DECISIONS-LEDGER.md`.
 7. **Treasury is transparent.** All transactions on-chain.
 8. **The roadmap above is the plan.** We follow it or we explicitly vote to change it.

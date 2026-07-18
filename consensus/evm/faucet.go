@@ -1,0 +1,168 @@
+package evm
+
+import (
+	"fmt"
+	"math/big"
+)
+
+// ════════════════════════════════════════════════════════════════════
+// 0x27 — GasFaucet
+//
+// Drips WAY to new accounts / quest trackers so they can pay gas.
+// Gas is charged in WAY (chain.go:507), so a small reserve keeps a tracker
+// funded for ~100k txs. Reserve seeded from treasury 0x03 at genesis.
+//
+// Selectors (sha256(sig)[:4]):
+//   drip()                  0x2A7AB5DA
+//   getDripAmount()        0xF7C3438B
+//   getLastDrip(address)   0x1DECB48C
+//   getFaucetBalance()      0x1AC9C1D0
+//   setDripAmount(uint256)  0x94AC47F1
+//   setCooldown(uint64)     0x8567A687
+// ════════════════════════════════════════════════════════════════════
+
+// Faucet storage layout
+// Slot 0x00: dripAmount (uint256, wei)
+// Slot 0x01: cooldownBlocks (uint64)
+// Slot 0x02: totalDripped (uint256, wei)
+// Per-address last drip block: storageKey(0x10 ++ address[20]) → uint64
+
+// Faucet defaults
+const (
+	FaucetDefaultDripAmount  = 1_000_000_000_000_000_000 // 1 WAY
+	FaucetDefaultCooldown    = uint64(1000)               // blocks
+	FaucetGenesisReserve     = 1_000_000_000_000_000_000_000_000 // 1,000,000 WAY seed
+)
+
+// Faucet selectors
+const (
+	selFaucetDrip          uint32 = 0x2A7AB5DA // drip()
+	selFaucetGetDripAmount uint32 = 0xF7C3438B // getDripAmount()
+	selFaucetGetLastDrip   uint32 = 0x1DECB48C // getLastDrip(address)
+	selFaucetGetBalance    uint32 = 0x1AC9C1D0 // getFaucetBalance()
+	selFaucetSetDripAmount uint32 = 0x94AC47F1 // setDripAmount(uint256)
+	selFaucetSetCooldown   uint32 = 0x8567A687 // setCooldown(uint64)
+)
+
+func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint64) ([]byte, error) {
+	sel := selectorBytes(input)
+	addr := PrecompileAddrHex(0x27)
+	acc := state.GetOrCreateAccount(addr)
+
+	// parse caller as 20-byte address
+	var callerAddr [20]byte
+	cb := []byte(caller)
+	if len(cb) >= 4 && cb[0] == '0' && cb[1] == 'x' {
+		copy(callerAddr[:], cb[2:22])
+	} else if len(cb) >= 20 {
+		copy(callerAddr[:], cb[:20])
+	}
+
+	switch sel {
+	case selFaucetDrip:
+		// rate-limit: one drip per cooldownBlocks
+		cooldown := readUint64(acc.Storage[storageKey([]byte{0x01})])
+		if cooldown == 0 {
+			cooldown = FaucetDefaultCooldown
+		}
+		lastKey := storageKey(append([]byte{0x10}, callerAddr[:]...))
+		lastDrip := readUint64(acc.Storage[lastKey])
+		if lastDrip != 0 && blockNum < lastDrip+cooldown {
+			return []byte{0}, nil // rate-limited
+		}
+		drip := readBigInt(acc.Storage[storageKey([]byte{0x00})])
+		if drip.Sign() == 0 {
+			drip = new(big.Int).SetUint64(FaucetDefaultDripAmount)
+		}
+		// reserve check
+		reserve := acc.Balance
+		if reserve == nil {
+			reserve = new(big.Int)
+		}
+		if reserve.Cmp(drip) < 0 {
+			return []byte{0}, nil // empty
+		}
+		// transfer drip from faucet reserve to caller
+		reserve.Sub(reserve, drip)
+		acc.Balance = reserve
+		recipient := state.GetOrCreateAccount(caller)
+		if recipient.Balance == nil {
+			recipient.Balance = new(big.Int)
+		}
+		recipient.Balance.Add(recipient.Balance, drip)
+		// record last drip + total
+		var lb [32]byte
+		new(big.Int).SetUint64(blockNum).FillBytes(lb[:])
+		acc.Storage[lastKey] = lb
+		totalKey := storageKey([]byte{0x02})
+		total := readBigInt(acc.Storage[totalKey])
+		total.Add(total, drip)
+		acc.Storage[totalKey] = writeBigInt(total)
+		state.AddLog(addr, [][32]byte{storageKey([]byte("FaucetDrip"))}, []byte(caller), blockNum)
+		return []byte{1}, nil
+
+	case selFaucetGetDripAmount:
+		drip := readBigInt(acc.Storage[storageKey([]byte{0x00})])
+		if drip.Sign() == 0 {
+			drip = new(big.Int).SetUint64(FaucetDefaultDripAmount)
+		}
+		out := make([]byte, 32)
+		drip.FillBytes(out)
+		return out, nil
+
+	case selFaucetGetLastDrip:
+		target := readAddress(input, 4)
+		lastKey := storageKey(append([]byte{0x10}, target[:]...))
+		out := make([]byte, 8)
+		new(big.Int).SetUint64(readUint64(acc.Storage[lastKey])).FillBytes(out)
+		return out, nil
+
+	case selFaucetGetBalance:
+		out := make([]byte, 32)
+		if acc.Balance != nil {
+			acc.Balance.FillBytes(out)
+		}
+		return out, nil
+
+	case selFaucetSetDripAmount:
+		// founder-tunable: only treasury (0x03) or a curator may set
+		if !isFaucetAdmin(caller, state) {
+			return nil, fmt.Errorf("GasFaucet: setDripAmount requires admin")
+		}
+		amt := readUint256(input, 4)
+		acc.Storage[storageKey([]byte{0x00})] = writeBigInt(amt)
+		return []byte{1}, nil
+
+	case selFaucetSetCooldown:
+		if !isFaucetAdmin(caller, state) {
+			return nil, fmt.Errorf("GasFaucet: setCooldown requires admin")
+		}
+		cd := readUint64FromInput(input, 4)
+		acc.Storage[storageKey([]byte{0x01})] = writeUint64(cd)
+		return []byte{1}, nil
+
+	default:
+		return nil, fmt.Errorf("GasFaucet: unknown selector 0x%08X", sel)
+	}
+}
+
+// isFaucetAdmin: treasury (0x03) or a Dox_Dev L3 curator may tune the faucet.
+func isFaucetAdmin(caller string, state *StateDB) bool {
+	cb := []byte(caller)
+	var callerAddr [20]byte
+	if len(cb) >= 4 && cb[0] == '0' && cb[1] == 'x' {
+		copy(callerAddr[:], cb[2:22])
+	} else if len(cb) >= 20 {
+		copy(callerAddr[:], cb[:20])
+	}
+	// treasury precompile address
+	if string(callerAddr[:]) == PrecompileAddrHex(0x03) {
+		return true
+	}
+	// L3 curator (Dox_Dev level >= 3) — check badge precompile storage
+	badgeAddr := PrecompileAddrHex(0x13)
+	badgeAcc := state.GetOrCreateAccount(badgeAddr)
+	levelKey := storageKey(append([]byte{0x20}, callerAddr[:]...))
+	level := readBigInt(badgeAcc.Storage[levelKey])
+	return level.Cmp(big.NewInt(3)) >= 0
+}

@@ -247,6 +247,11 @@ func (c *Chain) InitPrecompiles() {
 	// No genesis state required; account is created so the precompile address
 	// exists. Reward-pool init removed (WIFRGantletRewards retired — see #61/#62/#63).
 	_ = c.State.GetOrCreateAccount(evm.PrecompileAddrHex(0x21))
+
+	// ── SWAY (0x24): seed the ecosystem incentive token ──
+	// Initial 1B supply + allocation buckets (45/20/15/12/8). Idempotent;
+	// runs once at genesis. See DECISIONS.md 2026-07-18.
+	evm.SwayInit(c.State)
 }
 
 // SeedQuestSupply seeds the live WAY total-supply tracker (slot 0x41 of 0x23)
@@ -557,6 +562,12 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 	// Rollover the per-epoch emission cap when a new epoch begins.
 	if c.Staking != nil && c.Staking.EpochLength > 0 && c.Height%c.Staking.EpochLength == 0 {
 		c.Staking.RolloverEpoch()
+		// ── Economic Health: freeze the window, compute phase, run the
+		// automated feedback loop (expansion burn / consolidation stimulus).
+		// Truth-first: computed by the chain from real payout events, hard-
+		// capped so the token cannot be destabilized by the loop.
+		evm.AccrueEcono(c.State, c.Height)
+		evm.ApplyEconoPolicy(c.State)
 	}
 
 	// Distribute staking rewards for this block (anchored to the 7% annual cap).

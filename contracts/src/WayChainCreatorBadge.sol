@@ -18,6 +18,8 @@ contract WayChainCreatorBadge {
     address public ecosystemCreator;
     bool public creatorRetired = false;
     uint256 public ecosystemStabilityScore = 0; // Increases as contracts verify stable
+    string public clue = "L-9"; // Founder-dropped clue for collectors (updatable until retirement)
+    event ClueDropped(string clue);
 
     uint256 public constant RANK_0_CREATOR = 0;    // Launch verified
     uint256 public constant RANK_1_MAINTAINER = 1; // 1 week no bugs
@@ -55,6 +57,14 @@ contract WayChainCreatorBadge {
         
         emit BadgeMinted(msg.sender, tokenId, uint8(RANK_0_CREATOR), initialVerification);
         return tokenId;
+    }
+
+    // Drop a clue onto the badge itself (collector puzzle). Founder-only, updatable
+    // until the badge is retired — then the clue is frozen on-chain for holders.
+    function dropClue(string memory c) external {
+        require(msg.sender == ecosystemCreator, "Only creator");
+        clue = c;
+        emit ClueDropped(c);
     }
 
     function retireCreator() external {
@@ -135,7 +145,7 @@ contract WayChainCreatorBadge {
                 "{\"name\":\"WayChain Creator Badge #", _toString(tokenId),
                 "\",\"description\":\"Genesis launch certification - unique NFT\",\"attributes\":[{\"trait_type\":\"Rank\",\"value\":\"",
                 _rankToString(rank), "\"},{\"trait_type\":\"Unique\",\"value\":\"true\"},{\"trait_type\":\"Auctionable\",\"value\":\"",
-                creatorRetired ? "retired" : "active", "\"}]}"
+                creatorRetired ? "retired" : "active", "\"},{\"trait_type\":\"Clue\",\"value\":\"", clue, "\"}]}"
             ))
         ));
     }

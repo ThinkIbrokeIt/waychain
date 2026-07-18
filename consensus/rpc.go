@@ -462,6 +462,28 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 	case "way_questCap":
 		return "0x" + evm.QuestCap(rpc.chain.State).Text(16), nil
 
+	// ── Economic Health indicators (on-chain macroeconomics) ──
+	// The chain computes the four decentralized indicators + phase from real
+	// TaskRegistry (0x23) payout events. This is the read surface the
+	// EconoAnalytics oracle + dashboard consume. Truth lives here (Go core),
+	// not in the app-layer Solidity mirror.
+	case "way_econoIndicators":
+		return evm.GetEconoIndicators(rpc.chain.State, rpc.chain.Height), nil
+
+	case "way_econoPolicy":
+		p := evm.GetEconoPolicy()
+		return map[string]interface{}{
+			"phase":     p.Phase,
+			"phaseLabel": func() string {
+				if p.Phase == 1 {
+					return "Expansion"
+				}
+				return "Consolidation"
+			}(),
+			"burnBps":  p.BurnBps,
+			"grantBps": p.GrantBps,
+		}, nil
+
 	// ── Contract Deployment ──
 	case "way_deployCode":
 		var p []string

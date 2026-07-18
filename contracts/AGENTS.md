@@ -1,5 +1,12 @@
 # WayChain Contracts — AGENTS.md
 
+> **⚠️ SUPERSEDED — see `DECISIONS-LEDGER.md` (repo root) for current truth.**
+> This file contains stale claims. Specifically: the "do NOT deploy .sol on WayChain
+> mainnet until the keccak selector bridge lands" guidance (§6) is **WRONG** — the
+> 0x21 Keccak256 precompile is already live (`consensus/evm/keccak_precompile.go`,
+> tests passing). The bridge landed; this doc was not updated. Treat `DECISIONS-LEDGER.md`
+> as source of truth. File-specific code/structure notes below may still be useful.
+
 > **For AI agents inheriting this project. Read this first before writing code, running tests, or making architectural decisions.**
 
 ---
@@ -134,12 +141,12 @@ WayChain's CORE precompiles dispatch on `sha256(sig)[:4]`; these Solidity contra
 
 - This repo is the **application layer** of WayChain (see REPO_LAW.md Article X) — in-scope, not legacy.
 - **Current gap:** a standard Solidity contract's keccak256 selector does not match the core precompile's sha256 dispatch. This is a tracked bridge task (keccak precompile + app-layer dispatch), **not** a reason to discard the contracts.
-- **Do not** deploy these `.sol` files on WayChain mainnet until the selector bridge lands (tracked in the repo's open issues). Until then they are reference + cross-chain-attestation contracts.
+- **Do not** deploy these `.sol` files on WayChain mainnet *blindly* — but the keccak selector bridge (0x21 Keccak256 precompile) **has already landed** (`consensus/evm/keccak_precompile.go`, tests passing). A Solidity contract's keccak256 selectors are now derivable via 0x21. What remains UNTESTED is the end-to-end deploy+call of a `.sol` contract on the live node — that needs a real deploy+call test, not a missing primitive. See `DECISIONS-LEDGER.md`.
 
 ### Deployment Guidance
 
 - ✅ **Safe to deploy on:** PulseChain, Ethereum, Sepolia, Goerli, or any standard keccak256 EVM.
-- ⏳ **WayChain mainnet:** pending the selector-bridge task (keccak precompile). Do NOT deploy until that lands.
+- ✅ **WayChain mainnet:** keccak bridge (0x21) is LIVE. Deploy + keccak-selector call is now an *integration test*, not a blocked task. Test before relying on it. See `DECISIONS-LEDGER.md`.
 - ✅ **Safe to reference for:** Understanding the protocol design, auditing Go precompiles, writing cross-chain attestation contracts.
 - ✅ **This IS** the WayChain application layer (alongside the Go core). Both ship.
 ---

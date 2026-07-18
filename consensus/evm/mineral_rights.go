@@ -265,6 +265,14 @@ func mrtVerifyClaim(input []byte, caller string, state *StateDB, blockNum uint64
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, role},
 	}, []byte{approved}, blockNum)
 
+	// ── Economic Health: a verified mineral-rights claim is a HUGE factor.
+	// Real-world asset acquisition coming on-chain is the strongest signal of
+	// genuine economic output (tangible backing), so each verified claim is
+	// accorded a heavy weight in the health model — far above a micro task.
+	if claim.Status == ClaimStatusVerified && approved == 1 {
+		EconoAccrueMRT(claim.TokenSupply, blockNum)
+	}
+
 	// Output: [success(1)] [verifierCount(1)]
 	output := []byte{1, verifierCount}
 	return output, nil
