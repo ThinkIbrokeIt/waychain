@@ -24,12 +24,13 @@ p{margin-bottom:12px}
 .nav-logo-img{height:48px;width:auto;display:block}
 .nav-logo-text{font-family:'Playfair Display',Georgia,serif;font-size:1.4em;color:var(--warm);letter-spacing:1px}
 .nav-logo-text span{color:var(--copper)}
-.nav-links{display:flex;gap:2px;flex-wrap:wrap}
+.nav-links{display:none;gap:2px;flex-wrap:wrap}
+.nav-links.open{display:flex}
 .nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px;transition:all .2s}
 .nav-links a:hover{color:var(--warm);background:var(--slate2)}
 .nav-links a.active{color:var(--slate);background:var(--copper)}
 .nav-cta{background:rgba(184,115,51,.12)!important;color:var(--copper)!important}
-.nav-toggle{display:none;background:none;border:1px solid var(--border);border-radius:6px;color:var(--warm);font-size:1.4em;line-height:1;padding:6px 10px;cursor:pointer}
+.nav-toggle{display:block;background:none;border:1px solid var(--border);border-radius:6px;color:var(--warm);font-size:1.4em;line-height:1;padding:6px 10px;cursor:pointer}
 .nav-toggle:focus{outline:2px solid var(--copper);outline-offset:2px}
 
 .page{display:none}
@@ -199,31 +200,29 @@ p{margin-bottom:12px}
   .stat{border-right:none}
   .nav-links a{font-size:.55em;padding:3px 5px}
 }
-/* ── Mobile: consolidate header links into a dropdown ── */
-@media (max-width:768px){
-  .nav-toggle{display:block}
-  .nav-links{
-    display:none;
-    position:absolute;top:100%;right:0;left:0;
-    flex-direction:column;gap:0;
-    background:rgba(42,42,42,.99);
-    backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--border);
-    padding:8px 12px;
-    box-shadow:0 8px 24px rgba(0,0,0,.4);
-  }
-  .nav-links.open{display:flex}
-  .nav-links a{
-    font-size:.8em;
-    text-transform:none;
-    letter-spacing:.3px;
-    padding:12px 10px;
-    border-bottom:1px solid var(--border);
-    border-radius:0;
-  }
-  .nav-links a:last-child{border-bottom:none}
-  .nav-links a.active{background:transparent;color:var(--copper)}
+/* ── Hamburger dropdown — primary nav on ALL viewports (fixes cramped header) ── */
+.nav-toggle{display:block}
+.nav-links{
+  display:none;
+  position:absolute;top:100%;right:0;left:0;
+  flex-direction:column;gap:0;
+  background:rgba(42,42,42,.99);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  padding:8px 12px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
 }
+.nav-links.open{display:flex}
+.nav-links a{
+  font-size:.8em;
+  text-transform:none;
+  letter-spacing:.3px;
+  padding:12px 10px;
+  border-bottom:1px solid var(--border);
+  border-radius:0;
+}
+.nav-links a:last-child{border-bottom:none}
+.nav-links a.active{background:transparent;color:var(--copper)}
 </style>
 </head>
 <body>
@@ -473,7 +472,7 @@ wss://api.waychain.org/ws</pre></div>
 <script>
 const pages=['home','protocol','usecases','developers','about'];
 function showPage(id){pages.forEach(p=>{document.getElementById(p).classList.toggle('active',p===id);document.querySelector(`.nav-links a[data-page="${p}"]`)?.classList.toggle('active',p===id)});window.scrollTo(0,0)}
-document.querySelectorAll('[data-page]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();showPage(el.dataset.page);closeNav()});
+document.querySelectorAll('[data-page]').forEach(el=>{el.addEventListener('click',e=>{e.preventDefault();showPage(el.dataset.page);closeNav()});});
 function toggleNav(btn){const n=document.getElementById('navLinks');const open=n.classList.toggle('open');btn.setAttribute('aria-expanded',open);btn.textContent=open?'✕':'☰';}
 function closeNav(){const n=document.getElementById('navLinks');n.classList.remove('open');const b=document.querySelector('.nav-toggle');if(b){b.setAttribute('aria-expanded','false');b.textContent='☰';}}
 // Close dropdown when a real link is tapped or on outside click
