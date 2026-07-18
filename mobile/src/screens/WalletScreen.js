@@ -155,47 +155,56 @@ export default function WalletScreen({ navigation }) {
           </View>
 
           <Text style={styles.label}>Accounts ({accounts.length})</Text>
-          <View style={styles.chips}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
             {accounts.map((a, i) => (
               <TouchableOpacity key={a.address} style={[styles.chip, a.address === active?.address && styles.chipActive]} onPress={() => setActive(a)}>
                 <Text style={styles.chipLabel}>{a.label || ('Account ' + (i + 1))}{a.backedUp ? '  ✓' : '  ⚠'}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
 
-          <View style={styles.grid}>
-            <Button label="Receive" onPress={() => navigation.navigate('Receive', { address: active?.address })} variant="secondary" style={styles.gridBtn} />
-            <Button label="Send" onPress={goSend} variant="secondary" style={styles.gridBtn} />
-            <Button label="History" onPress={() => navigation.navigate('History')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Address Book" onPress={() => navigation.navigate('AddressBook')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Tokens" onPress={() => navigation.navigate('Tokens')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Identity" onPress={() => navigation.navigate('Identity')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Locks" onPress={() => navigation.navigate('Locks')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Protocol" onPress={() => navigation.navigate('Protocol')} variant="secondary" style={styles.gridBtn} />
-          </View>
+          <Text style={styles.sectionTitle}>Wallet</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
+            <Pill label="Receive" onPress={() => navigation.navigate('Receive', { address: active?.address })} />
+            <Pill label="Send" onPress={goSend} />
+            <Pill label="History" onPress={() => navigation.navigate('History')} />
+            <Pill label="Address Book" onPress={() => navigation.navigate('AddressBook')} />
+            <Pill label="Tokens" onPress={() => navigation.navigate('Tokens')} />
+            <Pill label="Identity" onPress={() => navigation.navigate('Identity')} />
+            <Pill label="Locks" onPress={() => navigation.navigate('Locks')} />
+            <Pill label="Protocol" onPress={() => navigation.navigate('Protocol')} />
+          </ScrollView>
 
           <Text style={styles.sectionTitle}>Protocol Precompiles</Text>
-          <View style={styles.grid}>
-            <Button label="TwoWay Vault" onPress={() => navigation.navigate('TwoWayVault')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Swap Route" onPress={() => navigation.navigate('SwapRoute')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Stability Pool" onPress={() => navigation.navigate('StabilityPool')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Bitcoin Reg" onPress={() => navigation.navigate('BitcoinRegistry')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Dead Man's" onPress={() => navigation.navigate('DeadMansSwitch')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Account Mgr" onPress={() => navigation.navigate('AccountManager')} variant="secondary" style={styles.gridBtn} />
-            <Button label="State Rent" onPress={() => navigation.navigate('StateRent')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Mineral Rts" onPress={() => navigation.navigate('MineralRights')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Templates" onPress={() => navigation.navigate('TemplateRegistry')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Keccak256" onPress={() => navigation.navigate('Keccak256')} variant="secondary" style={styles.gridBtn} />
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
+            <Pill label="TwoWay Vault" onPress={() => navigation.navigate('TwoWayVault')} />
+            <Pill label="Swap Route" onPress={() => navigation.navigate('SwapRoute')} />
+            <Pill label="Stability Pool" onPress={() => navigation.navigate('StabilityPool')} />
+            <Pill label="Bitcoin Reg" onPress={() => navigation.navigate('BitcoinRegistry')} />
+            <Pill label="Dead Man's" onPress={() => navigation.navigate('DeadMansSwitch')} />
+            <Pill label="Account Mgr" onPress={() => navigation.navigate('AccountManager')} />
+            <Pill label="State Rent" onPress={() => navigation.navigate('StateRent')} />
+            <Pill label="Mineral Rts" onPress={() => navigation.navigate('MineralRights')} />
+            <Pill label="Templates" onPress={() => navigation.navigate('TemplateRegistry')} />
+            <Pill label="Keccak256" onPress={() => navigation.navigate('Keccak256')} />
+          </ScrollView>
 
           <Text style={styles.sectionTitle}>Dox_Dev & Community</Text>
-          <View style={styles.grid}>
-            <Button label="Dox_Dev" onPress={() => navigation.navigate('DoxDev')} variant="secondary" style={styles.gridBtn} />
-            <Button label="Community Tasks" onPress={() => navigation.navigate('CommunityTasks')} variant="secondary" style={styles.gridBtn} />
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
+            <Pill label="Dox_Dev" onPress={() => navigation.navigate('DoxDev')} />
+            <Pill label="Community Tasks" onPress={() => navigation.navigate('CommunityTasks')} />
+          </ScrollView>
         </View>
       )}
     </ScrollView>
+  );
+}
+
+function Pill({ label, onPress }) {
+  return (
+    <TouchableOpacity style={styles.pill} onPress={onPress} activeOpacity={0.85}>
+      <Text style={styles.pillText}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -225,9 +234,12 @@ const styles = StyleSheet.create({
   chip: { backgroundColor: COLORS.parchment, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1, borderColor: COLORS.border },
   chipActive: { borderColor: COLORS.copper, backgroundColor: 'rgba(184,115,51,0.18)' },
   chipLabel: { fontFamily: FONTS.medium, fontSize: 13, color: COLORS.charcoal },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 14 },
-  gridBtn: { flex: 1, minWidth: '45%', minHeight: 42 },
-  sectionTitle: { fontFamily: FONTS.display, fontSize: 16, color: COLORS.copper, marginTop: 22, marginBottom: 2, letterSpacing: 1 },
+  // Horizontally scrolling pill rows (replaces the dense wrapped button grids)
+  chipRow: { flexDirection: 'row', gap: 8, paddingVertical: 4, paddingRight: 8 },
+  pillRow: { flexDirection: 'row', gap: 10, paddingVertical: 4, paddingRight: 8 },
+  pill: { backgroundColor: COLORS.parchment, borderRadius: 20, paddingVertical: 11, paddingHorizontal: 18, borderWidth: 1.5, borderColor: COLORS.copper },
+  pillText: { fontFamily: FONTS.medium, fontSize: 13, color: COLORS.copper },
+  sectionTitle: { fontFamily: FONTS.display, fontSize: 16, color: COLORS.copper, marginTop: 22, marginBottom: 6, letterSpacing: 1 },
   topActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 10, paddingHorizontal: 16, marginTop: -8, marginBottom: 4 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.card, borderWidth: 1.5, borderColor: COLORS.copper, alignItems: 'center', justifyContent: 'center', shadowColor: COLORS.copper, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
   iconBtnText: { fontFamily: FONTS.bold, fontSize: 22, color: COLORS.copper, textAlign: 'center' },
