@@ -5,13 +5,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppState } from 'react-native';
 import WalletScreen from './screens/WalletScreen';
-import DEXScreen from './screens/DEXScreen';
+import SwapRouteScreen from './screens/SwapRouteScreen';
 import StakingScreen from './screens/StakingScreen';
-import BridgeScreen from './screens/BridgeScreen';
+import BitcoinRegistryScreen from './screens/BitcoinRegistryScreen';
 import GovernanceScreen from './screens/GovernanceScreen';
-import ReceiveScreen from './screens/ReceiveScreen';
 import SendScreen from './screens/SendScreen';
 import HistoryScreen from './screens/HistoryScreen';
+import ReceiveScreen from './screens/ReceiveScreen';
 import AddressBookScreen from './screens/AddressBookScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import WIFRScreen from './screens/WIFRScreen';
@@ -21,9 +21,7 @@ import TokensScreen from './screens/TokensScreen';
 import IdentityScreen from './screens/IdentityScreen';
 import LocksScreen from './screens/LocksScreen';
 import TwoWayVaultScreen from './screens/TwoWayVaultScreen';
-import SwapRouteScreen from './screens/SwapRouteScreen';
 import StabilityPoolScreen from './screens/StabilityPoolScreen';
-import BitcoinRegistryScreen from './screens/BitcoinRegistryScreen';
 import DeadMansSwitchScreen from './screens/DeadMansSwitchScreen';
 import AccountManagerScreen from './screens/AccountManagerScreen';
 import StateRentScreen from './screens/StateRentScreen';
@@ -31,6 +29,8 @@ import MineralRightsScreen from './screens/MineralRightsScreen';
 import TemplateRegistryScreen from './screens/TemplateRegistryScreen';
 import Keccak256Screen from './screens/Keccak256Screen';
 import ProtocolScreen from './screens/ProtocolScreen';
+import CommunityTasksScreen from './screens/CommunityTasksScreen';
+import DoxDevScreen from './screens/DoxDevScreen';
 import AppLock from './components/AppLock';
 import { COLORS } from './theme';
 import { markBackground } from './services/secure';
@@ -60,9 +60,9 @@ function Tabs() {
       })}
     >
       <Tab.Screen name="Wallet" component={WalletScreen} />
-      <Tab.Screen name="DEX" component={DEXScreen} />
+      <Tab.Screen name="DEX" component={SwapRouteScreen} />
       <Tab.Screen name="Stake" component={StakingScreen} />
-      <Tab.Screen name="Bridge" component={BridgeScreen} />
+      <Tab.Screen name="Bridge" component={BitcoinRegistryScreen} />
       <Tab.Screen name="Governance" component={GovernanceScreen} />
       <Tab.Screen name="WIFR" component={WIFRScreen} />
     </Tab.Navigator>
@@ -104,6 +104,8 @@ export default function App() {
           <Stack.Screen name="TemplateRegistry" component={TemplateRegistryScreen} />
           <Stack.Screen name="Keccak256" component={Keccak256Screen} />
           <Stack.Screen name="Protocol" component={ProtocolScreen} />
+          <Stack.Screen name="CommunityTasks" component={CommunityTasksScreen} />
+          <Stack.Screen name="DoxDev" component={DoxDevScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
