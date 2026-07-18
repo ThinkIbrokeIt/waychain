@@ -30,8 +30,11 @@ p{margin-bottom:12px}
 .nav-links a:hover{color:var(--warm);background:var(--slate2)}
 .nav-links a.active{color:var(--slate);background:var(--copper)}
 .nav-cta{background:rgba(184,115,51,.12)!important;color:var(--copper)!important}
-.nav-toggle{display:block;background:none;border:1px solid var(--border);border-radius:6px;color:var(--warm);font-size:1.4em;line-height:1;padding:6px 10px;cursor:pointer}
-.nav-toggle:focus{outline:2px solid var(--copper);outline-offset:2px}
+.nav-toggle{display:flex;align-items:center;gap:8px;background:rgba(184,115,51,.12);border:1px solid var(--copper);border-radius:50px;color:var(--copper);font-family:'Inter',sans-serif;font-size:.8em;font-weight:700;letter-spacing:.5px;text-transform:uppercase;line-height:1;padding:9px 16px;cursor:pointer;transition:all .2s}
+.nav-toggle:hover{background:var(--copper);color:var(--warm)}
+.nav-toggle .bars{font-size:1.1em;line-height:1}
+.nav-toggle[aria-expanded="true"]{background:var(--copper);color:var(--warm)}
+.nav-toggle:focus{outline:2px solid var(--amber);outline-offset:2px}
 
 .page{display:none}
 .page.active{display:block}
@@ -211,6 +214,7 @@ p{margin-bottom:12px}
   border-bottom:1px solid var(--border);
   padding:8px 12px;
   box-shadow:0 8px 24px rgba(0,0,0,.4);
+  z-index:300;
 }
 .nav-links.open{display:flex}
 .nav-links a{
@@ -232,7 +236,7 @@ p{margin-bottom:12px}
     <img src="/assets/waylogo.png" alt="WayChain" class="nav-logo-img">
     <div class="nav-logo-text">WAYCHAIN</div>
   </div>
-  <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleNav(this)">☰</button>
+  <button class="nav-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks" onclick="toggleNav(this)"><span class="bars">☰</span> Menu</button>
   <div class="nav-links" id="navLinks">
     <a href="#" class="active" data-page="home">Home</a>
     <a href="/docs">Get Started</a>
