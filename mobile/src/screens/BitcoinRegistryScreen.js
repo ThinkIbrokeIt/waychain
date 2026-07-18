@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import { satsToUsd } from '../services/price';
 import { wallet } from '../services/wallet';
 import { waychainRPC } from '../services/rpc';
 
@@ -85,6 +86,35 @@ export default function BitcoinRegistryScreen() {
     } finally { setBusy(''); }
   };
 
+  // ── Open 1WAY Vault from attested BTC ──
+  // chained: createVault(0x22) -> depositBTC(0x22) -> mint1WAY(0x22)
+  const [vaultId, setVaultId] = useState('');
+  useEffect(() => { if (account && !vaultId) setVaultId(pad32(account.address)); }, [account]);
+  const openVault = async () => {
+    if (!account) { Alert.alert('No wallet'); return; }
+    const id = vaultId.trim().replace(/^0x/, '');
+    if (!/^[0-9a-fA-F]{64}$/.test(id)) { Alert.alert('Invalid vault ID', 'Enter 32-byte (64 hex).'); return; }
+    if (BigInt(amount || '0') <= 0n) { Alert.alert('Attest BTC first', 'Enter the BTC amount (sats) you attested.'); return; }
+    setBusy('OpenVault');
+    try {
+      await waychainRPC.precompileCall('0x22', 'createVault', pad32(id), { write: true, privHex: account.privateKey, pub64: account.publicKey });
+      await waychainRPC.precompileCall('0x22', 'depositBTC', pad32(id) + encodeUint256(amount), { write: true, privHex: account.privateKey, pub64: account.publicKey });
+      const res = await waychainRPC.precompileCall('0x22', 'mint1WAY', pad32(id) + encodeUint256(amount), { write: true, privHex: account.privateKey, pub64: account.publicKey });
+      Alert.alert('1WAY vault opened', 'Tx: ' + ((res && res.txHash) || 'pending').slice(0, 20) + '…\n1WAY minted against your BTC. Tap "Get WAY" to swap it in the DEX.');
+      refresh();
+    } catch (e) {
+      Alert.alert('Open vault failed', e?.message || 'Unknown error');
+    } finally { setBusy(''); }
+  };
+
+  const getWay = () => {
+    // Chain has no direct BTC->WAY. Path: 1WAY (above) -> swap 1WAY for WAY in DEX.
+    Alert.alert('Get WAY', 'The bridge mints 1WAY (BTC-backed). To get WAY, swap 1WAY for WAY in the DEX. Opening the DEX now with 1WAY selected.', [
+      { text: 'Open DEX', onPress: () => navigation.navigate('SwapRoute') },
+      { text: 'Later', style: 'cancel' },
+    ]);
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <BrandHeader subtitle="Bitcoin Registry" />
@@ -101,17 +131,27 @@ export default function BitcoinRegistryScreen() {
         <Text style={styles.label}>Attest BTC commitment</Text>
         <TextInput value={utxo} onChangeText={setUtxo} placeholder="UTXO hash (32-byte hex)" placeholderTextColor={COLORS.muted} style={styles.input} autoCapitalize="none" />
         <TextInput value={amount} onChangeText={setAmount} placeholder="amount (sats)" placeholderTextColor={COLORS.muted} style={styles.input} keyboardType="decimal-pad" />
+        {amount ? <Text style={styles.usd}>≈ ${satsToUsd(amount)}</Text> : null}
         <TextInput value={target} onChangeText={setTarget} placeholder="target addr (20-byte, default you)" placeholderTextColor={COLORS.muted} style={styles.input} autoCapitalize="none" />
         <Button label={busy === 'Attest' ? 'Attesting…' : 'Attest Commitment'} onPress={attest} disabled={!!busy} style={styles.btn} />
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.label}>Open 1WAY Vault (from attested BTC)</Text>
+        <TextInput value={vaultId} onChangeText={setVaultId} placeholder="vault ID (64 hex, default you)" placeholderTextColor={COLORS.muted} style={styles.input} autoCapitalize="none" />
+        <Text style={styles.hint}>Chains: createVault → depositBTC → mint1WAY (0x22). Uses the BTC amount you attested above.</Text>
+        <Button label={busy === 'OpenVault' ? 'Opening…' : 'Open 1WAY Vault'} onPress={openVault} disabled={!!busy} style={styles.btn} />
+        <Button label="Get WAY (swap 1WAY in DEX)" onPress={getWay} disabled={!!busy} variant="secondary" style={styles.btn} />
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.label}>Request withdrawal (sats)</Text>
         <TextInput value={wdAmount} onChangeText={setWdAmount} placeholder="amount (sats)" placeholderTextColor={COLORS.muted} style={styles.input} keyboardType="decimal-pad" />
+        {wdAmount ? <Text style={styles.usd}>≈ ${satsToUsd(wdAmount)}</Text> : null}
         <Button label={busy === 'Withdraw' ? 'Requesting…' : 'Request Withdrawal'} onPress={withdraw} disabled={!!busy} style={styles.btn} />
       </View>
 
-      <Text style={styles.note}>BitcoinRegistry (0x16): BTC bridge backing 1WAY 1:1. Selectors verified vs evm/precompiles.go. attestCommitment credits the target's BTC balance (on-chain clamp 10k–100M sats, rejects outside range). requestWithdrawal is a simplified acknowledge (bumps totalWithdrawn) — full BTC payout is off-chain settlement.</Text>
+      <Text style={styles.note}>Bitcoin Bridge (0x16 + 0x22): bring your Bitcoin onto WayChain. You attest that you hold BTC, open a 1WAY vault backed by it, and mint 1WAY (a BTC-pegged dollar). To spend in WAY, swap 1WAY for WAY in the DEX. Withdrawals settle your BTC back off-chain.</Text>
 
       {loading && <ActivityIndicator color={COLORS.copper} style={{ marginTop: 12 }} />}
     </ScrollView>
@@ -126,5 +166,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: COLORS.parchment, color: COLORS.charcoal, padding: 12, borderRadius: 10, marginTop: 8, borderWidth: 1, borderColor: COLORS.border, fontSize: 13 },
   stat: { fontFamily: FONTS.mono, fontSize: 12, color: COLORS.copper, marginTop: 6 },
   btn: { marginTop: 12 },
+  hint: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginTop: 6, marginBottom: 4 },
+  usd: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.copper, marginTop: 4 },
   note: { fontFamily: FONTS.body, fontSize: 11, color: COLORS.muted, marginTop: 14, lineHeight: 16 },
 });

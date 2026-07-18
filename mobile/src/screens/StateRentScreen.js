@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import AmountField from '../components/AmountField';
+import { wayToUsd, fmtWay } from '../services/price';
 import { wallet } from '../services/wallet';
 import { waychainRPC } from '../services/rpc';
 
@@ -45,10 +47,10 @@ export default function StateRentScreen() {
 
   const pay = async () => {
     if (!account) { Alert.alert('No wallet', 'Create or import a wallet.'); return; }
-    if (BigInt(amount || '0') <= 0n) { Alert.alert('Amount', 'Enter an amount > 0.'); return; }
+    if (BigInt(Math.round((parseFloat(amount) || 0) * 1e18)) <= 0n) { Alert.alert('Amount', 'Enter an amount > 0.'); return; }
     setBusy('PayRent');
     try {
-      const res = await waychainRPC.precompileCall('0x1E', 'payRent', encodeUint256(amount), {
+      const res = await waychainRPC.precompileCall('0x1E', 'payRent', encodeUint256(BigInt(Math.round((parseFloat(amount) || 0) * 1e18))), {
         write: true, privHex: account.privateKey, pub64: account.publicKey,
       });
       Alert.alert('Rent paid', 'Tx: ' + ((res && res.txHash) || 'pending').slice(0, 20) + '…');
@@ -67,11 +69,11 @@ export default function StateRentScreen() {
         <Button label="Refresh" onPress={refresh} disabled={loading} style={styles.btn} />
       </View>
       <View style={styles.card}>
-        <Text style={styles.label}>Pay rent (amount, 18 dec)</Text>
-        <TextInput value={amount} onChangeText={setAmount} placeholder="e.g. 1000000000000000000" placeholderTextColor={COLORS.muted} style={styles.input} keyboardType="decimal-pad" />
+        <Text style={styles.label}>Pay rent (WAY)</Text>
+        <AmountField label="" value={amount} onChange={setAmount} placeholder="0.0 WAY" />
         <Button label={busy === 'PayRent' ? 'Paying…' : 'Pay Rent'} onPress={pay} disabled={!!busy} style={styles.btn} />
       </View>
-      <Text style={styles.note}>StateRent (0x1E): rent = size × blocksSinceLast / 1000 (min 1 WAY/KB). 60% burn / 30% validators / 10% treasury. Selectors verified vs evm/state_rent.go.</Text>
+      <Text style={styles.note}>State Rent (0x1E): every account pays rent on the chain storage it uses, so bloat is discouraged and the network stays lean. Rent is priced by data size and time held; most of it is burned, the rest goes to validators and the treasury.</Text>
       {loading && <ActivityIndicator color={COLORS.copper} style={{ marginTop: 12 }} />}
     </ScrollView>
   );

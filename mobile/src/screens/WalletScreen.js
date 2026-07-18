@@ -173,6 +173,26 @@ export default function WalletScreen({ navigation }) {
             <Button label="Locks" onPress={() => navigation.navigate('Locks')} variant="secondary" style={styles.gridBtn} />
             <Button label="Protocol" onPress={() => navigation.navigate('Protocol')} variant="secondary" style={styles.gridBtn} />
           </View>
+
+          <Text style={styles.sectionTitle}>Protocol Precompiles</Text>
+          <View style={styles.grid}>
+            <Button label="TwoWay Vault" onPress={() => navigation.navigate('TwoWayVault')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Swap Route" onPress={() => navigation.navigate('SwapRoute')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Stability Pool" onPress={() => navigation.navigate('StabilityPool')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Bitcoin Reg" onPress={() => navigation.navigate('BitcoinRegistry')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Dead Man's" onPress={() => navigation.navigate('DeadMansSwitch')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Account Mgr" onPress={() => navigation.navigate('AccountManager')} variant="secondary" style={styles.gridBtn} />
+            <Button label="State Rent" onPress={() => navigation.navigate('StateRent')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Mineral Rts" onPress={() => navigation.navigate('MineralRights')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Templates" onPress={() => navigation.navigate('TemplateRegistry')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Keccak256" onPress={() => navigation.navigate('Keccak256')} variant="secondary" style={styles.gridBtn} />
+          </View>
+
+          <Text style={styles.sectionTitle}>Dox_Dev & Community</Text>
+          <View style={styles.grid}>
+            <Button label="Dox_Dev" onPress={() => navigation.navigate('DoxDev')} variant="secondary" style={styles.gridBtn} />
+            <Button label="Community Tasks" onPress={() => navigation.navigate('CommunityTasks')} variant="secondary" style={styles.gridBtn} />
+          </View>
         </View>
       )}
     </ScrollView>
@@ -207,6 +227,7 @@ const styles = StyleSheet.create({
   chipLabel: { fontFamily: FONTS.medium, fontSize: 13, color: COLORS.charcoal },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 14 },
   gridBtn: { flex: 1, minWidth: '45%', minHeight: 42 },
+  sectionTitle: { fontFamily: FONTS.display, fontSize: 16, color: COLORS.copper, marginTop: 22, marginBottom: 2, letterSpacing: 1 },
   topActions: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', gap: 10, paddingHorizontal: 16, marginTop: -8, marginBottom: 4 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.card, borderWidth: 1.5, borderColor: COLORS.copper, alignItems: 'center', justifyContent: 'center', shadowColor: COLORS.copper, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
   iconBtnText: { fontFamily: FONTS.bold, fontSize: 22, color: COLORS.copper, textAlign: 'center' },

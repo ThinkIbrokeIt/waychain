@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import AmountField from '../components/AmountField';
+import { wayToUsd, fmtWay } from '../services/price';
 import { wallet } from '../services/wallet';
 import { waychainRPC } from '../services/rpc';
 
@@ -47,7 +49,7 @@ export default function StabilityPoolScreen() {
 
   const write = async (label, args) => {
     if (!account) { Alert.alert('No wallet', 'Create or import a wallet.'); return; }
-    if ((label === 'Deposit' || label === 'Withdraw') && BigInt(amount || '0') <= 0n) { Alert.alert('Amount', 'Enter an amount > 0.'); return; }
+    if ((label === 'Deposit' || label === 'Withdraw') && BigInt(Math.round((parseFloat(amount) || 0) * 1e18)) <= 0n) { Alert.alert('Amount', 'Enter an amount > 0.'); return; }
     setBusy(label);
     try {
       const res = await waychainRPC.precompileCall('0x19', label.toLowerCase(), args, {
@@ -60,8 +62,8 @@ export default function StabilityPoolScreen() {
     } finally { setBusy(''); }
   };
 
-  const deposit = () => write('Deposit', encodeUint256(amount));
-  const withdraw = () => write('Withdraw', encodeUint256(amount));
+  const deposit = () => write('Deposit', encodeUint256(BigInt(Math.round((parseFloat(amount) || 0) * 1e18))));
+  const withdraw = () => write('Withdraw', encodeUint256(BigInt(Math.round((parseFloat(amount) || 0) * 1e18))));
   const claim = () => write('ClaimRewards', '');
 
   return (
@@ -76,8 +78,9 @@ export default function StabilityPoolScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Amount (2WAY, 18 decimals)</Text>
-        <TextInput value={amount} onChangeText={setAmount} placeholder="e.g. 1000000000000000000" placeholderTextColor={COLORS.muted} style={styles.input} keyboardType="decimal-pad" />
+        <Text style={styles.label}>Amount (2WAY)</Text>
+        <AmountField label="" value={amount} onChange={setAmount} placeholder="0.0 2WAY" />
+
         <View style={styles.actions}>
           <Button label={busy === 'Deposit' ? '…' : 'Deposit'} onPress={deposit} disabled={!!busy} variant="secondary" style={styles.actBtn} />
           <Button label={busy === 'Withdraw' ? '…' : 'Withdraw'} onPress={withdraw} disabled={!!busy} variant="secondary" style={styles.actBtn} />
@@ -85,7 +88,7 @@ export default function StabilityPoolScreen() {
         <Button label={busy === 'ClaimRewards' ? 'Claiming…' : 'Claim Rewards (WAY + SWAY)'} onPress={claim} disabled={!!busy || !account} style={styles.btn} />
       </View>
 
-      <Text style={styles.note}>StabilityPool (0x19): absorbs 2WAY liquidation debt; LPs earn fees + penalties from the WAY and SWAY reward buckets. Selectors verified vs evm/stability_pool.go. Deposit/withdraw/claim are real write ops.</Text>
+      <Text style={styles.note}>Stability Pool (0x19): the safety net that absorbs bad 2WAY vault debt so the system stays solvent. Deposit 2WAY to backstop liquidations and earn a share of the fees + penalties (paid in WAY and SWAY).</Text>
 
       {loading && <ActivityIndicator color={COLORS.copper} style={{ marginTop: 12 }} />}
     </ScrollView>

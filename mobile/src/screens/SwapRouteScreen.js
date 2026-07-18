@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import AmountField from '../components/AmountField';
+import { wayToUsd, fmtWay } from '../services/price';
 import { wallet } from '../services/wallet';
 import { waychainRPC } from '../services/rpc';
 
@@ -59,12 +61,13 @@ export default function SwapRouteScreen() {
     } catch (e) { setPair('error'); }
   };
 
+  const toWei = (a) => BigInt(Math.round((parseFloat(a) || 0) * 1e18));
   const addLiquidity = async () => {
     if (!account) { Alert.alert('No wallet', 'Create or import a wallet.'); return; }
-    if (BigInt(amt0 || '0') <= 0n || BigInt(amt1 || '0') <= 0n) { Alert.alert('Amounts', 'Enter both amounts.'); return; }
+    if (toWei(amt0) <= 0n || toWei(amt1) <= 0n) { Alert.alert('Amounts', 'Enter both amounts.'); return; }
     setBusy('AddLiquidity');
     try {
-      const res = await waychainRPC.precompileCall('0x25', 'addLiquidity', encodeUint256(amt0) + encodeUint256(amt1), {
+      const res = await waychainRPC.precompileCall('0x25', 'addLiquidity', encodeUint256(toWei(amt0)) + encodeUint256(toWei(amt1)), {
         write: true, privHex: account.privateKey, pub64: account.publicKey,
       });
       Alert.alert('Liquidity added', 'Tx: ' + ((res && res.txHash) || 'pending').slice(0, 20) + '…\nSWAY reward minted to you.');
@@ -76,7 +79,7 @@ export default function SwapRouteScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <BrandHeader subtitle="Swap Route (DEX)" />
+      <BrandHeader subtitle="DEX (Swap Route)" />
 
       <View style={styles.card}>
         <Text style={styles.label}>Global reserves (simplified DEX)</Text>
@@ -94,13 +97,13 @@ export default function SwapRouteScreen() {
 
       <View style={styles.card}>
         <Text style={styles.label}>Add liquidity (amount0 / amount1)</Text>
-        <TextInput value={amt0} onChangeText={setAmt0} placeholder="amount0 (18 dec)" placeholderTextColor={COLORS.muted} style={styles.input} keyboardType="decimal-pad" />
-        <TextInput value={amt1} onChangeText={setAmt1} placeholder="amount1 (18 dec)" placeholderTextColor={COLORS.muted} style={styles.input} keyboardType="decimal-pad" />
+        <AmountField label="" value={amt0} onChange={setAmt0} placeholder="0.0 token0" />
+        <AmountField label="" value={amt1} onChange={setAmt1} placeholder="0.0 token1" />
         <Button label={busy === 'AddLiquidity' ? 'Adding…' : 'Add Liquidity'} onPress={addLiquidity} disabled={!!busy || !account} style={styles.btn} />
       </View>
 
       <View style={styles.warnBox}>
-        <Text style={styles.warnText}>Swap & remove-liquidity are not finished on-chain (swap_route.go uses global reserves, not per-pair; removeLiquidity returns an error). This screen wires reads + addLiquidity (which mints SWAY). Full per-pair swap/remove lands in a follow-up #68 task.</Text>
+        <Text style={styles.warnText}>Swap Route (0x25) is the on-chain DEX: provide two tokens as liquidity and earn SWAY rewards from trading fees. Swap & remove-liquidity are still being finished on-chain (current code uses global reserves, not per-pair; remove returns an error). This screen wires reads + addLiquidity for now.</Text>
       </View>
 
       {loading && <ActivityIndicator color={COLORS.copper} style={{ marginTop: 12 }} />}

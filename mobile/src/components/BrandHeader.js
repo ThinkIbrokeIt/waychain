@@ -3,12 +3,13 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { COLORS, FONTS } from '../theme';
 
 // Wardenclyffe Lighthouse mark — clean copper/amber lighthouse (assets/lighthouse.png).
-// NOTE: react-native-svg standalone Svg renders BLANK on RN0.79/Hermes, so we use a PNG.
-// waylogo.png is a rainbow mascot, NOT the amber lighthouse — do not use it here.
+// Brand mark = favicontower (Tesla Wardenclyffe Tower) per founder directive
+// (2026-07-17): tower logo throughout the app. Composited onto parchment in
+// assets prep. waylogo.png (rainbow mascot) and lighthouse.png are NOT the brand.
 export default function BrandHeader({ subtitle, tagline }) {
   return (
     <View style={styles.wrap}>
-      <Image source={require('../../assets/lighthouse.png')} style={styles.logo} resizeMode="contain" />
+      <Image source={require('../../assets/favicontower.png')} style={styles.logo} resizeMode="contain" />
       <Text style={styles.brand} numberOfLines={1}>WAYCHAIN</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       <View style={styles.rule} />

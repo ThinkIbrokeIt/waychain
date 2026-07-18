@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert 
 import { COLORS, FONTS } from '../theme';
 import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
+import AmountField from '../components/AmountField';
+import { wayToUsd, fmtWay } from '../services/price';
 import { getAddressBook } from '../services/secure';
 import { buildAndSignTx, sendRawTransaction, getNonce } from '../services/tx';
 
@@ -87,15 +89,14 @@ export default function SendScreen({ route, navigation }) {
         </View>
       )}
 
-      <Text style={styles.label}>Amount (WAY)</Text>
-      <TextInput value={amount} onChangeText={setAmount} placeholder="0.0" placeholderTextColor={COLORS.muted}
-        style={styles.input} keyboardType="decimal-pad" />
+      <Text style={styles.label}>Amount</Text>
+      <AmountField label="" value={amount} onChange={setAmount} placeholder="0.0 WAY" />
 
       {preview && (
         <View style={styles.preview}>
           <Text style={styles.previewTitle}>Preview</Text>
           <Text style={styles.previewRow}>To: {preview.to.slice(0, 16)}…</Text>
-          <Text style={styles.previewRow}>Amount: {preview.amount} WAY</Text>
+          <Text style={styles.previewRow}>Amount: {fmtWay(preview.amount)} WAY (≈ ${wayToUsd(preview.amount)})</Text>
           <Text style={styles.previewRow}>Network: WayChain (Ed25519, lane 0)</Text>
         </View>
       )}
