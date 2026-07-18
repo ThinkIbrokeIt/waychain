@@ -201,9 +201,20 @@
     return { txHash, rawHex: built.rawHex };
   }
 
+  // Sign an arbitrary 32-byte message (e.g. an attestation dataHash) with the
+  // oracle's Ed25519 key. Uses the ephemeral unlocked seed (cleared on lock),
+  // matching the mobile wallet's sign(). Enables real oracle attestations
+  // (precompile 0x0E / 0x0C) that require a sig over the dataHash.
+  function signEd25519(messageBytes) {
+    if (!unlockedSeed) throw new Error('Wallet locked. Call unlock() first.');
+    const seed32 = fromHex(unlockedSeed.replace(/^0x/, '')).slice(0, 32);
+    const kp = nacl.sign.keyPair.fromSeed(seed32);
+    return nacl.sign.detached(messageBytes, kp.secretKey);
+  }
+
   global.WayChainWallet = {
     RPC_URL, deriveFromMnemonic, deriveFromPrivateKey,
-    load, save, clear, connect, unlock, lock, isUnlocked, sendTx,
+    load, save, clear, connect, unlock, lock, isUnlocked, sendTx, signEd25519,
     toHex, fromHex, sha256Hex,
   };
 })(window);
