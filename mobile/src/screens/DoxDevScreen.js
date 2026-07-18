@@ -33,7 +33,7 @@ export default function DoxDevScreen({ navigation }) {
     const a = accs[0] || null;
     setAccount(a);
     if (a) {
-      try { const lvl = await waychainRPC.getDoxLevel(a.address); setLevel(lvl); }
+      try { const lvl = await waychainRPC.getDoxLevel(a); setLevel(lvl); }
       catch { setLevel(0); }
     }
   }, []);

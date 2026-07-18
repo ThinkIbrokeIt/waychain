@@ -29,6 +29,8 @@
     { "source": "/journal", "destination": "/binary-journal/index.html" },
     { "source": "/locks", "destination": "/locks/index.html" },
     { "source": "/dex", "destination": "/dex/index.html" },
+    { "source": "/doxdev", "destination": "/doxdev/index.html" },
+    { "source": "/doxdev/", "destination": "/doxdev/index.html" },
     { "source": "/bridge", "destination": "/dex/bridge.html" },
     { "source": "/dex/bridge", "destination": "/dex/bridge.html" },
     { "source": "/wifr", "destination": "/wifr.html" },

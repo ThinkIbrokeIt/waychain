@@ -36,6 +36,22 @@
       const r = await call('eth_getTransactionCount', [pub64Hex]);
       return typeof r === 'string' ? (parseInt(r, 16) || 0) : 0;
     },
+    // Dox_Dev badge level (0 unverified → 1 basic → 2 professional → 3p/3t).
+    // MUST use the 64-hex pubkey (node keys EOA accounts by full pubkey; the
+    // 20-byte display address returns 0x0). If a 20-byte display address is
+    // passed and it matches the connected account, resolve to its 64-hex pubkey.
+    getDoxLevel: async (addrOrAccount) => {
+      const raw = addrOrAccount?.publicKey || addrOrAccount || '';
+      const a = raw.replace(/^0x/, '');
+      let lookup = a;
+      if (a.length === 40) {
+        const acc = global.waychainAccount || (global.WayChainWallet && global.WayChainWallet.load && global.WayChainWallet.load());
+        if (acc && (acc.address || '').replace(/^0x/, '') === a && acc.publicKey) lookup = acc.publicKey.replace(/^0x/, '');
+      }
+      const r = await call('way_getDoxLevel', ['0x' + lookup]);
+      const n = parseInt(r, 16);
+      return Number.isFinite(n) ? n : 0;
+    },
     getBlockCount: () => call('way_getBlockCount', []),
     getGovernanceProposals: async () => { const r = await call('way_govProposals', []); return Array.isArray(r) ? r : []; },
     getTwoWayStats: async () => {
