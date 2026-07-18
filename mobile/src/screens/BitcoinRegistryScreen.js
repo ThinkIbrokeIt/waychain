@@ -211,6 +211,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
         <Button label={busy === 'Mint' ? 'Minting…' : 'Mint 1WAY (LOCK -> DEBT)'} onPress={mint} disabled={!!busy} style={styles.btn} />
         <Button label={busy === 'Repay' ? 'Repaying…' : 'Repay 1WAY (UNLOCK -> 1WAY)'} onPress={repay} disabled={!!busy} variant="secondary" style={styles.btn} />
         <Button label="Get WAY (swap in DEX)" onPress={getWay} variant="secondary" style={styles.btn} />
+        <Button label="Scan to Pay (BTC)" onPress={() => navigation.navigate('ScanPay')} variant="secondary" style={styles.btn} />
       </View>
 
       <Text style={styles.note}>Trustless bridge: BTC is held in a WayChain-derived vault wallet with safety rules. A deposit is only credited with a sha256 proof of real BTC arrival — no promise, no trusting an unknown party. Red = DEBT (loan), Green = 1WAY (free).</Text>

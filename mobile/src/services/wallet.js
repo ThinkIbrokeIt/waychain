@@ -8,6 +8,8 @@ import { generateMnemonic, mnemonicToSeedSync, validateMnemonic } from '@scure/b
 import { wordlist } from '@scure/bip39/wordlists/english';
 import { getPublicKeyAsync, signAsync } from '@noble/ed25519';
 import { sha512 } from '@noble/hashes/sha512';
+import { HDKey } from '@scure/bip32';
+import { address as btcAddress, payments, networks } from 'bitcoinjs-lib';
 
 // RN/Hermes has no global Buffer — use Uint8Array <-> hex helpers.
 function bytesToHex(bytes) {
@@ -49,6 +51,45 @@ export async function deriveFromMnemonic(mnemonic) {
     publicKey: '0x' + pubHex,
     address: '0x' + pubHex.slice(0, 40),
   };
+}
+
+// ── Bitcoin (BTC) key derivation from the SAME BIP39 mnemonic ──
+// One seed => WayChain (Ed25519) + BTC (secp256k1). This is the "one wallet,
+// two chains" model and the foundation for scan-to-pay + phone/computer co-sign.
+// BIP44 native-segwit path: m/84'/0'/0'/0/0  (mainnet BTC).
+// Returns { btcPrivHex, btcPubHex, btcAddress }. btcAddress is a bc1... bech32.
+export function deriveBtcFromMnemonic(mnemonic, accountIndex = 0) {
+  const seed = mnemonicToSeedSync(mnemonic.trim());
+  const root = HDKey.fromMasterSeed(seed);
+  const path = `m/84'/0'/${accountIndex}'/0/0`;
+  const child = root.derive(path);
+  if (!child.privateKey) throw new Error('BTC key derivation failed');
+  const ecPair = child; // @scure/bip32 HDKey carries the secp256k1 priv/pub
+  const privHex = bytesToHex(child.privateKey);
+  const pubHex = bytesToHex(child.publicKey);
+  // Build a native-segwit (P2WPKH) receive address.
+  const { address } = payments.p2wpkh({ pubkey: Buffer.from(child.publicKey) });
+  return {
+    btcPrivHex: '0x' + privHex,
+    btcPubHex: '0x' + pubHex,
+    btcAddress: address,
+    path,
+  };
+}
+
+// Sign a PSBT (Partially Signed Bitcoin Transaction) with the BTC private key.
+// Input: psbtBase64 (from a BTC backend / companion that built the tx), btcPrivHex.
+// Output: signed PSBT base64, ready to combine + finalize + broadcast.
+// This is REAL signing (ECDSA over secp256k1) — no fake. Broadcast is a separate
+// step (needs a BTC node/API), surfaced to the user, not silently faked.
+export function signBtcPsbt(psbtBase64, btcPrivHex) {
+  const Psbt = require('bitcoinjs-lib').Psbt;
+  const net = require('bitcoinjs-lib').networks;
+  const btc = require('bitcoinjs-lib').ECPair;
+  const keyPair = btc.fromPrivateKey(Buffer.from(hexToBytes(btcPrivHex.replace(/^0x/, ''))), { network: net.bitcoin });
+  const psbt = Psbt.fromBase64(psbtBase64, { network: net.bitcoin });
+  psbt.signAllInputs(keyPair);
+  return psbt.toBase64();
 }
 
 // Derive directly from a raw private key (hex, 32 bytes / 64 hex chars, optional 0x).
@@ -145,6 +186,8 @@ export const wallet = {
   isValidMnemonic,
   deriveFromMnemonic,
   deriveFromPrivateKey,
+  deriveBtcFromMnemonic,
+  signBtcPsbt,
   sign,
   loadAccounts,
   saveAccounts,
