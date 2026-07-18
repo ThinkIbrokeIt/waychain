@@ -39,6 +39,8 @@
     { "source": "/bijo/", "destination": "/bijo/index.html" },
     { "source": "/verify-ladder", "destination": "/verify-ladder/index.html" },
     { "source": "/verify-ladder/", "destination": "/verify-ladder/index.html" },
+    { "source": "/template-registry", "destination": "/template-registry/index.html" },
+    { "source": "/template-registry/", "destination": "/template-registry/index.html" },
     { "source": "/bridge", "destination": "/dex/bridge.html" },
     { "source": "/dex/bridge", "destination": "/dex/bridge.html" },
     { "source": "/wifr", "destination": "/wifr.html" },
