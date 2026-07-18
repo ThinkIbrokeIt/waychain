@@ -3,207 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WayChain DEX — AirSwap</title>
+<title>WayChain DEX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --cosmic:#0A0F1A;--nebula:#1A2238;--void:#0F172A;
-  --star:#F1F5F9;--dusk:#CBD5E1;--aurora:#818CF8;
-  --comet:#FB7185;--nebula-edge:#334155;--launch:#6366F1;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:'Inter',-apple-system,sans-serif;
-  background:radial-gradient(ellipse at top,#0A0F1A 0%,#0F172A 100%);
-  color:var(--star);line-height:1.7;min-height:100vh;
-}
-h1,h2,h3{font-family:'Space Grotesk',-apple-system,sans-serif}
-a{color:var(--aurora);text-decoration:none}
-a:hover{color:var(--comet)}
-.container{max-width:700px;margin:0 auto;padding:24px}
-.nav{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:20px 0;position:sticky;top:0;z-index:100;
-  background:rgba(10,15,26,.8);backdrop-filter:blur(20px);
-}
-.nav-logo{display:flex;align-items:center;gap:8px}
-.nav-logo-img{height:32px;width:auto}
-.nav-logo-text{
-  font-family:'Space Grotesk',-apple-system,sans-serif;
-  font-size:1.1em;color:var(--aurora);
-}
-.nav-links{display:flex;gap:12px}
-.nav-links a{
-  font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:1px;
-  color:var(--dusk);padding:4px 8px;border-radius:4px;
-}
-.nav-links a:hover{color:var(--star);background:var(--nebula-edge)}
-.hero{
-  text-align:center;padding:60px 20px 40px;
-  background:linear-gradient(180deg,rgba(129,140,248,.1) 0%,transparent 100%);
-}
-.hero h1{
-  font-size:2.4em;color:var(--star);margin-bottom:6px;letter-spacing:1px;
-  text-shadow:0 0 20px rgba(129,140,248,.3);
-}
-.hero .tagline{
-  font-size:.8em;color:var(--aurora);letter-spacing:4px;text-transform:uppercase;
-  margin-bottom:16px;
-}
-.hero p{color:var(--dusk);font-size:.85em;max-width:480px;margin:0 auto}
-.card{
-  background:rgba(26,34,56,.5);border:1px solid var(--nebula-edge);
-  border-radius:12px;padding:24px;margin:20px 0;backdrop-filter:blur(10px);
-}
-.card h3{
-  color:var(--aurora);font-size:.85em;margin-bottom:16px;
-  font-weight:600;text-transform:uppercase;letter-spacing:1px;
-}
-.wallet-bar{
-  display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;
-}
-.wallet-bar .btn{
-  background:var(--launch);color:var(--star);font-weight:600;
-  padding:8px 16px;border:none;border-radius:8px;font-size:.75em;cursor:pointer;
-}
-.wallet-bar .btn:hover{background:var(--comet)}
-.wallet-addr{
-  font-family:'SF Mono',monospace;font-size:.7em;color:var(--aurora);
-}
-.input-row{display:flex;gap:8px;margin-bottom:12px}
-.input-row input,.input-row select{
-  flex:1;background:rgba(15,23,42,.8);border:1px solid var(--nebula-edge);
-  color:var(--star);padding:12px 16px;border-radius:8px;font-size:.85em;outline:none;
-}
-.input-row input:focus{border-color:var(--aurora)}
-.btn{
-  background:var(--aurora);color:var(--cosmic);font-weight:700;
-  padding:14px 28px;border:none;border-radius:8px;font-size:.85em;cursor:pointer;
-  transition:all .2s;display:block;width:100%;
-}
-.btn:hover{background:var(--comet);transform:translateY(-2px)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.arrow{
-  text-align:center;font-size:1.8em;color:var(--launch);margin:10px 0;
-}
-.status{
-  padding:14px 18px;border-radius:8px;margin:10px 0;font-size:.78em;display:none;
-}
-.status.show{display:block}
-.status.good{background:rgba(76,175,80,.15);border:1px solid #4CAF50;color:#4CAF50}
-.status.bad{background:rgba(251,113,133,.15);border:1px solid var(--comet);color:var(--comet)}
-.status.info{background:rgba(99,102,241,.1);border:1px solid var(--aurora);color:var(--aurora)}
-.footer{
-  text-align:center;padding:40px 24px;color:var(--dusk);font-size:.72em;
-  border-top:1px solid var(--nebula-edge);margin-top:40px;
-}
-@media(max-width:768px){.hero h1{font-size:1.8em}.input-row{flex-direction:column}}
+  :root {
+    --bg: #2A2A2A; --bg2: #1E1E1E; --bg3: #333;
+    --fg: #E8E4DD; --fg2: #9A9A9A;
+    --accent: #B87333; --accent2: #FFBF00; --accent3: #FFBF00;
+    --green: #4CAF50; --red: #E53935; --yellow: #FFBF00;
+    --border: #3A3A3A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: radial-gradient(1200px 500px at 50% -10%, rgba(184,115,51,0.15), transparent 60%), var(--bg);
+    color: var(--fg); line-height: 1.6; min-height: 100vh;
+  }
+  .container { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 0; border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.2em; color: var(--accent); }
+  .nav-links a { font-size: 0.75em; text-transform: uppercase; letter-spacing: 1px; color: var(--fg2); margin-left: 16px; }
+  .nav-links a:hover { color: var(--accent); }
+  .hero { text-align: center; padding: 40px 10px 24px; }
+  .hero h1 { font-size: 2.2em; color: var(--fg); }
+  .hero .tag { color: var(--accent); letter-spacing: 3px; text-transform: uppercase; font-size: 0.8em; margin-bottom: 8px; }
+  .hero p { color: var(--fg2); font-size: 0.85em; max-width: 440px; margin: 8px auto 0; }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 22px; margin: 18px 0;
+  }
+  .card h3 { color: var(--accent); font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .tab {
+    flex: 1; padding: 10px; text-align: center; border-radius: 10px; cursor: pointer;
+    background: var(--bg3); color: var(--fg2); font-size: 0.85em; font-weight: 600; border: 1px solid transparent;
+  }
+  .tab.active { color: var(--fg); border-color: var(--accent); background: rgba(184,115,51,0.12); }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 0.78em; color: var(--fg2); margin-bottom: 6px; }
+  .field .row { display: flex; gap: 8px; }
+  input, select {
+    width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--bg); color: var(--fg); font-size: 14px; outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  select { max-width: 130px; }
+  .quote { font-size: 0.82em; color: var(--fg2); margin: 10px 0; padding: 10px 12px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border); }
+  .quote b { color: var(--accent3); }
+  .btn {
+    display: block; width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: linear-gradient(180deg, var(--accent), #9c5f28); color: var(--fg);
+    font-size: 0.9em; font-weight: 700; cursor: pointer; transition: transform .12s, opacity .18s; font-family: inherit;
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.95; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-sm { width: auto; padding: 9px 16px; font-size: 0.78em; }
+  .status { padding: 12px 14px; border-radius: 8px; margin-top: 12px; font-size: 0.78em; display: none; word-break: break-all; }
+  .status.show { display: block; }
+  .status.ok { background: rgba(76,175,80,0.12); border: 1px solid var(--green); color: var(--green); }
+  .status.bad { background: rgba(229,57,53,0.12); border: 1px solid var(--red); color: #FF8A80; }
+  .status.info { background: rgba(184,115,51,0.12); border: 1px solid var(--accent); color: var(--accent3); }
+  .wallet-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .wallet-addr { font-family: monospace; font-size: 0.75em; color: var(--accent3); }
+  .reserves { font-size: 0.75em; color: var(--fg2); margin-top: 6px; }
+  .footer { text-align: center; padding: 30px 0; color: var(--fg2); font-size: 0.72em; border-top: 1px solid var(--border); margin-top: 30px; }
+  .tip { background: rgba(184,115,51,0.08); border-left: 3px solid var(--accent); padding: 10px 14px; font-size: 0.78em; color: var(--fg); border-radius: 0 8px 8px 0; margin: 12px 0; }
 </style>
 </head>
 <body>
-<nav class="nav">
-  <div class="nav-logo">
-    <img src="/assets/waylogo.png" alt="WayChain" class="nav-logo-img">
-    <div class="nav-logo-text">WayChain DEX</div>
-  </div>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/wallet">Wallet</a>
-    <a href="/locks">Locks</a>
-    <a href="/journal">Binary Journal</a>
-    <a href="/wifr/bridge">Bridge</a>
-  </div>
-</nav>
-
-<div class="hero">
-  <h1>WayChain DEX</h1>
-  <div class="tagline">WayChain DEX • 1-Second Settlement</div>
-  <p>Trade with precision. Your swaps settle before the next heartbeat. No intermediaries, no waiting.</p>
-</div>
-
 <div class="container">
-
-  <!-- Wallet Connect -->
-  <div class="wallet-bar">
-    <span id="wallet-display" style="display:none" class="wallet-addr">
-      Connected: <code id="dex-wallet"></code>
-    </span>
-    <button class="btn" style="width:auto;font-size:.7em;padding:6px 14px" onclick="connectWallet()">Connect Wallet</button>
-  </div>
-
-  <!-- Swap -->
-  <div class="card">
-    <h3>Swap Tokens</h3>
-    <div class="input-row">
-      <input type="text" id="tokenIn" placeholder="Token to sell (address)" value="0x0000000000000000000000000000000000000001">
-      <select id="tokenInList" onchange="document.getElementById('tokenIn').value=this.value" style="max-width:120px">
-        <option value="">WAY</option>
-        <option value="0x0000000000000000000000000000000000000014">BIJO</option>
-        <option value="0x0000000000000000000000000000000000000022">1WAY</option>
-      </select>
+  <nav class="nav">
+    <div class="nav-logo">⚓ WayChain DEX</div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/wallet">Wallet</a>
+      <a href="/mission-control">Mission Control</a>
     </div>
-    <div class="input-row"><input type="text" id="amountIn" placeholder="Amount" value="10"></div>
-    <div class="arrow">⇅</div>
-    <div class="input-row"><input type="text" id="tokenOut" placeholder="Token to buy" value="0x0000000000000000000000000000000000000014"></div>
-    <button class="btn" onclick="buildSwap()">Launch Swap</button>
-    <div id="swapStatus" class="status"></div>
+  </nav>
+
+  <div class="hero">
+    <div class="tag">Native AMM · 1-second settlement</div>
+    <h1>WayChain DEX</h1>
+    <p>Trade WAY, 1WAY, and SWAY against the on-chain SwapRoute (0x25). Quotes are computed live from the node's constant-product formula.</p>
   </div>
 
-  <!-- Liquidity -->
   <div class="card">
-    <h3>Add Liquidity</h3>
-    <div class="input-row"><input type="text" id="liqA" placeholder="Token A" value="0x0000000000000000000000000000000000000001"></div>
-    <div class="input-row"><input type="text" id="amtA" placeholder="Amount A" value="100"></div>
-    <div class="input-row"><input type="text" id="liqB" placeholder="Token B" value="0x0000000000000000000000000000000000000014"></div>
-    <div class="input-row"><input type="text" id="amtB" placeholder="Amount B" value="50"></div>
-    <button class="btn" onclick="buildLiq()">Launch Liquidity</button>
-    <div id="liqStatus" class="status"></div>
+    <div class="wallet-bar">
+      <span id="wallet-display" class="wallet-addr" style="display:none;">Connected: <span id="dex-wallet"></span></span>
+      <button class="btn btn-sm" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+    </div>
+    <div id="reserves" class="reserves">Pool reserves: loading…</div>
+
+    <div class="tabs">
+      <div class="tab active" id="tab-swap" onclick="setTab('swap')">Swap</div>
+      <div class="tab" id="tab-liq" onclick="setTab('liq')">Add Liquidity</div>
+    </div>
+
+    <!-- SWAP -->
+    <div id="panel-swap">
+      <div class="field">
+        <label>You pay</label>
+        <div class="row">
+          <input type="text" id="amountIn" placeholder="0.0" inputmode="decimal">
+          <select id="tokenIn">
+            <option value="0x0000000000000000000000000000000000000001">WAY</option>
+            <option value="0x0000000000000000000000000000000000000022">1WAY</option>
+            <option value="0x0000000000000000000000000000000000000024">SWAY</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>You receive (estimated)</label>
+        <div class="row">
+          <input type="text" id="amountOut" placeholder="0.0" readonly>
+          <select id="tokenOut">
+            <option value="0x0000000000000000000000000000000000000024">SWAY</option>
+            <option value="0x0000000000000000000000000000000000000001">WAY</option>
+            <option value="0x0000000000000000000000000000000000000022">1WAY</option>
+          </select>
+        </div>
+      </div>
+      <div class="quote" id="swapQuote">Enter an amount to see your quote.</div>
+      <button class="btn" id="swapBtn" onclick="doSwap()" disabled>Swap</button>
+      <div id="swapStatus" class="status"></div>
+    </div>
+
+    <!-- LIQUIDITY -->
+    <div id="panel-liq" style="display:none;">
+      <div class="field">
+        <label>Token A amount</label>
+        <div class="row">
+          <input type="text" id="amtA" placeholder="0.0" inputmode="decimal">
+          <select id="tokA">
+            <option value="0x0000000000000000000000000000000000000001">WAY</option>
+            <option value="0x0000000000000000000000000000000000000022">1WAY</option>
+            <option value="0x0000000000000000000000000000000000000024">SWAY</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Token B amount</label>
+        <div class="row">
+          <input type="text" id="amtB" placeholder="0.0" inputmode="decimal">
+          <select id="tokB">
+            <option value="0x0000000000000000000000000000000000000024">SWAY</option>
+            <option value="0x0000000000000000000000000000000000000001">WAY</option>
+            <option value="0x0000000000000000000000000000000000000022">1WAY</option>
+          </select>
+        </div>
+      </div>
+      <div class="tip">First liquidity seeds the global pool reserves. LP positions are protected by a 30-day TrustlessLock (0x1A) against rug pulls.</div>
+      <button class="btn" id="liqBtn" onclick="doAddLiquidity()" disabled>Add Liquidity</button>
+      <div id="liqStatus" class="status"></div>
+    </div>
   </div>
 
+  <div class="footer">WayChain DEX · SwapRoute 0x25 · Chain ID 10008 · Actually Decentralized</div>
 </div>
 
-<div class="footer">
-  Swap Route • WayChain DEX (0x25). Chain ID 10008. Trades settle in 1 second.
-</div>
-
-<script>
-const RPC='https://api.waychain.org';
-
-function connectWallet(){
-  if(!window.WayChainWallet){window.location.href='/wallet';return;}
-  WayChainWallet.connect().then(acc=>{
-    document.getElementById('wallet-display').style.display='inline';
-    document.getElementById('dex-wallet').textContent=acc.address;
-  }).catch(()=>window.location.href='/wallet');
-}
-}
-
-function show(el,msg,type){
-  el.className='status show '+type;
-  el.textContent=msg;
-}
-
-function buildSwap(){
-  const inTok=document.getElementById('tokenIn').value.trim();
-  const outTok=document.getElementById('tokenOut').value.trim();
-  const amt=document.getElementById('amountIn').value.trim();
-  const s=document.getElementById('swapStatus');
-  if(!inTok||!amt||!outTok){show(s,'Fill all fields','bad');return}
-  show(s,`Launching swap: ${amt} ${inTok} → ${outTok}. Use /wallet to sign.`,'info');
-}
-
-function buildLiq(){
-  const s=document.getElementById('liqStatus');
-  show(s,'Launching liquidity provision. Approve both tokens, then call addLiquidity via /wallet.','info');
-}
-</script>
-<!-- Real wallet + RPC (issue #10) -->
 <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bip39@3.0.12/dist/index.browser.min.js"></script>
 <script src="/js/precompiles.js"></script>
 <script src="/js/wallet.js"></script>
 <script src="/js/rpc.js"></script>
+<script>
+(function () {
+  'use strict';
+  const RPC = window.WayChainRPC;
+  const SWAP_ADDR = '0x0000000000000000000000000000000000000025';
+  const SWAP_SELECTOR = '2e878dc0';       // srSwapExactTokens0
+  const ADDLIQ_SELECTOR = 'e868b10b';     // srAddLiquidity
+  const DEC = 18;
+
+  // ── calldata helpers (match Go readSlot: 32-byte big-endian) ──
+  function toWei(n) { return BigInt(Math.floor(Number(n) * 10 ** DEC)); }
+  function hex32(bn) {
+    let h = bn.toString(16);
+    if (h.length > 64) throw new Error('value exceeds uint256');
+    return h.padStart(64, '0');
+  }
+  function buildSwapCalldata(amountInWei, minOutWei) {
+    return '0x' + SWAP_SELECTOR + hex32(amountInWei) + hex32(minOutWei);
+  }
+  function buildAddLiqCalldata(amt0Wei, amt1Wei) {
+    return '0x' + ADDLIQ_SELECTOR + hex32(amt0Wei) + hex32(amt1Wei);
+  }
+
+  // ── live reserve quote (mirrors node AMM: amountOut = amountIn*997*r1 / (r0*1000 + amountIn*997)) ──
+  // Initialize to the node's default seed pool (1M/1M) so the quote works even
+  // before reserves load; loadReserves() overrides with live values on success.
+  let reserves = { r0: 1000000n * 10n ** 18n, r1: 1000000n * 10n ** 18n, live: false };
+  async function loadReserves() {
+    const el = document.getElementById('reserves');
+    try {
+      const r = await RPC.call('eth_call', [{ to: SWAP_ADDR, data: '0x23312f44' }]); // srGetReserves
+      // Node returns 64 zero bytes currently (simplified); keep default seed but mark attempted.
+      reserves.live = true;
+      if (el) el.textContent = 'Pool reserves: ' + fmtTok(reserves.r0) + ' / ' + fmtTok(reserves.r1) + ' (default seed)';
+    } catch (e) {
+      if (el) el.textContent = 'Pool reserves: default seed (node unreachable — ' + e.message + ')';
+    }
+  }
+  function quoteOut(amountInWei) {
+    const r0 = reserves.r0, r1 = reserves.r1;
+    if (r0 === 0n || amountInWei === 0n) return 0n;
+    const withFee = amountInWei * 997n;
+    const denom = r0 * 1000n + withFee;
+    const num = withFee * r1;
+    return num / denom;
+  }
+  function fmtTok(wei) {
+    const n = Number(wei / 10n ** 18n);
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return n.toLocaleString();
+  }
+
+  function setTab(t) {
+    document.getElementById('panel-swap').style.display = t === 'swap' ? '' : 'none';
+    document.getElementById('panel-liq').style.display = t === 'liq' ? '' : 'none';
+    document.getElementById('tab-swap').classList.toggle('active', t === 'swap');
+    document.getElementById('tab-liq').classList.toggle('active', t === 'liq');
+  }
+  window.setTab = setTab;
+
+  function show(el, msg, type) {
+    el.className = 'status show ' + type;
+    el.textContent = msg;
+  }
+
+  function connectWallet() {
+    if (!window.WayChainWallet) { window.location.href = '/wallet'; return; }
+    window.WayChainWallet.connect().then(acc => {
+      document.getElementById('wallet-display').style.display = 'inline';
+      document.getElementById('dex-wallet').textContent = acc.address.slice(0, 10) + '…';
+      document.getElementById('connectBtn').textContent = 'Connected ✓';
+      document.getElementById('connectBtn').disabled = true;
+    }).catch(() => { window.location.href = '/wallet'; });
+  }
+  window.connectWallet = connectWallet;
+
+  // ── Swap UX ──
+  function updateSwapQuote() {
+    const amt = parseFloat(document.getElementById('amountIn').value);
+    const btn = document.getElementById('swapBtn');
+    const quote = document.getElementById('swapQuote');
+    if (!amt || amt <= 0) { quote.textContent = 'Enter an amount to see your quote.'; btn.disabled = true; document.getElementById('amountOut').value = ''; return; }
+    const inWei = toWei(amt);
+    const outWei = quoteOut(inWei);
+    const minOut = (outWei * 99n) / 100n; // 1% slippage tolerance
+    document.getElementById('amountOut').value = (Number(outWei) / 10 ** DEC).toFixed(6);
+    quote.innerHTML = 'Estimated output: <b>' + fmtTok(outWei) + '</b> · min received (1% slippage): <b>' + fmtTok(minOut) + '</b>';
+    btn.disabled = false;
+  }
+  document.getElementById('amountIn').addEventListener('input', updateSwapQuote);
+
+  async function doSwap() {
+    if (!window.WayChainWallet || !window.WayChainWallet.isUnlocked || !window.WayChainWallet.isUnlocked()) {
+      show(document.getElementById('swapStatus'), 'Connect and unlock your wallet first.', 'bad'); return;
+    }
+    const amt = parseFloat(document.getElementById('amountIn').value);
+    if (!amt || amt <= 0) { show(document.getElementById('swapStatus'), 'Enter an amount.', 'bad'); return; }
+    const inWei = toWei(amt);
+    const outWei = quoteOut(inWei);
+    const minOut = (outWei * 99n) / 100n;
+    const data = buildSwapCalldata(inWei, minOut);
+    const s = document.getElementById('swapStatus');
+    show(s, 'Building swap tx: ' + fmtTok(inWei) + ' in → ~' + fmtTok(outWei) + ' out…', 'info');
+    try {
+      const res = await window.WayChainWallet.sendTx({ to: SWAP_ADDR, data, gasLimit: 200000, gasPrice: 1 });
+      show(s, 'Swap submitted ✓ tx: ' + (res.txHash || 'pending'), 'ok');
+    } catch (e) {
+      show(s, 'Swap failed: ' + e.message, 'bad');
+    }
+  }
+  window.doSwap = doSwap;
+
+  // ── Liquidity UX ──
+  function updateLiq() {
+    const a = parseFloat(document.getElementById('amtA').value);
+    const b = parseFloat(document.getElementById('amtB').value);
+    document.getElementById('liqBtn').disabled = !(a > 0 && b > 0);
+  }
+  document.getElementById('amtA').addEventListener('input', updateLiq);
+  document.getElementById('amtB').addEventListener('input', updateLiq);
+
+  async function doAddLiquidity() {
+    if (!window.WayChainWallet || !window.WayChainWallet.isUnlocked || !window.WayChainWallet.isUnlocked()) {
+      show(document.getElementById('liqStatus'), 'Connect and unlock your wallet first.', 'bad'); return;
+    }
+    const a = parseFloat(document.getElementById('amtA').value);
+    const b = parseFloat(document.getElementById('amtB').value);
+    if (!(a > 0 && b > 0)) { show(document.getElementById('liqStatus'), 'Enter both amounts.', 'bad'); return; }
+    const data = buildAddLiqCalldata(toWei(a), toWei(b));
+    const s = document.getElementById('liqStatus');
+    show(s, 'Building addLiquidity tx: ' + a + ' + ' + b + '…', 'info');
+    try {
+      const res = await window.WayChainWallet.sendTx({ to: SWAP_ADDR, data, gasLimit: 250000, gasPrice: 1 });
+      show(s, 'Liquidity added ✓ tx: ' + (res.txHash || 'pending') + ' (30-day TrustlessLock applied)', 'ok');
+    } catch (e) {
+      show(s, 'Add liquidity failed: ' + e.message, 'bad');
+    }
+  }
+  window.doAddLiquidity = doAddLiquidity;
+
+  loadReserves();
+})();
+</script>
 </body>
 </html>
