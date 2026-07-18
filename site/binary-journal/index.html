@@ -154,6 +154,15 @@ a:hover{color:var(--warm)}
 </div>
 
 <div class="card">
+  <h3>Journal (local-first)</h3>
+  <p style="font-size:.8em;color:var(--muted);margin-bottom:12px">Write entries — they live in your browser (localStorage) until you anchor them on-chain. Anchoring stores the SHA256 hash immutably; the text stays yours.</p>
+  <div class="field"><label>New entry</label><textarea id="bjEntry" rows="4" placeholder="What truth are you recording?"></textarea></div>
+  <button class="btn" onclick="saveEntry()">Save to Journal</button>
+  <div class="status-msg" id="bjSaveStatus"></div>
+  <div id="bjEntries" style="margin-top:14px;font-size:.85em"></div>
+</div>
+
+<div class="card">
   <h3>About the 3·6·9 Protocol</h3>
   <div style="font-size:.82em;line-height:1.8">
     <p><strong>The Clue (3):</strong> Tesla said "If you only knew the magnificence of the 3, 6 and 9, you would have the key to the universe." Knowledge should be self-sovereign.</p>
@@ -271,6 +280,65 @@ async function checkSwitch() {
     show(s,'Switch found','good');
   } catch(e) { show(s,'Error: '+e.message,'bad'); }
 }
+
+// ── Journal (local-first, issue #109) ──
+const BJ_KEY = 'waychain.binaryjournal.entries.v1';
+function bjLoad() { try { return JSON.parse(localStorage.getItem(BJ_KEY) || '[]'); } catch { return []; } }
+function bjSave(list) { localStorage.setItem(BJ_KEY, JSON.stringify(list)); }
+function bjHash(text) {
+  // SHA-256 of the UTF-8 text (Web Crypto). Mirrors the chain's attest hash.
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(b => {
+    return '0x' + Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('');
+  });
+}
+function saveEntry() {
+  const ta = document.getElementById('bjEntry');
+  const text = ta.value.trim();
+  const s = document.getElementById('bjSaveStatus');
+  if (!text) { show(s, 'Write something first.', 'bad'); return; }
+  const list = bjLoad();
+  list.unshift({ id: Date.now(), text, anchored: false, hash: '', ts: new Date().toISOString() });
+  bjSave(list);
+  ta.value = '';
+  show(s, 'Saved locally. Anchor it to make it immutable.', 'good');
+  renderEntries();
+}
+async function anchorEntry(id) {
+  const list = bjLoad();
+  const e = list.find(x => x.id === id);
+  if (!e) return;
+  const s = document.getElementById('bjSaveStatus');
+  show(s, 'Hashing + anchoring…', 'info');
+  try {
+    const hash = await bjHash(e.text);
+    const addr = (window.waychainAccount && window.waychainAccount.address) || document.getElementById('truthAddr').value.trim();
+    if (!addr) { show(s, 'Connect your wallet first (top-right Connect).', 'bad'); return; }
+    const r = await rpc('way_attestTruth', [addr, hash]);
+    e.anchored = true; e.hash = hash; e.slot = r && r.slot;
+    bjSave(list);
+    show(s, `✅ Anchored at slot ${e.slot}. Hash ${hash.slice(0,18)}… is now immutable.`, 'good');
+    renderEntries();
+  } catch (err) { show(s, 'Anchor failed: ' + err.message, 'bad'); }
+}
+function renderEntries() {
+  const wrap = document.getElementById('bjEntries');
+  const list = bjLoad();
+  if (!list.length) { wrap.innerHTML = '<p style="color:var(--muted)">No journal entries yet. They stay in this browser until you anchor them.</p>'; return; }
+  wrap.innerHTML = list.map(e => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="color:var(--fg);white-space:pre-wrap">${e.text.replace(/</g,'&lt;')}</div>
+      <div style="margin-top:6px;font-size:.75em;color:var(--muted)">${e.anchored ? '✅ Anchored '+ (e.hash?e.hash.slice(0,18)+'…':'') : '📝 Local only'}
+        ${e.anchored ? '' : ` · <a href="#" onclick="anchorEntry(${e.id});return false;" style="color:var(--copper)">Anchor on-chain</a>`}
+        ${e.anchored ? '' : ` · <a href="#" onclick="deleteEntry(${e.id});return false;" style="color:var(--red)">Delete</a>`}
+      </div>
+    </div>`).join('');
+}
+function deleteEntry(id) {
+  bjSave(bjLoad().filter(x => x.id !== id));
+  renderEntries();
+}
+window.addEventListener('load', renderEntries);
+
 </script>
 
 <!-- Real wallet + RPC (issue #10) -->
