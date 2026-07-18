@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Ladder</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:18px}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);text-decoration:none}
+a:hover{color:var(--warm)}
+.nav{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.2em;color:var(--warm);letter-spacing:1px}
+.nav-logo span{color:var(--copper)}
+.nav-links{display:flex;gap:4px}
+.nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px}
+.nav-links a:hover{color:var(--warm);background:var(--slate2)}
+.hero{text-align:center;padding:56px 24px 40px;background:linear-gradient(180deg,#1a1a2e 0%,var(--slate) 100%)}
+.hero h1{font-size:3em;color:var(--warm);margin-bottom:8px;letter-spacing:2px}
+.hero .tagline{font-size:.8em;color:var(--copper);letter-spacing:4px;text-transform:uppercase}
+.hero .divider{width:50px;height:1px;background:var(--copper);margin:12px auto 16px}
+.hero p{color:var(--muted);font-size:.85em;max-width:560px;margin:0 auto}
+.container{max-width:760px;margin:0 auto;padding:0 24px}
+.card{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:24px;margin:20px 0}
+.card h3{color:var(--copper);font-size:.85em;margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.btn{background:var(--copper);color:var(--warm);font-weight:700;padding:12px 28px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn:hover{background:#a0642a}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:9px 16px;font-size:.78em}
+.step{display:flex;align-items:center;gap:12px;padding:12px;background:var(--slate3);border:1px solid var(--border);border-radius:6px;margin-bottom:8px}
+.step.done{border-color:var(--green)}
+.step .k{font-family:'Playfair Display',serif;font-size:1.1em;width:28px;text-align:center;color:var(--copper)}
+.step .body{flex:1}
+.step .name{font-weight:600;color:var(--warm);font-size:.9em}
+.step .meta{font-size:.75em;color:var(--muted)}
+.step .badge{font-size:.7em;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:4px;background:rgba(184,115,51,.15);color:var(--copper)}
+.bar{height:10px;background:var(--slate3);border-radius:6px;overflow:hidden;margin-top:8px}
+.bar>div{height:100%;background:var(--copper);transition:width .3s}
+.status{font-size:.82em;margin-top:10px;min-height:1.2em}
+.status.err{color:var(--red)} .status.ok{color:var(--green)} .status.info{color:var(--copper)}
+.note{color:var(--muted);font-size:.78em;margin-top:10px;line-height:1.6}
+.foot{color:var(--muted);font-size:.78em;margin-top:16px;line-height:1.6}
+.footer{text-align:center;color:var(--muted);font-size:.8em;padding:32px 24px}
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="nav-logo">Way<span>Chain</span></div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/doxdev">Dox_Dev</a>
+    <a href="/oracle">Oracle</a>
+    <a href="/bijo">BIJO</a>
+    <a href="/identity">Governance</a>
+  </div>
+</div>
+
+<div class="hero">
+  <h1>Verify Ladder</h1>
+  <div class="tagline">Shared Verification Primitive</div>
+  <div class="divider"></div>
+  <p>The cross-cutting verification + task-tracking primitive consumed by DoxDev, Oracles, and the BIJO-approved dev-task flow. Objective steps auto-verify; subjective steps need a human L2+ or oracle.</p>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h3>Demo Task — Deploy BTC Observer Oracle</h3>
+    <p class="note">This page imports the shared primitive (<code>dapps/_shared/verify-ladder.js</code>). In production each dApp references the same module instead of re-implementing ladder logic.</p>
+    <div id="steps"></div>
+    <div class="bar"><div id="bar" style="width:0%"></div></div>
+    <div class="status" id="vlStatus" style="margin-top:12px"></div>
+    <button class="btn btn-sm" onclick="autoVerify()">Run autopilot (objective only)</button>
+    <button class="btn btn-sm btn-outline" onclick="humanVerify()">Human L2+ sign-off</button>
+  </div>
+  <p class="foot">Truth-first: the primitive enforces the founder rule that subjective steps cannot be auto-verified. Real on-chain verify routes through TaskRegistry (0x23) taskVerify / OracleVerifier (0x0E) — this demo shows the state machine only.</p>
+</div>
+
+<div class="footer">
+  <p>Verify Ladder — WayChain shared primitive. Chain ID 10008.</p>
+  <p style="margin-top:8px"><a href="https://waychain.org">waychain.org</a></p>
+</div>
+
+<script type="module">
+import { VerifyLadder, STEP_KIND } from '/dapps/_shared/verify-ladder.js';
+
+let task = VerifyLadder.createTask('deploy-btc-observer', 'Deploy BTC observer oracle', [
+  { id: 'hash-check', kind: STEP_KIND.OBJECTIVE, label: 'On-chain hash matches' },
+  { id: 'oracle-sig', kind: STEP_KIND.ATTESTATION, label: 'Oracle attests vault funding' },
+  { id: 'curator-sign', kind: STEP_KIND.SIGNOFF, label: 'L3 curator sign-off' },
+]);
+
+function render() {
+  const wrap = document.getElementById('steps');
+  wrap.innerHTML = task.steps.map(s => `
+    <div class="step ${s.verified?'done':''}">
+      <div class="k">${s.verified?'✓':'•'}</div>
+      <div class="body"><div class="name">${s.label}</div><div class="meta">${s.kind}${s.verifier?(' · by '+s.verifier):''}</div></div>
+      <div class="badge">${s.kind}</div>
+    </div>`).join('');
+  document.getElementById('bar').style.width = (VerifyLadder.progress(task)*100).toFixed(0)+'%';
+  const st = document.getElementById('vlStatus');
+  if (VerifyLadder.isComplete(task)) { st.className='status ok'; st.textContent='Task complete — all steps verified.'; }
+  else { st.className='status info'; st.textContent='Progress: '+(VerifyLadder.progress(task)*100).toFixed(0)+'% — objective steps auto-verify; subjective need oracle/human.'; }
+}
+function autoVerify() {
+  // autopilot only verifies objective steps; subjective are left for humans.
+  task.steps.filter(s=>s.kind===STEP_KIND.OBJECTIVE && !s.verified).forEach(s=>VerifyLadder.verifyStep(task,s.id,'autopilot'));
+  render();
+}
+function humanVerify() {
+  // simulate a human L2+ / oracle signing off the remaining subjective steps.
+  task.steps.filter(s=>!s.verified).forEach(s=>VerifyLadder.verifyStep(task,s.id, s.kind===STEP_KIND.ATTESTATION?'oracle:0x'+'ab'.repeat(32):'human-L2'));
+  render();
+}
+render();
+</script>
+</body>
+</html>
