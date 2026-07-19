@@ -6,7 +6,7 @@
   "precompile_count": 28,
   "precompile_range": {
     "start": "0x0C",
-    "end": "0x26"
+    "end": "0x27"
   },
   "hash_selectors": "sha256(signature)[:4]",
   "eoa_account_key": "full 64-hex ed25519 pubkey",

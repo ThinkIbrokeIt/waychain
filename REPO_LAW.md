@@ -80,7 +80,7 @@ True backups are labeled backup (e.g. `~/backups/waychain-*`, `chain.db.bak-*`).
 ## Article V — Machine SoT (drift must fail CI)
 
 1. Precompile inventory: **`protocol-manifest.json`** generated from `consensus/evm/precompiles.go`.
-2. Count is **27** addresses **0x0C–0x26**. Claims of 20/21/22 without reconciling the manifest are illegal.
+2. Count is **28** addresses **0x0C–0x27** (GasFaucet added at 0x27). Claims of 20/21/22 without reconciling the manifest are illegal.
 3. **0x21 = Keccak256** precompile (app-layer hashing bridge). It was temporarily
    WIFRGantletRewards; that reward pool is RETIRED (function subsumed by the
    wifr-bridge quest at TaskRegistry 0x23, paid from treasury 0x03). Selection

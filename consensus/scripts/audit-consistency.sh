@@ -90,5 +90,29 @@ if bad:
 print('AGENTS.md: no positive WIFRGantlet@0x21 assignment')
 PY
 
+echo "=== Audit: ROOT AGENTS.md + REPO_LAW.md must match 28 @ 0x0C-0x27 (single source of truth) ==="
+ROOT_AGENTS="../AGENTS.md"
+REPO_LAW="../REPO_LAW.md"
+for f in "$ROOT_AGENTS" "$REPO_LAW"; do
+  if [ ! -f "$f" ]; then
+    echo "::warning:: $f not found (skipping root-doc drift check)"
+    continue
+  fi
+  body=$(cat "$f")
+  # reject stale '27 @ 0x0C-0x26' / '27 @ 0x0C–0x26' (hyphen or en-dash) / '27 precompiles'
+  if echo "$body" | grep -qE '27[^0-9][^@]*0x0C[-–]0x26' \
+     || echo "$body" | grep -qiE '\b27 (native )?precompiles\b'; then
+    echo "::error::$f still claims stale '27 @ 0x0C-0x26' / 27 precompiles. Must be 28 @ 0x0C-0x27."
+    exit 1
+  fi
+  # require correct count
+  if ! echo "$body" | grep -qE '28[^0-9].*0x0C[-–]0x27' \
+     && ! echo "$body" | grep -qiE '\b28 (native )?precompiles\b'; then
+    echo "::error::$f does not state '28 @ 0x0C-0x27' / '28 precompiles'. Update it."
+    exit 1
+  fi
+  echo "✅ $(basename "$f") matches 28 @ 0x0C-0x27"
+done
+
 echo "✅ Consistency audit passed (count=$CODE_COUNT, range=0x0C-0x27)"
 exit 0
