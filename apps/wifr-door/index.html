@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WIFR Door — WayChain</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="crest">⚓</div>
+      <h1>WIFR Door</h1>
+      <p class="tagline">Burn 1 WIFR on Solana — your key to the WayChain Quest.</p>
+    </header>
+
+    <section class="card" id="status-card">
+      <h2>Live Protocol State</h2>
+      <div class="rows">
+        <div class="row"><span>RPC endpoint</span><b id="rpc-endpoint">—</b></div>
+        <div class="row"><span>Quest pool remaining</span><b id="pool-remaining">—</b></div>
+        <div class="row"><span>Quest cap (5% supply)</span><b id="quest-cap">—</b></div>
+        <div class="row"><span>Autopilot set</span><b id="autopilot">—</b></div>
+        <div class="row"><span>0x1F attest read</span><b id="attest-avail">—</b></div>
+      </div>
+      <button id="refresh-btn">Refresh state</button>
+      <p class="note" id="node-note"></p>
+    </section>
+
+    <section class="card" id="door-card">
+      <h2>The Door</h2>
+      <ol class="steps">
+        <li><b>1. Burn</b> 1 WIFR on Solana (PUMP.fun) to the designated sink.</li>
+        <li><b>2. Witness</b> — a Dox_Dev attester records it at CrossChainAttestation (0x1F, <code>solana-waychain</code>).</li>
+        <li><b>3. Claim</b> — the <code>wifr-bridge</code> quest (0x23) opens: 50 WAY from the treasury (0x03).</li>
+      </ol>
+
+      <div class="form">
+        <label>Solana burn tx hash
+          <input id="sol-tx" type="text" placeholder="0x… (solana tx signature)" />
+        </label>
+        <label>Your WayChain address (display, 20-byte)
+          <input id="wc-addr" type="text" placeholder="0x…" />
+        </label>
+        <button id="check-btn">Check my door</button>
+      </div>
+
+      <div class="result" id="door-result">
+        <p class="placeholder">Paste your burn + address, then check. No wallet connection needed to read state.</p>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <p>WayChain · 28 precompiles (0x0C–0x27) · core = sha256, app layer = keccak256 (0x21 bridge).</p>
+      <p class="warn" id="truth-note"></p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

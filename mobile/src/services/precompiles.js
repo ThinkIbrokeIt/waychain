@@ -1,6 +1,6 @@
 // WayChain Precompile Registry — SINGLE SOURCE OF TRUTH for frontend↔backend wiring.
 //
-// Every precompile (0x0C–0x26) implemented natively in Go in
+// Every precompile (0x0C–0x27) implemented natively in Go in
 // waychain-consensus/evm/. This module mirrors that table so web + mobile
 // share ONE address/selector map (issue #9, child of #8).
 //
@@ -13,12 +13,12 @@
 // To build a call:  input = selectorBytes(4) + encodedArgs
 //   helper encodeCall(precompile, method, argsHex) does this.
 
-// Full 20-byte precompile address from the 1-byte table index (0x0C..0x26).
+// Full 20-byte precompile address from the 1-byte table index (0x0C..0x27).
 export const precompileAddress = (hex1) =>
   '0x' + '0'.repeat(24) + hex1.toLowerCase().replace(/^0x/, '');
 
 // ── Registry ──────────────────────────────────────────────────────────────
-// addr1 = the 1-byte table index (0x0C..0x26)
+// addr1 = the 1-byte table index (0x0C..0x27)
 // methods: { name, sel (4-byte hex, no 0x), sig, kind: 'read'|'write' }
 export const PRECOMPILES = {
   // 0x0C-0x12, 0x17 are SINGLE-PURPOSE precompiles: the Go functions read a
@@ -322,6 +322,18 @@ export const PRECOMPILES = {
       { name: 'getTemplate', sel: '8ecfe43a', sig: 'getTemplate(bytes32)', kind: 'read' },
       { name: 'getUserTemplates', sel: 'e47e9f21', sig: 'getUserTemplates(address)', kind: 'read' },
       { name: 'isRegistrar', sel: '47b4d00d', sig: 'isRegistrar(address)', kind: 'read' },
+    ],
+  },
+  '0x27': {
+    name: 'GasFaucet',
+    file: 'evm/faucet.go',
+    methods: [
+      { name: 'drip', sel: '2a7ab5da', sig: 'drip() — drips WAY for gas to caller', kind: 'write' },
+      { name: 'getDripAmount', sel: 'f7c3438b', sig: 'getDripAmount()', kind: 'read' },
+      { name: 'getLastDrip', sel: '1decb48c', sig: 'getLastDrip(address)', kind: 'read', args: ['account'] },
+      { name: 'getFaucetBalance', sel: '1ac9c1d0', sig: 'getFaucetBalance()', kind: 'read' },
+      { name: 'setDripAmount', sel: '94ac47f1', sig: 'setDripAmount(uint256)', kind: 'write' },
+      { name: 'setCooldown', sel: '8567a687', sig: 'setCooldown(uint64)', kind: 'write' },
     ],
   },
 };

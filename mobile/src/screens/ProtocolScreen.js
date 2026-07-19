@@ -69,7 +69,7 @@ export default function ProtocolScreen() {
         </View>
       ))}
 
-      <Text style={styles.foot}>Full set: 27 precompiles (0x0C–0x26). The wallet surfaces reads/writes for token, DeFi, identity, governance, WIFR, and lock precompiles; the above are protocol-grade and handled by dedicated tooling.</Text>
+      <Text style={styles.foot}>Full set: 28 precompiles (0x0C–0x27). The wallet surfaces reads/writes for token, DeFi, identity, governance, and lock precompiles; the above are protocol-grade and handled by dedicated tooling.</Text>
     </ScrollView>
   );
 }
