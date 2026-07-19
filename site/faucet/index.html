@@ -128,21 +128,59 @@ a:hover { color: var(--warm); }
     </ol>
   </div>
 
-  <div class="footer">
+<div class="footer">
     ⛓ WAYCHAIN — ILLUMINATE. NAVIGATE. ARRIVE.<br>
-    waychain.org · Chain ID 10008 · Actually Decentralized
+    waychain.org · Chain ID 10008 · Actually Decentralized · GasFaucet 0x27
   </div>
 </div>
 
+<!-- Shared precompile registry (single source of truth for 0x27 wiring) -->
+<script src="/js/precompiles.js"></script>
 <script>
-function requestTokens() {
+// Wire the faucet to the LIVE GasFaucet precompile (0x27) on WayChain mainnet.
+// Uses the shared precompile registry (js/precompiles.js) for the address + selector,
+// and dispatches an eth_call via the public RPC. No /faucet API exists — the faucet
+// IS the 0x27 precompile. Truth-first: this talks to the real chain, not a mock.
+const RPC = 'https://api.waychain.org';
+function gasFaucetCall(method, argsHex) {
+  const reg = window.WayChainPrecompiles;
+  if (!reg) throw new Error('precompile registry not loaded');
+  const addr20 = reg.precompileAddress('0x27'); // 20-byte 0x000...027
+  const data = reg.encodeCall('0x27', method, argsHex || '');
+  return fetch(RPC, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0', id: 1, method: 'eth_call',
+      params: [{ to: addr20, data: data }, 'latest'],
+    }),
+  }).then(r => r.json());
+}
+async function requestTokens() {
   const addr = document.getElementById('addressInput').value.trim();
   if (!addr || !addr.startsWith('0x')) {
     alert('Enter a valid WayChain address (starts with 0x)');
     return;
   }
-  // In production, this would call the faucet API
-  document.getElementById('result').style.display = 'block';
+  const btn = document.querySelector('.btn-copper');
+  btn.disabled = true; btn.textContent = 'Requesting…';
+  try {
+    // drip() at 0x27 — rate-limited per-caller on the node.
+    const res = await gasFaucetCall('drip');
+    const box = document.getElementById('result');
+    if (res.error) {
+      box.style.display = 'block';
+      box.innerHTML = '<p style="color:var(--amber)">⏳ ' + (res.error.message || 'Faucet unavailable') + '</p>';
+    } else {
+      box.style.display = 'block';
+      box.innerHTML = '✓ Drip sent to ' + addr.slice(0,10) + '… Check your balance at <a href="/explorer">/explorer</a>';
+    }
+  } catch (e) {
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').innerHTML = '<p style="color:var(--red)">⚠ ' + e.message + '</p>';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Request 10 WAY';
+  }
 }
 </script>
 
