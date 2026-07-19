@@ -61,6 +61,8 @@ jobs:
         run: CGO_ENABLED=1 go build -a -o /tmp/waychain .
       - name: Test consensus
         working-directory: consensus
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/consensus/revm-ffi/target/release
         run: go test ./...
       - name: Consistency audit (precompile / address-model / banner drift)
         working-directory: consensus
