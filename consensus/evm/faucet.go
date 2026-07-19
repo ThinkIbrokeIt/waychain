@@ -3,6 +3,7 @@ package evm
 import (
 	"fmt"
 	"math/big"
+	"strings"
 )
 
 // ════════════════════════════════════════════════════════════════════
@@ -49,14 +50,11 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 	addr := PrecompileAddrHex(0x27)
 	acc := state.GetOrCreateAccount(addr)
 
-	// parse caller as 20-byte address
-	var callerAddr [20]byte
-	cb := []byte(caller)
-	if len(cb) >= 4 && cb[0] == '0' && cb[1] == 'x' {
-		copy(callerAddr[:], cb[2:22])
-	} else if len(cb) >= 20 {
-		copy(callerAddr[:], cb[:20])
-	}
+	// caller is the 64-hex ed25519 pubkey (per AGENTS.md) or a 40-hex
+	// precompile address. The StateDB account key is the 40-hex form
+	// (addrFromPubKey semantics: first 40 hex chars of the pubkey).
+	callerKey := callerAccountKey(caller)
+	callerAddr20 := callerKey[:20] // 20-byte form for per-address drip tracking
 
 	switch sel {
 	case selFaucetDrip:
@@ -65,7 +63,7 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 		if cooldown == 0 {
 			cooldown = FaucetDefaultCooldown
 		}
-		lastKey := storageKey(append([]byte{0x10}, callerAddr[:]...))
+		lastKey := storageKey(append([]byte{0x10}, callerAddr20[:]...))
 		lastDrip := readUint64(acc.Storage[lastKey])
 		if lastDrip != 0 && blockNum < lastDrip+cooldown {
 			return []byte{0}, nil // rate-limited
@@ -146,23 +144,36 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 	}
 }
 
+// callerAccountKey normalizes a caller string to the StateDB account key.
+// Callers arrive as either a 64-hex ed25519 pubkey (live tx.from) or a
+// precompile address. The node uses two canonical forms that coexist in the
+// account map: 40-char (zero-padded 20-byte, e.g. user accounts via
+// addrFromPubKey) and 38-char (PrecompileAddrHex, e.g. "000…0003"). This
+// helper must NOT pad/truncate either form — padding a 38-char precompile
+// address corrupts it. So: 64-hex -> first 40 chars; 38/40 -> as-is.
+func callerAccountKey(caller string) string {
+	s := strings.TrimPrefix(strings.ToLower(caller), "0x")
+	switch {
+	case len(s) >= 64:
+		return s[:40] // 64-hex pubkey -> 40-char address
+	case len(s) == 40, len(s) == 38:
+		return s // canonical forms — pass through untouched
+	default:
+		return s // unknown form — do not corrupt
+	}
+}
+
 // isFaucetAdmin: treasury (0x03) or a Dox_Dev L3 curator may tune the faucet.
 func isFaucetAdmin(caller string, state *StateDB) bool {
-	cb := []byte(caller)
-	var callerAddr [20]byte
-	if len(cb) >= 4 && cb[0] == '0' && cb[1] == 'x' {
-		copy(callerAddr[:], cb[2:22])
-	} else if len(cb) >= 20 {
-		copy(callerAddr[:], cb[:20])
-	}
+	callerKey := callerAccountKey(caller)
 	// treasury precompile address
-	if string(callerAddr[:]) == PrecompileAddrHex(0x03) {
+	if callerKey == PrecompileAddrHex(0x03) {
 		return true
 	}
 	// L3 curator (Dox_Dev level >= 3) — check badge precompile storage
 	badgeAddr := PrecompileAddrHex(0x13)
 	badgeAcc := state.GetOrCreateAccount(badgeAddr)
-	levelKey := storageKey(append([]byte{0x20}, callerAddr[:]...))
+	levelKey := storageKey(append([]byte{0x20}, callerKey[:]...))
 	level := readBigInt(badgeAcc.Storage[levelKey])
 	return level.Cmp(big.NewInt(3)) >= 0
 }
