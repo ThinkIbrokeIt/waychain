@@ -250,11 +250,11 @@ waychain rpc call eth_getBalance 0xYourAddress latest</code></pre></div>
 
   <table>
     <tr><th>Feature</th><th>WayChain</th><th>Standard EVM</th></tr>
-    <tr><td>Hash function</td><td>SHA256 everywhere (selectors too). 0x21 is WIFRGantletRewards — not Keccak</td><td>keccak256</td></tr>
+    <tr><td>Hash function</td><td>SHA256 everywhere (selectors too). 0x21 is Keccak256 (app-layer hashing bridge)</td><td>keccak256</td></tr>
     <tr><td>Signatures</td><td>Ed25519</td><td>ECDSA (secp256k1)</td></tr>
     <tr><td>Tx format</td><td>Binary (not RLP)</td><td>RLP-encoded</td></tr>
     <tr><td>Fees</td><td>Gas-based (min 1 wei/gas) / fixed costs for specific ops</td><td>Auction-based</td></tr>
-    <tr><td>Precompiles</td><td>27 at 0x0C-0x26</td><td>0x01-0x0A</td></tr>
+    <tr><td>Precompiles</td><td>28 at 0x0C-0x27</td><td>0x01-0x0A</td></tr>
   </table>
 
   <h2>RPC API</h2>
@@ -271,7 +271,7 @@ curl -X POST https://api.waychain.org \
 # WebSocket stream
 wss://api.waychain.org/ws</code></pre></div>
 
-  <h2>Native Precompiles (0x0C-0x26)</h2>
+  <h2>Native Precompiles (0x0C-0x27)</h2>
   <table>
     <tr><th>Address</th><th>Name</th><th>Function</th><th>Status</th></tr>
     <tr><td><code>0x0C</code></td><td>OracleAggregator</td><td>Price aggregation</td><td>✅ Live</td></tr>
@@ -295,16 +295,17 @@ wss://api.waychain.org/ws</code></pre></div>
     <tr><td><code>0x1E</code></td><td>StateRent</td><td>Storage fees</td><td>✅ Live</td></tr>
     <tr><td><code>0x1F</code></td><td>CrossChain</td><td>External attestations</td><td>✅ Live</td></tr>
     <tr><td><code>0x20</code></td><td>MRT Registry</td><td>Mineral rights</td><td>✅ Live</td></tr>
-    <tr><td><code>0x21</code></td><td>WIFRGantletRewards</td><td>WIFR gauntlet reward distribution</td><td>✅ Live</td></tr>
+    <tr><td><code>0x21</code></td><td>Keccak256</td><td>App-layer SHA-3 hashing bridge</td><td>✅ Live</td></tr>
     <tr><td><strong><code>0x22</code></strong></td><td><strong>WayStablecoin (1WAY)</strong></td><td><strong>BTC-backed stablecoin</strong><br><small>BTC locked → 1WAY minted (1:1)</small></td><td><strong>✅ Live</strong></td></tr>
     <tr><td><strong><code>0x23</code></strong></td><td><strong>TaskRegistry</strong></td><td><strong>Professional oracle tasks</strong><br><small>Bounties for geologists, lawyers, surveyors, engineers</small></td><td><strong>✅ Live</strong></td></tr>
     <tr><td><strong><code>0x24</code></strong></td><td><strong>SWAY Token</strong></td><td><strong>DEX LP incentive</strong><br><small>Minted by 2WAY Vault (0x18) / TaskRegistry (0x23) rewards</small></td><td><strong>✅ Live</strong></td></tr>
     <tr><td><strong><code>0x25</code></strong></td><td><strong>SwapRoute (DEX)</strong></td><td><strong>Native DEX</strong><br><small>0.3% fee, SWAY rewards to LPs</small></td><td><strong>✅ Live</strong></td></tr>
     <tr><td><strong><code>0x26</code></strong></td><td><strong>TemplateRegistry</strong></td><td><strong>Safe contract templates</strong><br><small>Class A deployment for Level 2+</small></td><td><strong>✅ Live</strong></td></tr>
+    <tr><td><code>0x27</code></td><td>GasFaucet</td><td>Drips WAY for gas to new accounts / quest trackers</td><td>✅ Live</td></tr>
   </table>
 
   <h2>Web Connection Layer (Live)</h2>
-  <p>The frontend talks to mainnet through a single <strong>shared precompile registry</strong> — one source of truth for all 27 precompiles (0x0C–0x26) and all 128 methods (54 read / 74 write), verified against the Go source on the node. Both the web and mobile wallets use it.</p>
+  <p>The frontend talks to mainnet through a single <strong>shared precompile registry</strong> — one source of truth for all 28 precompiles (0x0C–0x27) and all 128 methods (54 read / 74 write), verified against the Go source on the node. Both the web and mobile wallets use it.</p>
   <ul>
     <li><strong>Real Ed25519 auth</strong> — the web wallet derives a 20-byte address (<code>hex(pubkey)[0:40]</code>) matching the chain's canonical format. No fake/placeholder addresses.</li>
     <li><strong>Live reads</strong> — <code>precompileCall</code> dispatches <code>eth_call</code> to the correct precompile + selector + ABI-encoded args. Proven working against mainnet (e.g. Dox_Dev returns 3 badges on-chain).</li>

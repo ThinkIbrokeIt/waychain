@@ -14,7 +14,7 @@
 waychain/
 ├── REPO_LAW.md              ← BINDING law (one tree, three states, issue-first)
 ├── AGENTS.md                ← you are here
-├── protocol-manifest.json   ← machine SoT (27 precompiles 0x0C–0x26)
+├── protocol-manifest.json   ← machine SoT (28 precompiles 0x0C–0x27)
 ├── consensus/               ← Go L1 (canonical protocol)
 │   ├── evm/precompiles.go
 │   ├── scripts/audit-consistency.sh
@@ -32,7 +32,7 @@ waychain/
 | Fact | Value |
 |---|---|
 | Chain ID | 10008 (`0x2718`) |
-| Precompiles | **27** @ **0x0C–0x26** |
+| Precompiles | **28** @ **0x0C–0x27** |
 | 0x21 | **Keccak256** (SHA-3 precompile; was mislabeled WIFRGantletRewards pre-#65) |
 | Selectors | `sha256(sig)[:4]` |
 | EOA key / balance / tx.from | **64-hex** pubkey; 20-byte display only |

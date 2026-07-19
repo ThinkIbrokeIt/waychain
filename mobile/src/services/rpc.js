@@ -19,17 +19,18 @@ export const hexToNum = (hex) => {
 
 // Precompile addresses — imported from the shared registry (issue #9).
 // Single source of truth: src/services/precompiles.js mirrors
-// waychain-consensus/evm/precompiles.go (0x0C–0x26).
+// waychain-consensus/evm/precompiles.go (0x0C–0x27).
 import { PRECOMPILES as REGISTRY, precompileAddress, encodeCall } from './precompiles';
 import { buildAndSignTx, getNonce, sendRawTransaction } from './tx';
 
 // Backwards-compatible named map for existing call sites.
+// NOTE: 0x21 is Keccak256 (app-layer hashing bridge) — it is NOT "WIFR".
+// WIFR is a Solana marketing token and has no WayChain precompile address.
 const PRECOMPILES = {
   BIJO:           precompileAddress('0x14'),
   TWO_WAY:        precompileAddress('0x18'),
   TRUSTLESS_LOCK: precompileAddress('0x1A'),
   GOVERNANCE:     precompileAddress('0x1D'),
-  WIFR:           precompileAddress('0x21'),
 };
 
 // ABI selectors: WayChain uses sha256(signature)[:4], NOT keccak256.
@@ -114,7 +115,7 @@ export const waychainRPC = {
   sign,
 
   // ── Per-precompile call layer (issue #11, child of #8) ──
-  // Unified read/write entrypoint for all 27 precompiles, built on the
+  // Unified read/write entrypoint for all 28 precompiles, built on the
   // shared registry (#9) + real auth (#10) + tx pipeline (tx.js).
   //
   //   precompileCall('0x22', 'createVault', '0x'+vaultId, { write:true, privHex, pub64 })

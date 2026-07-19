@@ -8,7 +8,7 @@
   "whitepaper_sections": 22,
   "live_features": 24,
   "spec_features": 6,
-  "precompiles": 27,
+  "precompiles": 28,
   "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
   "blueprint_files": 29,
   "blueprint_lines": 11947,
@@ -26,13 +26,13 @@
     "Mobile nav: header dashboard links consolidated into hamburger dropdown (≤768px)"
   ],
   "fixes": [
-    "SoT freeze: precompiles count 22→27 matches protocol-manifest (0x0C–0x26)",
+    "SoT freeze: precompiles count reconciled to protocol-manifest (now 28 @ 0x0C–0x27, added 0x27 GasFaucet)",
     "Address false marketing counts (20/21/22) in declaration/telegram/MARKETING",
     "BIJO clarified as ecosystem reward token (not fuel token)",
     "BIJO supply corrected: 369B → 369M (matches on-chain precompile)",
     "State rent pricing updated to match 2026 cloud storage costs",
     "Whitepaper HTML restored (was broken/regressed in v3.1.1)",
     "Navigation links for Binary Journal, TrustlessLock, DEX, Declaration now visible in header and footer",
-    "Precompile count updated from 20 to 27 (added 0x0E-0x12, 0x22-0x26)"
+    "Precompile set grew to 28 (0x0C–0x27) with GasFaucet at 0x27"
   ]
 }

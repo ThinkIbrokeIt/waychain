@@ -45,28 +45,30 @@ def parse_precompiles(text: str) -> list[dict]:
             }
         )
     entries.sort(key=lambda e: e["addr_byte"])
-    if len(entries) != 27:
-        raise SystemExit(f"expected 27 precompiles, found {len(entries)}")
-    if entries[0]["addr_byte"] != 0x0C or entries[-1]["addr_byte"] != 0x26:
+    if len(entries) != 28:
+        raise SystemExit(f"expected 28 precompiles, found {len(entries)}")
+    if entries[0]["addr_byte"] != 0x0C or entries[-1]["addr_byte"] != 0x27:
         raise SystemExit(
-            f"range must be 0x0C-0x26, got {entries[0]['addr']}-{entries[-1]['addr']}"
+            f"range must be 0x0C-0x27, got {entries[0]['addr']}-{entries[-1]['addr']}"
         )
-    # contiguity check — no holes in 0x0C..0x26
-    expected = list(range(0x0C, 0x27))
+    # contiguity check — no holes in 0x0C..0x27
+    expected = list(range(0x0C, 0x28))
     got = [e["addr_byte"] for e in entries]
     if got != expected:
-        raise SystemExit(f"precompile address set not contiguous 0x0C-0x26: {got}")
+        raise SystemExit(f"precompile address set not contiguous 0x0C-0x27: {got}")
     return entries
 
 
 def build_manifest(entries: list[dict]) -> dict:
+    start = entries[0]["addr"]
+    end = entries[-1]["addr"]
     return {
         "schema_version": 1,
         "protocol": "WayChain",
         "chain_id": 10008,
         "chain_id_hex": "0x2718",
         "precompile_count": len(entries),
-        "precompile_range": {"start": "0x0C", "end": "0x26"},
+        "precompile_range": {"start": start, "end": end},
         "hash_selectors": "sha256(signature)[:4]",
         "eoa_account_key": "full 64-hex ed25519 pubkey",
         "eoa_display_address": "20-byte pub[0:40]",

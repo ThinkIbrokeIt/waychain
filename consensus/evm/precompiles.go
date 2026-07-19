@@ -182,17 +182,24 @@ var PrecompilesTable = map[byte]*Precompile{
 		Gas:     5000,
 		Fn:      templateRegistryPrecompile,
 	},
+	0x27: {
+		Address: 0x27,
+		Name:    "GasFaucet", // drips WAY for gas to new accounts / quest trackers
+		Gas:     3000,
+		Fn:      faucetPrecompile,
+	},
 }
 
 // IsPrecompile returns true if the address is a precompile
 func IsPrecompile(addr byte) bool {
-	return addr >= 0x0C && addr <= 0x26
+	return addr >= 0x0C && addr <= 0x27
 }
 
 // ── 0x21: Keccak256 (app-layer hashing bridge) ──
 // Implemented in keccak_precompile.go (keccak256Precompile).
-// Was temporarily WIFRGantletRewards; that reward pool is removed — its
-// function is subsumed by the wifr-bridge quest (TaskRegistry 0x23, treasury 0x03).
+// This address was previously assigned to a removed reward pool; its role is
+// now the SHA-3 hashing bridge used by Solidity dApps. The old reward function
+// is subsumed by the wifr-bridge quest (TaskRegistry 0x23, treasury 0x03).
 // See issues #61/#62/#63.
 
 // ExecutePrecompile runs a precompile and returns the result
@@ -508,10 +515,10 @@ func stateRentCalc(input []byte, caller string, state *StateDB, blockNum uint64)
 
 // PrecompileNames returns a formatted list of all precompiles
 func PrecompileNames() string {
-	// Range must match PrecompilesTable + protocol-manifest.json (0x0C-0x26).
+	// Range must match PrecompilesTable + protocol-manifest.json (0x0C-0x27).
 	// Stale "0x0C-0x20" banners are caught by scripts/audit-consistency.sh (issue #24).
-	result := "\nWayChain Precompiles (0x0C-0x26):\n"
-	for addr := byte(0x0C); addr <= 0x26; addr++ {
+	result := "\nWayChain Precompiles (0x0C-0x27):\n"
+	for addr := byte(0x0C); addr <= 0x27; addr++ {
 		if pc, ok := PrecompilesTable[addr]; ok {
 			result += fmt.Sprintf("  0x%02X — %s (gas: %d)\n", addr, pc.Name, pc.Gas)
 		}

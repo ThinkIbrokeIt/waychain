@@ -88,7 +88,7 @@
     },
 
     // ── Per-precompile call layer (issue #11) ──
-    // READ for all 27 precompiles via eth_call + the shared registry.
+    // READ for all 28 precompiles via eth_call + the shared registry.
     // WRITE requires the unlocked wallet (ephemeral seed) + tx.js signer.
     precompileCall: async (addr1, method, argsHex = '', opts = {}) => {
       const reg = (global.WayChainPrecompiles && global.WayChainPrecompiles.PRECOMPILES) || null;

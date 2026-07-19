@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"os"
+
+	"github.com/ThinkIbrokeIt/waychain-consensus/evm"
 )
 
 // GenesisConfig defines the initial state of the WayChain network
@@ -76,6 +79,18 @@ func InitGenesis(config GenesisConfig) *GenesisState {
 		account.Balance.SetUint64(acc.Balance)
 		account.DoxDevLevel = acc.Level
 	}
+
+	// ── Seed protocol precompile reserves (issue #92) ──
+	// GasFaucet 0x27: fund its reserve so new accounts/quest trackers can
+	// drip WAY for gas immediately after genesis. Reserve is denominated in
+	// wei (1M WAY = 1e24), so use big.Int (exceeds uint64).
+	faucetAddr := evm.PrecompileAddrHex(0x27)
+	faucetAcc := chain.State.GetOrCreateAccount(faucetAddr)
+	if faucetAcc.Balance == nil {
+		faucetAcc.Balance = new(big.Int)
+	}
+	faucetAcc.Balance.SetString("1000000000000000000000000", 10) // 1M WAY (wei)
+	fmt.Printf("  GasFaucet 0x27 seeded with 1,000,000 WAY\n")
 
 	// ── Initial supply checks ──
 	var totalGenesis uint64
