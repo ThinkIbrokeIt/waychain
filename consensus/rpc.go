@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 package main
 
 import (
@@ -113,10 +114,12 @@ func (rpc *RPCServer) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "https://waychain.org")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-	w.Header().Set("Access-Control-Max-Age", "86400")
+	// NOTE: CORS is owned exclusively by nginx (sites-available/waychain), which
+	// adds Access-Control-Allow-Origin "*" with `always`. The Go API MUST NOT set
+	// ACAO — a duplicate ACAO header (different values) is invalid per spec and
+	// makes browsers reject the response ("Failed to fetch"), while curl ignores
+	// it. That duplication is what broke Mission Control / all browser RPC calls.
+	// OPTIONS preflight is still short-circuited here; nginx passes it through.
 
 	if r.Method == "OPTIONS" {
 		return
