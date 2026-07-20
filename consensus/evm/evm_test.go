@@ -68,36 +68,33 @@ func TestCounter(t *testing.T) {
 }
 
 func TestPrecompileTxRouting42Char(t *testing.T) {
-	// Regression test for #26: a tx to a precompile arrives as the 42-char
-	// canonical form (PrecompileAddrHex -> "0000...0013"). The dispatcher must
-	// route it to the precompile, NOT fall through to the EOA/revm path.
+	// Regression test for #26 (and #143): a tx to a precompile arrives as the
+	// canonical 40-char form (PrecompileAddrHex -> "0000...0013", 38 zeros +
+	// 1 byte 0x13). The dispatcher must route it to the precompile, NOT fall
+	// through to the EOA/revm path. (PrecompileAddrHex was fixed in #143 to
+	// emit 40 chars; previously 38, which broke genesis-seeded reserves.)
 	state := NewStateDB()
 	evm := NewEVM(state, ConsensusLane, 1, 1000, 10008, 100000, "")
 	state.GetOrCreateAccount("caller").DoxDevLevel = 3
 
-	// Canonical precompile address for 0x13 (DoxDevBadge) is 38 hex chars
-	// (18 zero bytes + 1 byte 0x13). The old dispatcher only matched
-	// len==40 || len==2, so this 38-char form fell through to revm.
-	precompile38 := PrecompileAddrHex(0x13)
-	if len(precompile38) != 38 {
-		t.Fatalf("PrecompileAddrHex(0x13) expected 38 chars, got %d: %q", len(precompile38), precompile38)
+	// Canonical precompile address for 0x13 (DoxDevBadge) is 40 hex chars.
+	precompile40 := PrecompileAddrHex(0x13)
+	if len(precompile40) != 40 {
+		t.Fatalf("PrecompileAddrHex(0x13) expected 40 chars, got %d: %q", len(precompile40), precompile40)
 	}
 
-	ctx := &CallContext{Caller: "caller", Address: precompile38, Value: big.NewInt(0), GasLimit: 100000, Calldata: []byte{}}
+	ctx := &CallContext{Caller: "caller", Address: precompile40, Value: big.NewInt(0), GasLimit: 100000, Calldata: []byte{}}
 	res := evm.Execute(ctx)
 	// Routing proof: the call must reach the precompile, not fall through to
 	// the EOA/revm path. The EOA fallback yields GasUsed==21000 with no error.
 	// The precompile path runs precompile logic (here it rejects empty calldata
 	// as "unknown selector") — that error proves we routed TO the precompile.
-	// (A precompile's table gas may be 0, so we assert on the EOA signature,
-	// not on an exact gas value.)
 	if res.GasUsed == 21000 {
-		t.Fatalf("38-char precompile was NOT routed (fell through to EOA path, GasUsed=21000)")
+		t.Fatalf("40-char precompile was NOT routed (fell through to EOA path, GasUsed=21000)")
 	}
 	if res.Error == nil {
 		t.Fatalf("expected the precompile to run and reject empty calldata; got no error (may have missed routing)")
 	}
-
 	// A normal account address must NOT be mis-routed to a precompile even
 	// if its trailing byte happens to be a precompile id — only when all
 	// higher bytes are zero.

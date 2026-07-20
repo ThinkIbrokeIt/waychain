@@ -539,8 +539,14 @@ func PrecompileNames() string {
 // with sha3.NewLegacyKeccak256). This comment previously claimed all ABI
 // selectors were sha256 — that was stale after the 2026-07-04 keccak decision.
 
+// PrecompileAddrHex returns the 20-byte (40-hex-char) storage key for a
+// precompile address. MUST be 40 chars so client queries (way_getBalance with a
+// standard 0x-prefixed 40-hex address) resolve. Bug fixed 2026-07-20 (issue
+// #143): prior format emitted 38 chars, so genesis-seeded precompile reserves
+// (e.g. GasFaucet 0x27) were stored under a key that client lookups missed →
+// way_getBalance returned 0x0 despite the reserve being seeded.
 func PrecompileAddrHex(addr byte) string {
-	return fmt.Sprintf("000000000000000000000000000000000000%02x", addr)
+	return fmt.Sprintf("00000000000000000000000000000000000000%02x", addr)
 }
 
 // ── Storage key helpers ──
