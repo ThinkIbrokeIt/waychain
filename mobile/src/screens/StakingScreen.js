@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../theme';
@@ -5,54 +6,55 @@ import BrandHeader from '../components/BrandHeader';
 import Button from '../components/Button';
 import { waychainRPC } from '../services/rpc';
 import { wallet } from '../services/wallet';
+import { VALIDATOR_CONSTANTS } from '../services/consensus-constants';
 
 // ── arg packing (WayChain SHA256 ABI: big-endian, no keccak) ──
 const pad32 = (v) => {
   try { return BigInt(v).toString(16).padStart(64, '0'); } catch { return '0'.repeat(64); }
 };
 const pad20 = (addr20) => addr20.toLowerCase().replace(/^0x/, '').padStart(40, '0');
+const fmtWay = (hexOrNum) => {
+  try {
+    const wei = typeof hexOrNum === 'string' ? BigInt(hexOrNum) : BigInt(hexOrNum);
+    return (Number(wei) / 1e18).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  } catch { return '0'; }
+};
 
 export default function StakingScreen({ navigation }) {
   const [account, setAccount] = useState(null);
   const [block, setBlock] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 2WAY vault section
-  const [vault, setVault] = useState(null);        // {btc, debt} for current account
-  const [vaultCount, setVaultCount] = useState(null);
-  const [vaultBusy, setVaultBusy] = useState(false);
-  const [depositAmt, setDepositAmt] = useState(''); // BTC amount (string)
+  // Read-only network-security context (live + protocol constants)
+  const [validatorCount, setValidatorCount] = useState(null); // LIVE: way_validatorCount
+  const [opCount, setOpCount] = useState(null);               // LIVE: 0x17 getOperatorCount (storage operators)
+  const [opInfo, setOpInfo] = useState(null);                 // { active, stakedWay } for this account
 
-  // WAY operator staking section
-  const [opInfo, setOpInfo] = useState(null);       // {active, stakedWay}
-  const [opCount, setOpCount] = useState(null);
+  // WAY staking action (0x17 StorageEndowment)
+  const [stakeAmt, setStakeAmt] = useState('');
   const [opBusy, setOpBusy] = useState(false);
-  const [stakeAmt, setStakeAmt] = useState('');      // WAY amount (string)
 
   useEffect(() => {
     wallet.loadAccounts().then((a) => setAccount(a && a.length ? a[0] : null));
     waychainRPC.call('way_getBlockCount', []).then(r => setBlock(typeof r === 'string' ? parseInt(r, 16) : r)).catch(() => {});
   }, []);
 
-  // addr20 = 20-byte display form of the Ed25519 pubkey (pub[0:40])
   const addr20 = account ? account.publicKey.slice(2, 42) : '';
 
   const refresh = useCallback(async () => {
     if (!account) { setLoading(false); return; }
     try {
-      // 2WAY vault stats
-      const vc = await waychainRPC.precompileCall('0x18', 'vaultCount', '', { write: false });
-      setVaultCount(parseInt(vc, 16));
-      // vault id derived from account (sha256 style) — read this account's vault if any
-      const v = await waychainRPC.precompileCall('0x18', 'getVault', pad20(addr20), { write: false }).catch(() => null);
-      if (v && v !== '0x' && v !== '0x0') setVault({ raw: v });
-      // WAY operator staking
+      // LIVE read-only: how many validators are securing the network right now
+      const vc = await waychainRPC.call('way_validatorCount', []).catch(() => null);
+      setValidatorCount(vc != null ? parseInt(vc, 10) : null);
+      // LIVE read-only: community storage operators (0x17)
       const oc = await waychainRPC.precompileCall('0x17', 'getOperatorCount', '', { write: false }).catch(() => null);
       setOpCount(oc ? parseInt(oc, 16) : null);
+      // This account's stake position (0x17)
       const oi = await waychainRPC.precompileCall('0x17', 'getOperatorInfo', pad20(addr20), { write: false }).catch(() => null);
       if (oi && oi !== '0x' && oi.length >= 4) {
         const active = parseInt(oi.slice(2, 4), 16);
-        const stakedHex = '0x' + oi.slice(4); // joinedAt(8) + stakedWay(23)
+        const stakedHex = '0x' + oi.slice(4);
         setOpInfo({ active, stakedWay: stakedHex });
       } else {
         setOpInfo(null);
@@ -66,29 +68,7 @@ export default function StakingScreen({ navigation }) {
 
   useEffect(() => { if (account) refresh(); }, [refresh]);
 
-  // ── 2WAY vault: open (deposit + mint) ──
-  const openVault = async () => {
-    if (!account) { Alert.alert('No wallet', 'Import your recovery phrase first.'); return; }
-    if (!depositAmt || parseFloat(depositAmt) <= 0) { Alert.alert('Enter BTC amount', 'Amount must be > 0.'); return; }
-    setVaultBusy(true);
-    try {
-      // vault id = sha256-style of account (use addr20 as the vault seed)
-      const vaultId = pad32(BigInt('0x' + addr20.padStart(40, '0')).toString(16) || '1');
-      const amtWei = pad32(BigInt(Math.round(parseFloat(depositAmt) * 1e8)).toString(16)); // BTC satoshis as wei-equivalent
-      await waychainRPC.precompileCall('0x18', 'deposit', vaultId + pad32('0x0') /*btcProof placeholder*/ + amtWei, {
-        write: true, privHex: account.privateKey, pub64: account.publicKey,
-      });
-      await waychainRPC.precompileCall('0x18', 'mint', vaultId + amtWei, {
-        write: true, privHex: account.privateKey, pub64: account.publicKey,
-      });
-      Alert.alert('Vault opened', '2WAY vault created. Mint queued on-chain.');
-      refresh();
-    } catch (e) {
-      Alert.alert('Vault open failed', e?.message || 'err');
-    } finally { setVaultBusy(false); }
-  };
-
-  // ── WAY operator staking: registerOperator ──
+  // ── WAY staking: registerOperator (0x17) ──
   const stakeOperator = async () => {
     if (!account) { Alert.alert('No wallet', 'Import your recovery phrase first.'); return; }
     if (!stakeAmt || parseFloat(stakeAmt) <= 0) { Alert.alert('Enter WAY amount', 'Amount must be > 0.'); return; }
@@ -98,7 +78,7 @@ export default function StakingScreen({ navigation }) {
       await waychainRPC.precompileCall('0x17', 'registerOperator', amtWei, {
         write: true, privHex: account.privateKey, pub64: account.publicKey,
       });
-      Alert.alert('Staked', `Registered as WAY storage operator with ${stakeAmt} WAY.`);
+      Alert.alert('Staked', `Staked ${stakeAmt} WAY to help secure the network.`);
       refresh();
     } catch (e) {
       Alert.alert('Stake failed', e?.message || 'err');
@@ -112,7 +92,7 @@ export default function StakingScreen({ navigation }) {
       await waychainRPC.precompileCall('0x17', 'unregisterOperator', '', {
         write: true, privHex: account.privateKey, pub64: account.publicKey,
       });
-      Alert.alert('Unregistered', 'Operator stake released (inactive).');
+      Alert.alert('Unregistered', 'Your WAY stake is released (no longer securing a position).');
       refresh();
     } catch (e) {
       Alert.alert('Unregister failed', e?.message || 'err');
@@ -131,6 +111,7 @@ export default function StakingScreen({ navigation }) {
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <BrandHeader subtitle="Stake" />
+
       <View style={styles.statRow}>
         <View style={styles.stat}><Text style={styles.statLabel}>Network</Text><Text style={styles.statVal}>WayChain</Text></View>
         <View style={styles.stat}><Text style={styles.statLabel}>Block</Text><Text style={styles.statVal}>#{block ?? '—'}</Text></View>
@@ -139,54 +120,59 @@ export default function StakingScreen({ navigation }) {
 
       {loading && <ActivityIndicator color={COLORS.copper} style={{ marginTop: 24 }} />}
 
-      {/* ── Section 1: 2WAY Vault ── */}
+      {/* ── Network Security (read-only context) ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>2WAY Vault · Bitcoin-backed stablecoin</Text>
-        <Text style={styles.sectionSub}>Open a vault, deposit BTC, mint 2WAY (precompile 0x18).</Text>
+        <Text style={styles.sectionTitle}>Network Security</Text>
+        <Text style={styles.sectionSub}>Stakes are how we secure the network. Validators bond WAY; thresholds must be met to join the active set, and bonds cover other positions if a validator misbehaves.</Text>
         <View style={styles.statInline}>
-          <Text style={styles.k}>Active vaults</Text><Text style={styles.v}>{vaultCount ?? '—'}</Text>
+          <Text style={styles.k}>Validators securing now</Text>
+          <Text style={styles.v}>{validatorCount != null ? `${validatorCount} / ${VALIDATOR_CONSTANTS.maxValidators}` : '—'}</Text>
         </View>
-        {vault && (
-          <View style={styles.statInline}>
-            <Text style={styles.k}>Your vault</Text><Text style={styles.v}>{vault.raw.slice(0, 18)}…</Text>
-          </View>
-        )}
-        <TextInput
-          value={depositAmt} onChangeText={setDepositAmt}
-          placeholder="BTC amount to deposit" placeholderTextColor={COLORS.muted}
-          keyboardType="decimal-pad" style={styles.input}
-        />
-        <Button label={vaultBusy ? 'Opening…' : 'Open 2WAY Vault'} onPress={openVault} disabled={vaultBusy} style={styles.btn} />
+        <View style={styles.statInline}>
+          <Text style={styles.k}>Min stake to be a validator</Text>
+          <Text style={styles.v}>{VALIDATOR_CONSTANTS.minValidatorStake.toLocaleString()} WAY</Text>
+        </View>
+        <View style={styles.statInline}>
+          <Text style={styles.k}>Missed-block jail threshold</Text>
+          <Text style={styles.v}>{VALIDATOR_CONSTANTS.jailThresholdBlocks} blocks</Text>
+        </View>
+        <View style={styles.statInline}>
+          <Text style={styles.k}>Community storage operators</Text>
+          <Text style={styles.v}>{opCount != null ? opCount : '—'}</Text>
+        </View>
+        <Text style={styles.note}>Validator thresholds are protocol constants (consensus/consensus.go, validators.go). The live validator count is read from the node (way_validatorCount).</Text>
       </View>
 
-      {/* ── Section 2: WAY Operator Staking ── */}
+      {/* ── Your WAY stake (action via 0x17 StorageEndowment) ── */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>WAY Operator Staking · StorageEndowment</Text>
-        <Text style={styles.sectionSub}>Stake WAY to register as a storage operator (precompile 0x17).</Text>
-        <View style={styles.statInline}>
-          <Text style={styles.k}>Operators</Text><Text style={styles.v}>{opCount ?? '—'}</Text>
-        </View>
+        <Text style={styles.sectionTitle}>Your WAY Stake</Text>
+        <Text style={styles.sectionSub}>Stake WAY to take a secured position in the network (precompile 0x17, StorageEndowment).</Text>
         {opInfo && opInfo.active === 1 && (
           <View style={styles.statInline}>
-            <Text style={styles.k}>Your stake</Text>
-            <Text style={styles.v}>{opInfo.stakedWay === '0x' ? '0' : (Number(BigInt(opInfo.stakedWay)) / 1e18).toFixed(2) + ' WAY'}</Text>
+            <Text style={styles.k}>Your staked position</Text>
+            <Text style={styles.v}>{fmtWay(opInfo.stakedWay)} WAY</Text>
           </View>
         )}
         <TextInput
-          value={stakeAmt} onChangeText={setStakeAmt}
-          placeholder="WAY amount to stake" placeholderTextColor={COLORS.muted}
-          keyboardType="decimal-pad" style={styles.input}
+          value={stakeAmt}
+          onChangeText={setStakeAmt}
+          placeholder="WAY amount to stake"
+          placeholderTextColor={COLORS.muted}
+          keyboardType="decimal-pad"
+          style={styles.input}
         />
         {opInfo && opInfo.active === 1 ? (
-          <Button label={opBusy ? '…' : 'Unregister Operator'} onPress={unregisterOp} disabled={opBusy} variant="secondary" style={styles.btn} />
+          <Button label={opBusy ? '…' : 'Unstake (release)'}
+            onPress={unregisterOp} disabled={opBusy} variant="secondary" style={styles.btn} />
         ) : (
-          <Button label={opBusy ? 'Staking…' : 'Stake WAY (register)'} onPress={stakeOperator} disabled={opBusy} style={styles.btn} />
+          <Button label={opBusy ? 'Staking…' : 'Stake WAY'}
+            onPress={stakeOperator} disabled={opBusy} style={styles.btn} />
         )}
       </View>
 
       <Text style={styles.note}>
-        Both sections call live WayChain precompiles (0x18 TwoWayVault, 0x17 StorageEndowment).
-        Writes are real signed txs from your mnemonic. Reads reflect on-chain state.
+        Staking calls the live WayChain precompile 0x17. Writes are real signed txs from your
+        mnemonic. The 2WAY Bitcoin-backed vault has its own tab — this screen is WAY-only.
       </Text>
     </ScrollView>
   );
