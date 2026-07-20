@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // Deploy with EIP-155 signature verification
 // Creator signs payload off-web, script verifies on-chain
 

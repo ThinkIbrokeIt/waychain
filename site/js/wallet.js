@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // WayChain web wallet — REAL Ed25519 auth (issue #10) + write signer (Option X).
 //
 // ADDRESS MODEL (verified live 2026-07-14):

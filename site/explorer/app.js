@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // WayChain Explorer — Phase 2 frontend (clean client over the EXPL-8 API).
 //
 // Truth-first: every number comes from /api/*. Nothing is hardcoded.

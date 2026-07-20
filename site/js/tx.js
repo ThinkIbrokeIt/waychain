@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // WayChain web transaction builder + signer (browser port of mobile tx.js).
 // Format is byte-for-byte compatible with the Go chain (serialize.go):
 //   hash = sha256("nonce:from:to:value:gasLimit:lane:len(data):data:enc")
