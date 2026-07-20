@@ -160,20 +160,69 @@ jobs:
           vercel build --prod --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" --project waychain-site
 
-  # ── 5. NODE REDEPLOY: MANUAL ONLY (never automatic) ──────────────────────
+  # ── 5. NODE AUTO-DEPLOY: green build → build binary → ship to AWS + restart ──
+  # Founder rule 2026-07-19 (extended): "everything should sync with binary
+  # deploy; any step that was manual needs to be automated; after a green PR the
+  # binary should build and deploy." Interpretation: when a PR goes GREEN and is
+  # merged to master (push to master), the node MUST auto-build the binary and
+  # deploy — NO manual step anywhere. (We do NOT deploy unmerged PR code; the
+  # deploy fires on the post-merge push so only reviewed code reaches the node.)
+  # Runs ONLY after build-test + strix-security pass. Verifies live sha256.
   redeploy-node:
-    name: Redeploy WayChain Node (MANUAL)
+    name: Deploy WayChain Node (auto on green master)
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_node_redeploy == 'REDEPLOY-NODE'
+    needs: [build-test, strix-security]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+      || (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_node_redeploy == 'REDEPLOY-NODE')
     steps:
-      - name: Gate
-        run: echo "Manual node redeploy confirmed by human dispatch."
-      - name: SSH to AWS and restart waychain.service
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Install Rust (needed for revm_ffi cgo dependency)
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo registry + revm-ffi build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            consensus/revm-ffi/target
+          key: ${{ runner.os }}-cargo-revm-ffi-${{ hashFiles('consensus/revm-ffi/Cargo.lock') }}
+      - name: Build revm_ffi (cgo links librevm_ffi.so)
+        working-directory: consensus/revm-ffi
+        run: cargo build --release
+      - name: Build deployable binary (linux/amd64, CGO_ENABLED=1, -a per build-cache rule)
+        working-directory: consensus
+        env:
+          CGO_ENABLED: "1"
+          GOOS: linux
+          GOARCH: amd64
+        run: go build -a -o /tmp/waychain .
+      - name: Record built sha256
+        id: built
+        run: echo "sha=$(sha256sum /tmp/waychain | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Ship binary to AWS node + restart service
         env:
           NODE_HOST: ${{ secrets.NODE_HOST }}
           NODE_USER: ${{ secrets.NODE_USER }}
           NODE_KEY: ${{ secrets.NODE_SSH_KEY }}
         run: |
           echo "$NODE_KEY" > /tmp/node_key && chmod 600 /tmp/node_key
-          ssh -i /tmp/node_key -o StrictHostKeyChecking=no "$NODE_USER@$NODE_HOST" \
-            'sudo systemctl restart waychain.service && sudo systemctl status waychain.service --no-pager'
+          # pipe the freshly built binary straight to the node (no scp, per repo convention)
+          cat /tmp/waychain | ssh -i /tmp/node_key -o StrictHostKeyChecking=no \
+            "$NODE_USER@$NODE_HOST" \
+            'sudo install -m 0755 /dev/stdin /usr/local/bin/waychain && sudo systemctl restart waychain.service && sudo systemctl restart waychain-explorer.service'
+          sleep 3
+          LIVE_SHA=$(ssh -i /tmp/node_key -o StrictHostKeyChecking=no \
+            "$NODE_USER@$NODE_HOST" 'sha256sum /usr/local/bin/waychain' | cut -d' ' -f1)
+          echo "built : ${{ steps.built.outputs.sha }}"
+          echo "live  : $LIVE_SHA"
+          if [ "$LIVE_SHA" != "${{ steps.built.outputs.sha }}" ]; then
+            echo "::error::live binary sha mismatch after deploy"; exit 1
+          fi
+          ssh -i /tmp/node_key -o StrictHostKeyChecking=no \
+            "$NODE_USER@$NODE_HOST" 'sudo systemctl status waychain.service --no-pager | head -5'
