@@ -47,11 +47,25 @@ export default function DoxDevScreen({ navigation }) {
     ]);
   };
 
-  const submitApp = () => {
+  const submitApp = async () => {
     if (!role.trim()) { Alert.alert('Role required'); return; }
     if (!payAddr.trim()) { Alert.alert('Confirm payment address'); return; }
-    Alert.alert('Application submitted', `Role: ${role}\nDocs: ${needDocs ? docsNote || '(attached)' : 'not required'}\nPayment: ${payAddr}\n\nReviewed by governor (3p) or designated via questSetAutopilot (3t).`);
-    setApplying(null); setRole(''); setDocsNote(''); setPayAddr('');
+    if (!account) { Alert.alert('No wallet'); return; }
+    try {
+      // doxApply(bytes32 roleHash, bytes32 docsHash, address payAddr)
+      const enc = (s) => { const b = new TextEncoder().encode(s.slice(0, 32)); const o = new Uint8Array(32); o.set(b); return Array.from(o).map((x) => x.toString(16).padStart(2, '0')).join(''); };
+      const roleHex = enc(role.trim());
+      const docsHex = enc(needDocs ? (docsNote.trim() || role.trim()) : '');
+      const pay = payAddr.trim().replace(/^0x/, '').toLowerCase().padStart(40, '0');
+      const args = '0x' + roleHex + docsHex + pay;
+      await waychainRPC.precompileCall('0x13', 'doxApply', args, {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      setApplying(null); setRole(''); setDocsNote(''); setPayAddr('');
+      Alert.alert('Application submitted on-chain', `Role: ${role}\nReviewed by governor (3p) or designated via questSetAutopilot (3t).`);
+    } catch (e) {
+      Alert.alert('Failed', e?.message || 'Unknown error');
+    }
   };
 
   return (
