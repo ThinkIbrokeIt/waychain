@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 package evm
 
 // bt cwallet.go — WayChain-controlled per-vault BTC custody (trustless, sha256-native)

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // Minimal ABI arg encoder for WayChain precompile calls (issue #12.2).
 // The registry's encodeCall appends raw argsHex, so callers must pre-encode
 // args. These helpers produce the 32-byte-left-padded Solidity encodings the

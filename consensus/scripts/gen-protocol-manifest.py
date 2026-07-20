@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 """Generate protocol-manifest.json from evm/precompiles.go.
 
 Canonical machine-readable source of truth for:

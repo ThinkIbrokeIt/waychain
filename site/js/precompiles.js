@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // WayChain Precompile Registry — SINGLE SOURCE OF TRUTH for frontend↔backend wiring.
 //
 // Every precompile (0x0C–0x27) implemented natively in Go in

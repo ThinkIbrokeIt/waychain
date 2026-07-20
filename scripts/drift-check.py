@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 #!/usr/bin/env python3
 """WayChain precompile-drift guard.
 

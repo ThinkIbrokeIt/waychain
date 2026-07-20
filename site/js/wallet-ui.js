@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // WayChain web core wallet UI (issue #12.1, child of #8/#12).
 // Renders a live address + WAY balance widget using the real auth (#10)
 // + call layer (#11). Drop a <div id="wallet-widget"></div> on any page.

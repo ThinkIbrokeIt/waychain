@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 // WayChain web RPC — real node connection (issue #10/#11, child of #8).
 // Depends on js/precompiles.js (registry) + js/wallet.js (auth) + js/tx.js (signer).
 (function (global) {
