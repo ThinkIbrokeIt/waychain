@@ -146,11 +146,13 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 
 // callerAccountKey normalizes a caller string to the StateDB account key.
 // Callers arrive as either a 64-hex ed25519 pubkey (live tx.from) or a
-// precompile address. The node uses two canonical forms that coexist in the
-// account map: 40-char (zero-padded 20-byte, e.g. user accounts via
-// addrFromPubKey) and 38-char (PrecompileAddrHex, e.g. "000…0003"). This
-// helper must NOT pad/truncate either form — padding a 38-char precompile
-// address corrupts it. So: 64-hex -> first 40 chars; 38/40 -> as-is.
+// precompile address. All addresses are canonical 40-char (20-byte) hex:
+// user accounts via addrFromPubKey (first 40 of the 64-hex pubkey) and
+// precompiles via PrecompileAddrHex (e.g. "0000…0027", 38 zeros + %02x).
+// This helper must NOT pad/truncate — padding corrupts the key. So:
+// 64-hex -> first 40 chars; 40 -> as-is.
+// (The 38-char case is retained only for backward-compat with any pre-fix
+// 2026-07-20 state; new precompile keys are 40-char.)
 func callerAccountKey(caller string) string {
 	s := strings.TrimPrefix(strings.ToLower(caller), "0x")
 	switch {

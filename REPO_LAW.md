@@ -63,6 +63,20 @@ True backups are labeled backup (e.g. `~/backups/waychain-*`, `chain.db.bak-*`).
 4. **One concern per PR** when possible. No “while I was here” multi-tree edits.
 5. **Close issues with evidence** (commit, sha, DOM, RPC) — not “done.”
 
+### Article III-A — Downstream staleness MUST have an issue before green (founder directive 2026-07-20)
+
+> Any change to `master` (HEAD) that will cause **any part of the downstream** to become stale — not just precompiles, but **everything downstream**: RPC surface, client/wallet address handling, mobile, site, contracts, deploy scripts, protocol-manifest.json, ops dashboards, docs — **must have a tracking issue filed BEFORE the PR is allowed to go green/merge.**
+>
+> Rationale (founder, 2026-07-20): "when a change to the head is going to cause any part of the downstream staleness then issue must be created before getting a green on the PR. not just with precompiles. everything down stream. how else will we keep up with whats what downstream."
+>
+> Procedure:
+> 1. Before merging a PR that alters a shared interface, address format, RPC method, precompile, storage key, or deploy contract, the author files (or cites) an issue enumerating **every downstream consumer** that must be reconciled.
+> 2. The PR description links that issue. CI/reviewer must confirm the issue exists and lists downstream touch-points.
+> 3. The downstream issue stays OPEN until each consumer is reconciled and verified (coded + deployed/live as applicable).
+> 4. This is how we keep "what's what downstream" auditable without a daily manual walk — the issue tracker IS the map.
+>
+> A PR that merges protocol/interface changes without its downstream issue is a law violation (collapses the three states and hides drift).
+
 ---
 
 ## Article IV — Three states (never collapse)

@@ -267,6 +267,28 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 		}
 		return fmt.Sprintf("0x%x", acc.Nonce), nil
 
+	// ── Debug: introspect live in-memory state (issue #143 diagnostics) ──
+	// Lists every account key + balance currently held by the RPC server's
+	// chain.State. Used to verify genesis seeding is actually live (truth-first:
+	// see the running node's state, not reconstruct it).
+	case "way_debugAccountCount":
+		return fmt.Sprintf("%d", len(rpc.chain.State.Accounts)), nil
+
+	case "way_debugAccounts":
+		type acctView struct {
+			Address string `json:"address"`
+			Balance string `json:"balance"`
+		}
+		views := make([]acctView, 0, len(rpc.chain.State.Accounts))
+		for addr, acc := range rpc.chain.State.Accounts {
+			bal := "nil"
+			if acc.Balance != nil {
+				bal = "0x" + acc.Balance.Text(16)
+			}
+			views = append(views, acctView{Address: addr, Balance: bal})
+		}
+		return views, nil
+
 	// ── Call / Estimate ──
 	case "eth_call":
 		var p []map[string]interface{}
