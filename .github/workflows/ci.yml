@@ -215,7 +215,7 @@ jobs:
           # pipe the freshly built binary straight to the node (no scp, per repo convention)
           cat /tmp/waychain | ssh -i /tmp/node_key -o StrictHostKeyChecking=no \
             "$NODE_USER@$NODE_HOST" \
-            'sudo install -m 0755 /dev/stdin /usr/local/bin/waychain && sudo systemctl restart waychain.service'
+            'sudo install -m 0755 /dev/stdin /usr/local/bin/waychain && sudo systemctl restart waychain.service && sudo systemctl restart waychain-explorer.service'
           sleep 3
           LIVE_SHA=$(ssh -i /tmp/node_key -o StrictHostKeyChecking=no \
             "$NODE_USER@$NODE_HOST" 'sha256sum /usr/local/bin/waychain' | cut -d' ' -f1)
