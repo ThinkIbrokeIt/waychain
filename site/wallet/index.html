@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>WayChain Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
   <script type="module">
     // BIP39 mnemonic support via @scure/bip39 (browser ESM; the old UMD
     // dist/index.browser.min.js was removed from bip39 v3 and 404s).
@@ -332,6 +333,7 @@
         <p>Create a new wallet or import an existing one to get started.</p>
         <button class="btn btn-primary" onclick="genWallet()">Create New Wallet</button>
         <button class="btn btn-secondary" onclick="showImp()">Import Wallet</button>
+        <button class="btn btn-outline" onclick="showQrImport()">📷 QR Import</button>
       </div>
 
       <div id="imp" class="hide">
@@ -443,10 +445,22 @@
     </section>
 
     <div class="footer">
-      <p>WayChain Wallet &middot; v1.1 &middot; <a href="/">Back to WayChain</a></p>
+      <p>WayChain Wallet · v1.1 · <a href="/">Back to WayChain</a></p>
       <p style="margin-top:6px;">Keys are stored locally in your browser. Use only on devices you trust — browser storage is not a hardened vault.</p>
     </div>
   </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;z-index:10000;">
+      <div style="background:#1E1E1E;border:1px solid #3A3A3A;border-radius:12px;max-width:400px;width:90%;padding:20px;color:#E8E4DD;">
+        <h3 style="margin:0 0 12px;font-size:18px;">Scan QR Code</h3>
+        <p style="font-size:13px;color:#9A9A9A;margin-bottom:12px;">Upload an image or use camera.</p>
+        <input type="file" id="qr-file" accept="image/*" style="width:100%;margin-bottom:12px;" onchange="handleQrFile(this)">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="hideQrImport()">Cancel</button>
+        </div>
+      </div>
+    </div>
 
   <script>
     const RPC = 'https://api.waychain.org',
@@ -681,6 +695,64 @@
       document.getElementById('imp').classList.toggle('hide');
       document.getElementById('ik').value = '';
       document.getElementById('imn').value = '';
+    }
+
+    // QR Import modal
+    function showQrImport() {
+      const m = document.getElementById('qr-modal');
+      if (m) m.style.display = 'flex';
+    }
+    function hideQrImport() {
+      const m = document.getElementById('qr-modal');
+      if (m) m.style.display = 'none';
+    }
+    async function scanQrResult(content) {
+      // Accept either recovery phrase (12 words) or private key (64/128 hex)
+      const txt = (content || '').trim();
+      const words = txt.split(/\s+/);
+      if (words.length >= 12 && words.length <= 24) {
+        document.getElementById('imn').value = txt;
+        hideQrImport();
+        showImp();
+        impMnemonic();
+        return;
+      }
+      // Treat as private key if hex
+      const hex = txt.replace(/^0x/, '');
+      if (/^[0-9a-fA-F]+$/.test(hex) && (hex.length === 64 || hex.length === 128)) {
+        document.getElementById('ik').value = txt;
+        hideQrImport();
+        showImp();
+        impWallet();
+        return;
+      }
+      setStatus('balance-status', '⚠️ QR content not recognized. Expecting 12-word phrase or 64/128-hex private key.', 'error');
+    }
+
+    // Handle file upload for QR scanning
+    function handleQrFile(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const code = jsQR(imageData.data, imageData.width, imageData.height);
+          if (code && code.data) {
+            scanQrResult(code.data);
+          } else {
+            setStatus('balance-status', 'No QR code found in image.', 'error');
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     async function impWallet() {
