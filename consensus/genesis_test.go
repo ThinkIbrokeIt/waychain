@@ -14,7 +14,7 @@ func TestGenesisFounderBootstrap(t *testing.T) {
 	gs := InitGenesis(DefaultGenesis())
 	st := gs.Chain.State
 
-	founder := "0xe5da0c28804c512ac7e0f4a53ad8d6fd13f81e76"
+	founder := "e5da0c28804c512ac7e0f4a53ad8d6fd13f81e76"
 	fa := st.GetAccount(founder)
 	if fa == nil {
 		t.Fatalf("founder account not created")
@@ -42,7 +42,8 @@ func TestGenesisFounderBootstrap(t *testing.T) {
 	}
 
 	// ecosystem reserve must be a real account (not a junk string key)
-	eco := st.GetAccount("0x00000000000000000000000000000000000000ec")
+	// Uses raw hex format (no 0x prefix) - matches RPC query format
+	eco := st.GetAccount("00000000000000000000000000000000000000ec")
 	if eco == nil || eco.Balance == nil || eco.Balance.Uint64() != 13_500_000 {
 		t.Fatalf("ecosystem reserve balance = %v, want 13,500,000", eco.Balance)
 	}

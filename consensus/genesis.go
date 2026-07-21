@@ -57,11 +57,13 @@ func DefaultGenesis() GenesisConfig {
 			// not the literal string "treasury" (that orphaned 10M under a junk key).
 			{Address: evm.PrecompileAddrHex(0x03), Balance: 10_000_000, Level: 3},
 			// Ecosystem reserve — real fixed reserve address (not a string key).
-			{Address: "0x00000000000000000000000000000000000000ec", Balance: 13_500_000, Level: 3},
-			// Founder bootstrap account (2026-07-20, issue #150): seeded with WAY
-			// for gas + DoxDev L3 so the founder can post/verify tasks and act as
-			// the autopilot oracle from day one. Breaks the 0-WAY gas deadlock.
-			{Address: "0xe5da0c28804c512ac7e0f4a53ad8d6fd13f81e76", Balance: 1_000_000, Level: 3},
+					// NOTE: Address WITHOUT 0x prefix (RPC queries strip it; internal storage is raw hex)
+					{Address: "00000000000000000000000000000000000000ec", Balance: 13_500_000, Level: 3},
+					// Founder bootstrap account (2026-07-20, issue #150): seeded with WAY
+					// for gas + DoxDev L3 so the founder can post/verify tasks and act as
+					// the autopilot oracle from day one. Breaks the 0-WAY gas deadlock.
+					// NOTE: Address WITHOUT 0x prefix (RPC queries strip it; internal storage is raw hex)
+					{Address: "e5da0c28804c512ac7e0f4a53ad8d6fd13f81e76", Balance: 1_000_000, Level: 3},
 			// Remaining ~75.5% distributed at the genesis event.
 		},
 	}
@@ -103,7 +105,7 @@ func InitGenesis(config GenesisConfig) *GenesisState {
 	// ── Founder bootstrap (issue #150) ──
 	// Designate the founder as the autopilot oracle (Dox_Dev L3) so objective
 	// quests/tasks auto-verify from day one (no human bottleneck).
-	founder := "0xe5da0c28804c512ac7e0f4a53ad8d6fd13f81e76"
+	founder := "e5da0c28804c512ac7e0f4a53ad8d6fd13f81e76"
 	fAcc := chain.State.GetOrCreateAccount(founder)
 	fAcc.DoxDevLevel = 3
 	if err := evm.SetAutopilot(chain.State, founder); err != nil {
