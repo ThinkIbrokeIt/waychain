@@ -52,9 +52,17 @@ func DefaultGenesis() GenesisConfig {
 			{ID: "genesis-val-5", Stake: 10000},
 		},
 		Accounts: []GenesisAccount{
-			{Address: "treasury", Balance: 10_000_000, Level: 3},  // 10% treasury
-			{Address: "ecosystem", Balance: 13_500_000, Level: 3},  // 13.5% reserve
-			// Remaining 76.5% distributed equally at genesis event
+			// Treasury precompile (0x03) — the paying treasury for quests +
+			// gov-funded community tasks. MUST be the real precompile address,
+			// not the literal string "treasury" (that orphaned 10M under a junk key).
+			{Address: evm.PrecompileAddrHex(0x03), Balance: 10_000_000, Level: 3},
+			// Ecosystem reserve — real fixed reserve address (not a string key).
+			{Address: "0x00000000000000000000000000000000000000ec", Balance: 13_500_000, Level: 3},
+			// Founder bootstrap account (2026-07-20, issue #150): seeded with WAY
+			// for gas + DoxDev L3 so the founder can post/verify tasks and act as
+			// the autopilot oracle from day one. Breaks the 0-WAY gas deadlock.
+			{Address: "0xe5da0c28804c512ac7e0f4a53ad8d6fd13f81e76", Balance: 1_000_000, Level: 3},
+			// Remaining ~75.5% distributed at the genesis event.
 		},
 	}
 }
@@ -91,6 +99,17 @@ func InitGenesis(config GenesisConfig) *GenesisState {
 	}
 	faucetAcc.Balance.SetString("1000000000000000000000000", 10) // 1M WAY (wei)
 	fmt.Printf("  GasFaucet 0x27 seeded with 1,000,000 WAY\n")
+
+	// ── Founder bootstrap (issue #150) ──
+	// Designate the founder as the autopilot oracle (Dox_Dev L3) so objective
+	// quests/tasks auto-verify from day one (no human bottleneck).
+	founder := "0xe5da0c28804c512ac7e0f4a53ad8d6fd13f81e76"
+	fAcc := chain.State.GetOrCreateAccount(founder)
+	fAcc.DoxDevLevel = 3
+	if err := evm.SetAutopilot(chain.State, founder); err != nil {
+		fmt.Printf("  WARN: SetAutopilot failed: %v\n", err)
+	}
+	fmt.Printf("  Founder %s seeded: 1M WAY, DoxDev L3, autopilot oracle\n", founder)
 
 	// ── Initial supply checks ──
 	var totalGenesis uint64

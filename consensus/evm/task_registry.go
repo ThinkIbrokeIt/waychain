@@ -2,6 +2,7 @@ package evm
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
@@ -550,6 +551,20 @@ func isAutopilot(caller string, state *StateDB) bool {
 		return false
 	}
 	return strings.EqualFold(caller, ap)
+}
+
+// SetAutopilot designates the autopilot oracle address (right-aligned 20-byte).
+// Exported so genesis can wire the founder as autopilot at height 0 (issue #150).
+func SetAutopilot(state *StateDB, addr string) error {
+	a := strings.TrimPrefix(strings.ToLower(addr), "0x")
+	b, err := hex.DecodeString(a)
+	if err != nil || len(b) != 20 {
+		return fmt.Errorf("SetAutopilot: invalid 20-byte address %q", addr)
+	}
+	var slot [32]byte
+	copy(slot[12:32], b)
+	state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{autopilotSlot})] = slot
+	return nil
 }
 
 // verifyAndPay marks a claimant's task verified and pays the reward from the
