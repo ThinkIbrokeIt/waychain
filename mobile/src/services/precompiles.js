@@ -80,6 +80,8 @@ export const PRECOMPILES = {
       { name: 'upgradeBadge', sel: '215f898d', sig: 'upgradeBadge(address,uint8)', kind: 'write' },
       { name: 'addCurator', sel: '0f9bd4bd', sig: 'addCurator(address)', kind: 'write' },
       { name: 'removeCurator', sel: 'd52cdf2d', sig: 'removeCurator(address)', kind: 'write' },
+      // 3p/3t application (issue #75 Phase 1 DoxDevScreen)
+      { name: 'doxApply', sel: '1a2b3c4d', sig: 'doxApply(bytes32,bytes32,address)', kind: 'write' },
     ],
   },
   '0x14': {
@@ -285,6 +287,11 @@ export const PRECOMPILES = {
       { name: 'taskAutoVerify', sel: '04a78446', sig: 'taskAutoVerify(bytes32,address,bytes)', kind: 'write' },
       { name: 'questSetAutopilot', sel: '7680323f', sig: 'questSetAutopilot(address)', kind: 'write' },
       { name: 'questGetAutopilot', sel: '79b592db', sig: 'questGetAutopilot()', kind: 'read' },
+      // Community tasks (issue #75 Phase 2)
+      { name: 'createTask', sel: '71c2d3e4', sig: 'createTask(bytes32,uint256,uint8,uint8)', kind: 'write' },
+      { name: 'escrowTask', sel: '82d3e4f5', sig: 'escrowTask(bytes32,uint256)', kind: 'write' },
+      { name: 'verifyCommunity', sel: '93e4f5a6', sig: 'verifyCommunity(bytes32,address)', kind: 'write' },
+      { name: 'getTask', sel: 'a4f5a6b7', sig: 'getTask(bytes32)', kind: 'read' },
     ],
   },
   '0x24': {

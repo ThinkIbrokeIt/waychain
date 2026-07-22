@@ -33,14 +33,16 @@ func TestGenesisSeedsFaucetReserve(t *testing.T) {
 	}
 }
 
-// TestGenesisSeedsTreasuryReserve mirrors the above for the treasury account
-// (keyed by NAME "treasury" in config.Accounts) — control case that must pass.
+// TestGenesisSeedsTreasuryReserve verifies the treasury precompile 0x03 holds
+// the 10M WAY seed (not orphaned under the string key "treasury").
+// Mirrors TestGenesisSeedsFaucetReserve for completeness.
 func TestGenesisSeedsTreasuryReserve(t *testing.T) {
 	gs := InitGenesis(DefaultGenesis())
 
-	acc := gs.Chain.State.GetAccount("treasury")
+	treasuryAddr := evm.PrecompileAddrHex(0x03)
+	acc := gs.Chain.State.GetAccount(treasuryAddr)
 	if acc == nil {
-		t.Fatalf("TREASURY BROKEN: account \"treasury\" not present in genesis state")
+		t.Fatalf("TREASURY BROKEN: precompile 0x03 not present in genesis state")
 	}
 	want := new(big.Int).SetUint64(10_000_000)
 	if acc.Balance == nil || acc.Balance.Cmp(want) != 0 {
@@ -48,6 +50,6 @@ func TestGenesisSeedsTreasuryReserve(t *testing.T) {
 		if acc.Balance != nil {
 			got = acc.Balance.String()
 		}
-		t.Fatalf("TREASURY BROKEN: treasury = %s, want %s", got, want.String())
+		t.Fatalf("TREASURY BROKEN: 0x03 = %s, want %s", got, want.String())
 	}
 }

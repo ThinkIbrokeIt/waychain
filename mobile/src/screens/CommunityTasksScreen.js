@@ -44,33 +44,69 @@ export default function CommunityTasksScreen({ navigation }) {
 
   const tierOk = (req) => { const order = { '1': 1, '2': 2, '3p': 3, '3t': 3 }; return (order[level] || 0) >= (order[req] || 0); };
 
-  const postTask = () => {
+  const pad32 = (s) => {
+    const b = new TextEncoder().encode(s.slice(0, 32));
+    const out = new Uint8Array(32);
+    out.set(b);
+    return Array.from(out).map((x) => x.toString(16).padStart(2, '0')).join('');
+  };
+  const u256 = (n) => {
+    const v = BigInt(n);
+    let h = v.toString(16);
+    if (h.length > 64) h = h.slice(-64);
+    return h.padStart(64, '0');
+  };
+  const tierToLevel = { '1': 1, '2': 2, '3p': 3, '3t': 3 };
+  const verifyToMode = { 'autopilot': 0, 'human-L2': 1, 'poster-confirm': 1 };
+
+  const postTask = async () => {
     if (!title.trim()) { Alert.alert('Title required'); return; }
     if (!payout || Number(payout) <= 0) { Alert.alert('Payout must be > 0 WAY'); return; }
-    const t = {
-      id: 'task-' + Date.now(),
-      title: title.trim(),
-      desc: desc.trim(),
-      tier,
-      payout: Number(payout),
-      funding: isPublic ? 'gov-vote' : 'self-escrow',
-      verify,
-      poster: posterAddr.trim() || (account ? account.address : 'unknown'),
-      status: isPublic ? 'voting' : 'open',
-      claims: [],
-    };
-    setTasks([t, ...tasks]);
-    setTitle(''); setDesc(''); setPayout(''); setPosterAddr(''); setIsPublic(false); setShowForm(false);
-    Alert.alert('Posted', isPublic
-      ? 'Sent to governance vote (yay/nay decides treasury funding).'
-      : 'Escrow funded by poster. Professionals can now claim.');
+    if (!account) { Alert.alert('No wallet'); return; }
+    try {
+      const taskId = 'ct-' + Date.now().toString(36);
+      const idHex = pad32(taskId);
+      const rewardHex = u256(BigInt(Math.floor(Number(payout))) * 10n ** 18n);
+      const minLevel = tierToLevel[tier] || 1;
+      const vMode = verifyToMode[verify] ?? 1;
+      const createArgs = '0x' + idHex + rewardHex + minLevel.toString(16).padStart(2, '0') + vMode.toString(16).padStart(2, '0');
+      await waychainRPC.precompileCall('0x23', 'createTask', createArgs, {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      if (!isPublic) {
+        const escArgs = '0x' + idHex + rewardHex;
+        await waychainRPC.precompileCall('0x23', 'escrowTask', escArgs, {
+          write: true, privHex: account.privateKey, pub64: account.publicKey,
+        });
+      }
+      const t = {
+        id: taskId, title: title.trim(), desc: desc.trim(), tier,
+        payout: Number(payout), funding: isPublic ? 'gov-vote' : 'self-escrow',
+        verify, poster: posterAddr.trim() || account.address, status: isPublic ? 'voting' : 'open', claims: [],
+      };
+      setTasks([t, ...tasks]);
+      setTitle(''); setDesc(''); setPayout(''); setPosterAddr(''); setIsPublic(false); setShowForm(false);
+      Alert.alert('Posted on-chain', isPublic
+        ? 'Sent to governance vote (yay/nay decides treasury funding).'
+        : 'Task created + escrow funded. Professionals can now claim.');
+    } catch (e) {
+      Alert.alert('Failed', e?.message || 'Unknown error');
+    }
   };
 
-  const claim = (t) => {
+  const claim = async (t) => {
     if (!tierOk(t.tier)) { Alert.alert('Requires Dox_Dev ' + t.tier, 'Your level: ' + level); return; }
     if (!account) { Alert.alert('No wallet'); return; }
-    setTasks(tasks.map(x => x.id === t.id ? { ...x, claims: [...x.claims, account.address], status: 'claimed' } : x));
-    Alert.alert('Claimed', 'Task marked claimed by you. Verification: ' + t.verify + '.');
+    try {
+      const idHex = pad32(t.id);
+      await waychainRPC.precompileCall('0x23', 'taskClaim', '0x' + idHex, {
+        write: true, privHex: account.privateKey, pub64: account.publicKey,
+      });
+      setTasks(tasks.map(x => x.id === t.id ? { ...x, claims: [...x.claims, account.address], status: 'claimed' } : x));
+      Alert.alert('Claimed on-chain', 'Task marked claimed by you. Verification: ' + t.verify + '.');
+    } catch (e) {
+      Alert.alert('Failed', e?.message || 'Unknown error');
+    }
   };
 
   return (

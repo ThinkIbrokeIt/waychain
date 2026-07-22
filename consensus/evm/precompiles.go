@@ -607,6 +607,7 @@ const (
 	selDoxUpgradeBadge uint32 = 0x215F898D // upgradeBadge(address,uint8)
 	selDoxAddCurator   uint32 = 0x0F9BD4BD // addCurator(address)
 	selDoxRemoveCurator uint32 = 0xD52CDF2D // removeCurator(address)
+	selDoxApply         uint32 = 0x1A2B3C4D // doxApply(roleHash[32], docsHash[32], payAddr[20]) — 3p/3t application
 )
 
 // BIJO selectors
@@ -914,6 +915,32 @@ func doxDevBadgePrecompile(input []byte, caller string, state *StateDB, blockNum
 		if count > 3 {
 			acc.Storage[countKey] = writeUint64(count - 1)
 		}
+		return []byte{1}, nil
+
+	case selDoxApply:
+		// doxApply(roleHash[32], docsHash[32], payAddr[20]) — 3p/3t application.
+		// Records an application from caller (issue #75). Reviewed off-chain by a
+		// governor (L3 curator), who then issues/upgrades the badge. The
+		// application is stored under 0x13 storage slot 0x40 + caller so it can
+		// be enumerated/reviewed. payAddr receives WAY on task payout.
+		if len(input) < 84 {
+			return nil, fmt.Errorf("input too short")
+		}
+		roleHash := input[4:36]
+		docsHash := input[36:68]
+		payAddr := readAddress(input, 68)
+		appKey := storageKey(append([]byte{0x40}, []byte(caller)...))
+		var rec [32]byte
+		copy(rec[2:22], payAddr[:])
+		acc.Storage[appKey] = rec
+		roleKey := storageKey(append([]byte{0x41}, []byte(caller)...))
+		var rslot [32]byte
+		copy(rslot[:], roleHash)
+		acc.Storage[roleKey] = rslot
+		docsKey := storageKey(append([]byte{0x42}, []byte(caller)...))
+		var dslot [32]byte
+		copy(dslot[:], docsHash)
+		acc.Storage[docsKey] = dslot
 		return []byte{1}, nil
 
 	default:

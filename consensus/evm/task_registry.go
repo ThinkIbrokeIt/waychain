@@ -3,6 +3,7 @@ package evm
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strings"
@@ -281,6 +282,127 @@ func taskRegistryPrecompile(input []byte, caller string, state *StateDB, blockNu
 		copy(slot[:], amount.Bytes())
 		state.GetOrCreateAccount(caller).Storage[delKey] = slot
 		return []byte{1}, nil
+	case 0x71C2D3E4: // createTask(taskId[32], reward[32], minLevel[1], verifyMode[1])
+		// Any account may create a payable community task (issue #75 Phase 2).
+		// Payment only occurs on verifyCommunity, which is gatekept (autopilot
+		// L3 for objective, human L2 for subjective), so open creation is safe.
+		taskId := input[4:36]
+		reward := new(big.Int).SetBytes(input[36:68])
+		minLevel := input[68]
+		verifyMode := input[69]
+		if reward.Sign() <= 0 {
+			return nil, fmt.Errorf("reward must be > 0")
+		}
+		// store task record in 0x23 storage: key 0x30 + taskId
+		recKey := storageKey(append([]byte{0x30}, taskId...))
+		var rec [32]byte
+		// byte0 = minLevel, byte1 = verifyMode, bytes2..32 = reward (right-aligned)
+		rec[0] = minLevel
+		rec[1] = verifyMode
+		rb := reward.Bytes()
+		copy(rec[32-len(rb):32], rb) // right-align reward in the 30-byte window
+		state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[recKey] = rec
+		return []byte{1}, nil
+
+	case 0x82D3E4F5: // escrowTask(taskId[32], amount[32]) — poster funds self-escrow
+		taskId := input[4:36]
+		amount := new(big.Int).SetBytes(input[36:68])
+		callerAcc := state.GetOrCreateAccount(caller)
+		if callerAcc.Balance == nil {
+			callerAcc.Balance = new(big.Int)
+		}
+		if callerAcc.Balance.Cmp(amount) < 0 {
+			return nil, fmt.Errorf("insufficient balance to escrow")
+		}
+		// move poster WAY into the task escrow slot (0x31 + taskId) under 0x23,
+		// and into the 0x23 account's own balance (the escrow holder).
+		escKey := storageKey(append([]byte{0x31}, taskId...))
+		esc := readBigInt(state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[escKey])
+		if esc == nil {
+			esc = new(big.Int)
+		}
+		esc.Add(esc, amount)
+		var slot [32]byte
+		esc.FillBytes(slot[:])
+		escAcc := state.GetOrCreateAccount(PrecompileAddrHex(0x23))
+		if escAcc.Balance == nil {
+			escAcc.Balance = new(big.Int)
+		}
+		escAcc.Balance.Add(escAcc.Balance, amount)
+		state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[escKey] = slot
+		callerAcc.Balance.Sub(callerAcc.Balance, amount)
+		return []byte{1}, nil
+
+	case 0x93E4F5A6: // verifyCommunity(taskId[32], claimant[20])
+		// Pays a community task from its escrow (self-funded) or treasury
+		// (gov-funded). Gated like the quest primitive: objective tasks go
+		// through autopilot (L3), subjective through human L2 verify.
+		taskId := input[4:36]
+		claimant := readAddress(input, 36)
+		claimantAddr := fmt.Sprintf("%x", claimant[:])
+		rec := state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey(append([]byte{0x30}, taskId...))]
+		if rec[0] == 0 && rec[1] == 0 {
+			return nil, fmt.Errorf("unknown task")
+		}
+		verifyMode := rec[1]
+		reward := new(big.Int).SetBytes(rec[2:32])
+		if verifyMode == 0 { // autopilot (objective)
+			if !isAutopilot(caller, state) {
+				return nil, fmt.Errorf("unauthorized: need autopilot oracle")
+			}
+		} else { // human L2 (subjective)
+			ca := state.GetAccount(caller)
+			if ca == nil || ca.DoxDevLevel < 2 {
+				return nil, fmt.Errorf("unauthorized: need Dox_Dev L2 verifier")
+			}
+		}
+		// pay from escrow if funded, else from treasury
+		escKey := storageKey(append([]byte{0x31}, taskId...))
+		esc := readBigInt(state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[escKey])
+		src := PrecompileAddrHex(0x03) // default treasury
+		if esc != nil && esc.Sign() > 0 {
+			src = PrecompileAddrHex(0x23) // escrow held under 0x23 storage value; pay from escrow balance
+		}
+		// mark verified
+		claimKey := storageKey(append([]byte{0x10}, []byte(claimantAddr)...))
+		var s [32]byte
+		copy(s[:], taskId)
+		s[31] = 2
+		state.GetOrCreateAccount(claimantAddr).Storage[claimKey] = s
+		// transfer reward
+		payer := state.GetOrCreateAccount(src)
+		if payer.Balance == nil {
+			payer.Balance = new(big.Int)
+		}
+		claimAcc := state.GetOrCreateAccount(claimantAddr)
+		if claimAcc.Balance == nil {
+			claimAcc.Balance = new(big.Int)
+		}
+		// debit from escrow if self-funded
+		if esc != nil && esc.Sign() > 0 {
+			newEsc := new(big.Int).Sub(esc, reward)
+			if newEsc.Sign() < 0 {
+				newEsc = big.NewInt(0)
+			}
+			var eslot [32]byte
+			newEsc.FillBytes(eslot[:])
+			state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[escKey] = eslot
+			// escrow balance is tracked in the 0x23 account's own balance for simplicity
+			if payer.Balance.Cmp(reward) >= 0 {
+				payer.Balance.Sub(payer.Balance, reward)
+			}
+		} else {
+			if payer.Balance.Cmp(reward) >= 0 {
+				payer.Balance.Sub(payer.Balance, reward)
+			}
+		}
+		claimAcc.Balance.Add(claimAcc.Balance, reward)
+		return []byte{1}, nil
+
+	case 0xA4F5A6B7: // getTask(taskId[32]) -> 32-byte record (minLevel,verifyMode,reward)
+		taskId := input[4:36]
+		rec := state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey(append([]byte{0x30}, taskId...))]
+		return rec[:], nil
 	}
 	return nil, fmt.Errorf("unknown selector")
 }
@@ -430,6 +552,20 @@ func isAutopilot(caller string, state *StateDB) bool {
 		return false
 	}
 	return strings.EqualFold(caller, ap)
+}
+
+// SetAutopilot designates the autopilot oracle address (right-aligned 20-byte).
+// Exported so genesis can wire the founder as autopilot at height 0 (issue #150).
+func SetAutopilot(state *StateDB, addr string) error {
+	a := strings.TrimPrefix(strings.ToLower(addr), "0x")
+	b, err := hex.DecodeString(a)
+	if err != nil || len(b) != 20 {
+		return fmt.Errorf("SetAutopilot: invalid 20-byte address %q", addr)
+	}
+	var slot [32]byte
+	copy(slot[12:32], b)
+	state.GetOrCreateAccount(PrecompileAddrHex(0x23)).Storage[storageKey([]byte{autopilotSlot})] = slot
+	return nil
 }
 
 // verifyAndPay marks a claimant's task verified and pays the reward from the

@@ -137,6 +137,9 @@ export default function WalletScreen({ navigation }) {
           <TouchableOpacity onPress={() => promptImport(doImport)}>
             <Text style={styles.link}>Import existing wallet</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('ScanPay', { mode: 'import', onImport: doImport })} style={{ marginTop: 12 }}>
+            <Text style={[styles.link, { color: COLORS.amber }]}>📷 QR Import</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.card}>

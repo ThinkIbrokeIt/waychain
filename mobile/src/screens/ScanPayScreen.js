@@ -82,6 +82,15 @@ export default function ScanPayScreen({ navigation }) {
     if (scanned) return;
     setScanned(true);
     const raw = res.data || '';
+    // Import mode: accept raw recovery phrase or private key without auth check
+    if (navigation.getState?.().routes?.find(r => r.params?.mode === 'import')?.params?.onImport) {
+      const onImport = navigation.getState().routes.find(r => r.params?.mode === 'import')?.params?.onImport;
+      if (onImport && raw.trim()) {
+        onImport(raw.trim());
+        navigation.goBack();
+        return;
+      }
+    }
     // ATTACK SURFACE CLOSED: only QRs we generated (HMAC-tagged with the user's
     // own mnemonic) are accepted. Anything else is auto-blocked — no parsing,
     // no signing. This prevents foreign-QR tx-injection / address substitution.

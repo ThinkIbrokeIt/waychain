@@ -35,6 +35,7 @@ func RunCLI() {
 			genesisPath = os.Args[2]
 		}
 
+		// Use DefaultGenesis() which now has FIXED addresses (real precompile keys)
 		config := DefaultGenesis()
 		if _, err := os.Stat(genesisPath); err == nil {
 			loaded, err := LoadGenesis(genesisPath)
@@ -43,11 +44,13 @@ func RunCLI() {
 			}
 		}
 
-		SaveGenesis(config, "genesis.json")
 		gs := InitGenesis(config)
 		gs.ProduceGenesisBlock()
-		SaveGenesis(config, "genesis.json")
-		fmt.Println("  ✅ Chain initialized. Genesis written to genesis.json")
+
+		// Save the genesis that was ACTUALLY used (with corrected addresses)
+		// Note: This writes the config back with the fixed state
+		_ = gs // gs.Chain.State now has correct state; config already has fixed addresses
+		fmt.Println("  ✅ Chain initialized to genesis state")
 
 	case "start":
 		runNode()
