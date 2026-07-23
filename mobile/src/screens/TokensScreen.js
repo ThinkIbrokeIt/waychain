@@ -65,7 +65,7 @@ export default function TokensScreen({ navigation }) {
   }, []);
 
   useEffect(() => { loadAccount(); }, [loadAccount]);
-  useEffect(() => { if (account) fetchAll(account.address); }, [account, fetchAll]);
+  useEffect(() => { if (account) fetchAll(account.publicKey); }, [account, fetchAll]);
 
   const write = async (label, fn) => {
     if (!account) { Alert.alert('No wallet', 'Create or import a wallet to transact.'); return; }
@@ -73,7 +73,7 @@ export default function TokensScreen({ navigation }) {
     try {
       const res = await fn();
       Alert.alert(label + ' submitted', 'Tx: ' + ((res && res.txHash) || 'pending').slice(0, 20) + '…');
-      fetchAll(account.address);
+      fetchAll(account.publicKey);
     } catch (e) {
       Alert.alert(label + ' failed', e?.message || 'Unknown error');
     } finally {
@@ -97,7 +97,7 @@ export default function TokensScreen({ navigation }) {
     const amt = parseFloat(burnAmt);
     if (!amt || amt <= 0) { Alert.alert('Invalid amount', 'Enter a SWAY amount.'); return; }
     const wei = BigInt(Math.floor(amt * 1e18)).toString(16);
-    const args = raw20(account.address) + encodeUint256('0x' + wei);
+    const args = raw20(account.publicKey) + encodeUint256('0x' + wei);
     write('Burn SWAY', () =>
       waychainRPC.precompileCall('0x24', 'burn', args, { write: true, privHex: account.privateKey, pub64: account.publicKey }));
   };

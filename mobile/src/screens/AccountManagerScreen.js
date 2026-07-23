@@ -34,7 +34,7 @@ export default function AccountManagerScreen() {
     if (!account) return;
     setLoading(true);
     try {
-      const s = await waychainRPC.precompileCall('0x1B', 'getStage', pad32(account.address));
+      const s = await waychainRPC.precompileCall('0x1B', 'getStage', pad32(account.publicKey));
       setStage(s);
     } catch { setStage('err'); }
     finally { setLoading(false); }

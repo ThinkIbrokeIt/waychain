@@ -37,7 +37,7 @@ export default function TemplateRegistryScreen() {
     if (!account) return;
     setLoading(true);
     try {
-      const r = await waychainRPC.precompileCall('0x26', 'isRegistrar', pad32(account.address));
+      const r = await waychainRPC.precompileCall('0x26', 'isRegistrar', pad32(account.publicKey));
       setIsReg(r);
     } catch { setIsReg('err'); }
     finally { setLoading(false); }

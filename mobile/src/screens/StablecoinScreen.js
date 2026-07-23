@@ -52,7 +52,7 @@ export default function StablecoinScreen({ navigation }) {
       setTotalSupply(ts);
       setPrice(pr);
       if (account) {
-        const vaultHex = account.address.replace(/^0x/, '').padStart(64, '0');
+        const vaultHex = account.publicKey.replace(/^0x/, '').padStart(64, '0');
         const v = await waychainRPC.precompileCall('0x22', 'getUserVault', vaultHex);
         setHasVault(v && v !== '0x' && v.replace(/^0x/, '').replace(/0/g, '') !== '');
       }

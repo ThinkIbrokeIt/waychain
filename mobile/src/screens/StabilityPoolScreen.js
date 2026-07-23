@@ -39,7 +39,7 @@ export default function StabilityPoolScreen() {
     try {
       const [p, u] = await Promise.allSettled([
         waychainRPC.precompileCall('0x19', 'getPoolStats', ''),
-        account ? waychainRPC.precompileCall('0x19', 'getUserDeposit', padAddr(account.address)) : Promise.resolve(null),
+        account ? waychainRPC.precompileCall('0x19', 'getUserDeposit', padAddr(account.publicKey)) : Promise.resolve(null),
       ]);
       setPool(p.status === 'fulfilled' && p.value ? p.value : null);
       setUserDeposit(u.status === 'fulfilled' && u.value && u.value !== '0x' ? u.value : '0x0');

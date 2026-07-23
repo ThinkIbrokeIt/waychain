@@ -50,7 +50,7 @@ export default function IdentityScreen() {
   }, []);
 
   useEffect(() => { loadAccount(); }, [loadAccount]);
-  useEffect(() => { if (account) fetchId(account.address); }, [account, fetchId]);
+  useEffect(() => { if (account) fetchId(account.publicKey); }, [account, fetchId]);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
