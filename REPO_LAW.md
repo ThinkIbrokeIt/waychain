@@ -40,16 +40,18 @@ AWS `3.89.116.45` is the **live node** (binary + chain.db). It is **not** a seco
 
 Legacy GitHub remotes may still exist for history. They are **not** edit homes:
 
-| Old standalone | Status under Law |
-|---|---|
-| `ThinkIbrokeIt/waychain-consensus` | **MIRROR / ARCHIVE** — content lives in monorepo `consensus/` |
-| `ThinkIbrokeIt/waychain-site` | **MIRROR / ARCHIVE** — content lives in monorepo `site/` |
-| `ThinkIbrokeIt/waychain-mobile` | **MIRROR / ARCHIVE** — content lives in monorepo `mobile/` |
-| `ThinkIbrokeIt/waychain-client` | **Release packaging only** — must not diverge protocol source; build FROM monorepo `consensus/` tags |
-| `ThinkIbrokeIt/waychain-contracts` | **LEGACY ARCHIVE** |
-| `ThinkIbrokeIt/WAYCHAIN_BLUEPRINT` | Spec archive; prefer monorepo `blueprint/` after sync |
+| Old standalone | Status under Law | Sync mechanism |
+|---|---|---|
+| `ThinkIbrokeIt/waychain-consensus` | **MIRROR** — content lives in monorepo `consensus/` | `mirror-satellites.yml` (matrix) |
+| `ThinkIbrokeIt/waychain-site` | **MIRROR** — content lives in monorepo `site/` | `mirror-satellites.yml` (matrix) |
+| `ThinkIbrokeIt/waychain-mobile` | **MIRROR** — content lives in monorepo `mobile/` | `mirror-satellites.yml` (matrix) |
+| `ThinkIbrokeIt/waychain-client` | **MIRROR / release packaging** — build FROM monorepo `consensus/` tags | `mirror-satellites.yml` (matrix) |
+| `ThinkIbrokeIt/waychain-contracts` | **LEGACY MIRROR** — reference Solidity, not protocol | `mirror-satellites.yml` (matrix) |
+| `ThinkIbrokeIt/WAYCHAIN_BLUEPRINT` | **MIRROR** — spec archive; mirrors monorepo `blueprint/` | `mirror-satellites.yml` (matrix) |
 
-**Rule:** If a path is not under `~/projects/waychain/` (except AWS ops and true `~/backups/`), an agent **MUST refuse to edit product code there** and redirect to the monorepo.
+**Mirror sync is AUTOMATED.** `.github/workflows/mirror-satellites.yml` (matrix) force-syncs each monorepo subdir → its satellite on every push touching that subdir. It also adds a "READ-ONLY MIRROR of the WayChain monorepo" banner to each satellite's top-level README/AGENTS so stale "monorepo is NOT SoT" language never confuses anyone. Requires repo secret `MIRROR_PUSH_TOKEN` (PAT with push to all satellites).
+
+**Rule:** If a path is not under `~/projects/waychain/` (except AWS ops and true `~/backups/`), an agent **MUST refuse to edit product code there** and redirect to the monorepo. Satellites are sync targets ONLY — never edit them directly; edit the monorepo and let the workflow mirror.
 
 True backups are labeled backup (e.g. `~/backups/waychain-*`, `chain.db.bak-*`). Those are not working trees.
 

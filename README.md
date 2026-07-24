@@ -118,22 +118,98 @@ the 27, see its real on-chain state.
 
 ## Develop
 
+### Prerequisites
+
+- **Go** 1.26+ (the daemon module is `github.com/ThinkIbrokeIt/waychain-consensus`)
+- **Rust + Cargo** (for the `revm-ffi` EVM engine — a Rust FFI lib linked via CGO)
+- **Android SDK** (only for the mobile wallet build below)
+
+> ⚠️ **The node WILL NOT run smart contracts if built with `CGO_ENABLED=0`.** The
+> EVM engine (`revm-ffi`) is a Rust library linked through CGO — you MUST build with
+> `CGO_ENABLED=1`, and the compiled `.so` must be on `LD_LIBRARY_PATH` at runtime/test
+> time or the binary fails with `dlopen: librevm_ffi.so: cannot open shared object file`.
+
+### Build the node (from clean source)
+
 ```bash
-# Protocol — build, test, consistency audit
-cd consensus
+# 1) Build the Rust EVM engine FIRST — cargo lives in the revm-ffi/ SUBDIR,
+#    NOT in consensus/. `cargo build` at consensus/ fails with "could not find Cargo.toml".
+cd consensus/revm-ffi
+cargo build --release
+cd ..
+
+# 2) Build the Go daemon. -a forces a full recompile (Go's build cache is
+#    unreliable here — a stale cached rpc package can ship WITHOUT your new
+#    selectors, and the node comes up "active" but returns "method not found").
 CGO_ENABLED=1 go build -a -o /tmp/waychain .
-go test ./...
+
+# 3) Run the tests. The .so MUST be on LD_LIBRARY_PATH or tests die at runtime.
+LD_LIBRARY_PATH=$PWD/revm-ffi/target/release go test ./...
+
+# Single package, fast:
+LD_LIBRARY_PATH=$PWD/revm-ffi/target/release go test ./evm -run TestSeedAllGenesis -v
+
+# Consistency audit (precompile count vs manifest, selector drift, etc.)
 bash scripts/audit-consistency.sh
-
-# Explorer API
-cd explorer && go build -o /tmp/waychain-explorer .
-
-# Site / explorer frontend
-cd site && vercel deploy --prod --project waychain-site
-
-# Mobile
-cd mobile && npm test
 ```
+
+### Run a local node
+
+```bash
+# Point the runtime at the .so, then start the binary you just built.
+export LD_LIBRARY_PATH=$PWD/revm-ffi/target/release
+/tmp/waychain start
+# Public RPC will be served on :9545 (fronted by nginx:8080 on the live box).
+```
+
+### Deploy to the live node (AWS)
+
+The deploy runs from a box with SSH access to `3.89.116.45` (the AWS SG only
+allows specific IPs on port 22). Build the linux/amd64 binary, ship it, swap it in:
+
+```bash
+cd consensus/revm-ffi && cargo build --release
+cd consensus && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o /tmp/waychain-master .
+
+# (open the AWS SG :22 for your IP first, then:)
+cat /tmp/waychain-master | ssh -i WayChain.pem ubuntu@3.89.116.45 \
+  'cat > /tmp/waychain-new && chmod +x /tmp/waychain-new'
+ssh -i WayChain.pem ubuntu@3.89.116.45 \
+  'sudo cp /usr/local/bin/waychain /home/ubuntu/waychain-backup-$(date +%s) && \
+   sudo mv /tmp/waychain-new /usr/local/bin/waychain && \
+   sudo systemctl restart waychain.service'
+# Verify: curl the node for a known selector's result, then close the SG rule.
+```
+
+### Explorer API
+
+```bash
+cd explorer && go build -o /tmp/waychain-explorer .
+```
+
+### Site / explorer frontend
+
+```bash
+cd site && vercel deploy --prod --project waychain-site
+```
+
+### Mobile wallet (APK)
+
+The wallet is an Expo app. Building the release APK needs the Android SDK and a
+prebuild step that generates the native `android/` project:
+
+```bash
+cd mobile
+npm install
+npx expo prebuild --platform android --no-install   # generates android/ from app.json
+echo "sdk.dir=/path/to/Android/Sdk" > android/local.properties
+cd android
+./gradlew assembleRelease --no-daemon
+# APK: android/app/build/outputs/apk/release/app-release.apk
+```
+
+> Pin Expo modules to SDK 53 (the project's major). Installing latest pulls SDK-57
+> modules that crash at runtime with `NoClassDefFoundError: AnyTypeCache`.
 
 ### Three states (never collapse)
 

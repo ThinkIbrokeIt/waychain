@@ -18,7 +18,22 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]  # monorepo root (protocol-manifest.json is SoT at root)
-SRC = ROOT / "consensus" / "evm" / "precompiles.go"
+# In the monorepo the script lives at consensus/scripts/ (parents[2] = root).
+# In the waychain-consensus MIRROR it lives flat at scripts/ (parents[1] = root).
+# Resolve ROOT by walking up to the dir that actually contains the precompiles file.
+def _find_root(start: Path) -> Path:
+    for cand in [start, start / "consensus", start.parent]:
+        if (cand / "evm" / "precompiles.go").exists():
+            return cand
+    return start  # fallback: monorepo assumption
+ROOT = _find_root(Path(__file__).resolve().parent)
+# Layout-agnostic source: monorepo has consensus/evm/precompiles.go; the
+# waychain-consensus mirror has it flat at evm/precompiles.go. Try both.
+CANDIDATES = [
+    ROOT / "consensus" / "evm" / "precompiles.go",
+    ROOT / "evm" / "precompiles.go",
+]
+SRC = next((p for p in CANDIDATES if p.exists()), CANDIDATES[0])
 OUT = ROOT / "protocol-manifest.json"
 
 
