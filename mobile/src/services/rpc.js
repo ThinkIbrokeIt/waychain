@@ -2,7 +2,32 @@
 import * as Crypto from 'expo-crypto';
 import { deriveFromMnemonic, deriveFromPrivateKey, newMnemonic, sign } from './wallet';
 
-const RPC_URL = 'https://api.waychain.org';
+const RPC_URLS = [
+  'https://api.waychain.org',          // primary (community nginx + node)
+  // Add more community-run RPC endpoints here as nodes come online.
+  // Wallets fall back across this list so no single host is a hard dependency.
+];
+
+// Try each RPC endpoint in order until one answers. Per DECENTRALIZATION-
+// DOCTRINE.md Step 4: multiple community RPC nodes, no single point of failure.
+async function rpcFetch(method, params) {
+  let lastErr;
+  for (const url of RPC_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 }),
+      });
+      const json = await res.json();
+      if (json.error) throw new Error(json.error.message || 'RPC error');
+      return json.result ?? null;
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('All RPC endpoints unreachable');
+}
 
 // Decode a 0x-hex bigint string ("0x1a2b") → JS number (safe for UI display
 // of counts/totals that fit in a double. Returns 0 on empty/invalid.
@@ -40,14 +65,7 @@ const SELECTORS = {
 
 export const waychainRPC = {
   call: async (method, params) => {
-    const res = await fetch(RPC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 }),
-    });
-    const json = await res.json();
-    if (json.error) throw new Error(json.error.message || 'RPC error');
-    return json.result ?? null;
+    return rpcFetch(method, params);
   },
 
   // Wallet P3 panel reads. These call the read-only way_* methods added to
