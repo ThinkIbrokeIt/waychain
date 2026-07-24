@@ -15,7 +15,7 @@
     ],
     "android": {
       "package": "org.waychain.mobile",
-      "versionCode": 1,
+      "versionCode": 6,
       "permissions": [
         "CAMERA",
         "USE_FINGERPRINT"
