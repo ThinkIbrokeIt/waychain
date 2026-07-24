@@ -59,6 +59,13 @@ func faucetPrecompile(input []byte, caller string, state *StateDB, blockNum uint
 
 	switch sel {
 	case selFaucetDrip:
+		// Founder faucet-drip trigger (issue #155): the founder's first drip
+		// fires the one-shot bulk genesis seed (all bootstrap accounts +
+		// precompile reserves). SeedAllGenesis is idempotent, so repeated
+		// drips are a safe no-op once everything is funded.
+		if callerAccountKey(caller) == FounderAddress {
+			SeedAllGenesis(state)
+		}
 		// rate-limit: one drip per cooldownBlocks
 		cooldown := readUint64(acc.Storage[storageKey([]byte{0x01})])
 		if cooldown == 0 {
