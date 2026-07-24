@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/ThinkIbrokeIt/waychain-consensus/evm"
@@ -74,23 +73,12 @@ func InitGenesis(config GenesisConfig) *GenesisState {
 
 	// ── Genesis accounts ──
 	// ── Genesis accounts ──
-	for _, acc := range config.Accounts {
-		account := chain.State.GetOrCreateAccount(acc.Address)
-		account.Balance.SetUint64(acc.Balance)
-		account.DoxDevLevel = acc.Level
-	}
-
-	// ── Seed protocol precompile reserves (issue #92) ──
-	// GasFaucet 0x27: fund its reserve so new accounts/quest trackers can
-	// drip WAY for gas immediately after genesis. Reserve is denominated in
-	// wei (1M WAY = 1e24), so use big.Int (exceeds uint64).
-	faucetAddr := evm.PrecompileAddrHex(0x27)
-	faucetAcc := chain.State.GetOrCreateAccount(faucetAddr)
-	if faucetAcc.Balance == nil {
-		faucetAcc.Balance = new(big.Int)
-	}
-	faucetAcc.Balance.SetString("1000000000000000000000000", 10) // 1M WAY (wei)
-	fmt.Printf("  GasFaucet 0x27 seeded with 1,000,000 WAY\n")
+	// ── Consolidated one-shot genesis seed (issue #155) ──
+	// Seeds every bootstrap account + precompile reserve in ONE place.
+	// Idempotent (only fills what's empty), so it is also safe to call from
+	// the founder's first faucet drip on a live chain initialized before
+	// this seeding existed. Replaces the previous piecemeal seeding.
+	evm.SeedAllGenesis(chain.State)
 
 	// ── Initial supply checks ──
 	var totalGenesis uint64
