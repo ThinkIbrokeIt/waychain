@@ -17,8 +17,6 @@ export default function WalletScreen({ navigation }) {
   const [revealAddr, setRevealAddr] = useState(null);
   const [needsBackup, setNeedsBackup] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [faucetBusy, setFaucetBusy] = useState(false);
-  const [faucetMsg, setFaucetMsg] = useState(null); // { ok, text }
 
   const load = useCallback(async () => {
     const accs = await wallet.loadAccounts();
@@ -42,31 +40,6 @@ export default function WalletScreen({ navigation }) {
     setRefreshing(true);
     if (active) await refreshBalance(active.publicKey);
     setRefreshing(false);
-  }, [active, refreshBalance]);
-
-  // Faucet drip: calls GasFaucet 0x27 drip() selector (sha256("drip()")[:4] = 0x2a7ab5da).
-  // WRITE path: build + sign a tx from the active wallet and send it. The founder's
-  // first drip also fires the one-shot genesis seed (idempotent, no-op once funded).
-  const dripFaucet = useCallback(async () => {
-    if (!active?.privateKey || !active?.publicKey) {
-      setFaucetMsg({ ok: false, text: 'No active wallet to receive the drip.' });
-      return;
-    }
-    setFaucetBusy(true);
-    setFaucetMsg(null);
-    try {
-      await waychainRPC.precompileCall('0x27', 'drip', '', {
-        write: true,
-        privHex: active.privateKey,
-        pub64: active.publicKey,
-      });
-      setFaucetMsg({ ok: true, text: 'Faucet drip sent — gas WAY incoming.' });
-      await refreshBalance(active.publicKey);
-    } catch (e) {
-      setFaucetMsg({ ok: false, text: 'Drip failed: ' + (e?.message || e) });
-    } finally {
-      setFaucetBusy(false);
-    }
   }, [active, refreshBalance]);
 
   const createWallet = async () => {
@@ -184,13 +157,6 @@ export default function WalletScreen({ navigation }) {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.faucetBtn} onPress={dripFaucet} disabled={faucetBusy || !active}>
-            <Text style={styles.faucetBtnText}>{faucetBusy ? 'Dripping…' : '💧 Faucet Drip (gas WAY)'}</Text>
-          </TouchableOpacity>
-          {faucetMsg && (
-            <Text style={[styles.faucetMsg, { color: faucetMsg.ok ? COLORS.copper : COLORS.red }]}>{faucetMsg.text}</Text>
-          )}
-
           <Text style={styles.label}>Accounts ({accounts.length})</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
             {accounts.map((a, i) => (
@@ -284,9 +250,6 @@ const styles = StyleSheet.create({
   revealTitle: { fontFamily: FONTS.display, fontSize: 18, color: COLORS.amber, textAlign: 'center' },
   revealText: { fontFamily: FONTS.body, fontSize: 15, color: COLORS.charcoal, marginTop: 10, lineHeight: 24 },
   revealNote: { fontFamily: FONTS.body, fontSize: 12, color: COLORS.muted, marginTop: 10 },
-  faucetBtn: { marginTop: 16, backgroundColor: COLORS.copper, borderRadius: 14, paddingVertical: 13, alignItems: 'center', shadowColor: COLORS.copper, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3 },
-  faucetBtnText: { fontFamily: FONTS.bold, fontSize: 15, color: COLORS.parchment },
-  faucetMsg: { fontFamily: FONTS.medium, fontSize: 13, textAlign: 'center', marginTop: 10 },
   revealBtn: { marginTop: 12 },
   warn: { backgroundColor: 'rgba(229,57,53,0.12)', borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: COLORS.red },
   warnText: { fontFamily: FONTS.medium, fontSize: 13, color: '#FF8A80', textAlign: 'center' },
