@@ -191,6 +191,36 @@
   const ADDLIQ_SELECTOR = 'e868b10b';     // srAddLiquidity
   const DEC = 18;
 
+  // ── Shared wallet (tandem with /wallet via same-origin localStorage) ──
+  // The web wallet stores keys at waychain_p / waychain_s / waychain_a. We read
+  // the same keys so the DEX and web wallet share ONE account — no provider
+  // bridge needed. Signing replicates wallet/index.html snd(): 64-hex pubkey as
+  // wire 'from', sha256-seeded nacl detached signature over the wire tx.
+  (function buildWayChainWallet() {
+    const LP = 'waychain_p', LS = 'waychain_s', LA = 'waychain_a';
+    function toH(a){return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');}
+    function frH(h){h=(''+h).replace('0x','');if(h.length%2)h='0'+h;const r=new Uint8Array(h.length/2);for(let i=0;i<h.length;i+=2)r[i/2]=parseInt(h.substr(i,2),16);return r;}
+    function b2B(n,l){const b=new Uint8Array(l);let v=BigInt(n);for(let i=l-1;i>=0;i--){b[i]=Number(v&0xFFn);v>>=8n;}return b;}
+    function cat(a){const l=a.reduce((s,x)=>s+x.length,0);const r=new Uint8Array(l);let o=0;for(const x of a)r.set(x,o),o+=x.length;return r;}
+    function bld(n,fB,tB,v,gL,gP,d,e){return cat([b2B(n,8),new Uint8Array([fB.length]),fB,new Uint8Array([tB.length]),tB,b2B(v,32),b2B(gL,8),b2B(gP,8),b2B(d.length,4),d,b2B(e.length,4),e]);}
+    async function rpc(m,p){const r=await fetch(RPC,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})});const d=await r.json();if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));return d.result;}
+    function load(){const p=localStorage.getItem(LP),s=localStorage.getItem(LS),a=localStorage.getItem(LA);if(p&&s&&a)return{publicKey:frH(p),secretKey:frH(s),address:a};return null;}
+    const w = load();
+    window.WayChainWallet = {
+      isUnlocked(){ return !!w; },
+      async connect(){ if(!w) throw new Error('No wallet — open /wallet to create or import one'); return { address: w.address }; },
+      getAccount(){ return w ? { address: w.address } : null; },
+      async sendTx({ to, data, gasLimit, gasPrice, value = 0 }){
+        const n = BigInt(await rpc('eth_getTransactionCount',[w.address,'pending']));
+        const fB = w.publicKey, tB = frH(to);
+        const u = bld(n, fB, tB, BigInt(value), BigInt(gasLimit), BigInt(gasPrice), frH(data||'0x'), new Uint8Array(0));
+        const sig = nacl.sign.detached(u, w.secretKey);
+        const tx = '0x' + toH(cat([u, sig]));
+        return rpc('eth_sendRawTransaction', [tx]);
+      }
+    };
+  })();
+
   // ── calldata helpers (match Go readSlot: 32-byte big-endian) ──
   function toWei(n) { return BigInt(Math.floor(Number(n) * 10 ** DEC)); }
   function hex32(bn) {
