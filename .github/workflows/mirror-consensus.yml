@@ -1,0 +1,54 @@
+name: mirror-consensus
+
+# Keeps the public Go module mirror (ThinkIbrokeIt/waychain-consensus) in sync
+# with the monorepo's consensus/ subdir. REPO_LAW Article II: satellites are
+# MIRRORS of the monorepo. Without this, the archived mirror rots and external
+# `go mod download github.com/ThinkIbrokeIt/waychain-consensus` serves stale code.
+#
+# Triggers on any push that touches consensus/. Force-pushes the subdir to the
+# mirror repo so the public module path always reflects monorepo truth.
+
+on:
+  push:
+    paths:
+      - 'consensus/**'
+      - '.github/workflows/mirror-consensus.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+        with:
+          path: mono
+          fetch-depth: 0
+
+      - name: Checkout mirror repo
+        uses: actions/checkout@v4
+        with:
+          repository: ThinkIbrokeIt/waychain-consensus
+          path: mirror
+          token: ${{ secrets.MIRROR_PUSH_TOKEN }}
+          fetch-depth: 0
+
+      - name: Sync consensus/ -> mirror (preserve mirror's .github + .gitignore)
+        run: |
+          cd mirror
+          # Remove everything except repo-specific files we keep from the mirror.
+          find . -maxdepth 1 -not -name '.' -not -name '.git' -not -name '.github' -not -name '.gitignore' -exec rm -rf {} +
+          # Copy monorepo consensus/ contents in.
+          cp -r ../mono/consensus/. .
+          git config user.name "mirror-bot"
+          git config user.email "mirror@waychain.org"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "no changes — mirror already current"
+            exit 0
+          fi
+          git add -A
+          git commit -m "mirror: sync from monorepo consensus/ ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push
