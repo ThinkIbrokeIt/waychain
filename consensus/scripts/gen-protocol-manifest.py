@@ -18,7 +18,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]  # monorepo root (protocol-manifest.json is SoT at root)
-SRC = ROOT / "consensus" / "evm" / "precompiles.go"
+# Layout-agnostic source: monorepo has consensus/evm/precompiles.go; the
+# waychain-consensus mirror has it flat at evm/precompiles.go. Try both.
+CANDIDATES = [
+    ROOT / "consensus" / "evm" / "precompiles.go",
+    ROOT / "evm" / "precompiles.go",
+]
+SRC = next((p for p in CANDIDATES if p.exists()), CANDIDATES[0])
 OUT = ROOT / "protocol-manifest.json"
 
 
