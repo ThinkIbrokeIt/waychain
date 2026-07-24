@@ -135,12 +135,19 @@ Platform roots are **folders**, not justification for new repos:
 
 | Platform | Root inside monorepo |
 |---|---|
-| Vercel (waychain.org) | `site/` |
+| **Self-hosted nginx** (waychain.org) | `site/` |
 | Expo / mobile builds | `mobile/` |
 | Go daemon / CGO CI | `consensus/` |
 | AWS binary | **built from** `consensus/` |
 
 Rebind project settings to monorepo paths. Do not “split to make Vercel happy.”
+
+> **Amendment (2026-07-24, founder directive):** Vercel is a HARD external
+> dependency and is **forbidden as the production host**. `site/` is served by
+> the community-run nginx on community hardware (see Article XI). The `waychain-site`
+> satellite exists only as a read-only mirror / fallback, never the live gate.
+> If a deploy requires a corporate account's approval to go live, it is not
+> decentralized — fix the architecture, do not promote manually around the gate.
 
 ---
 
@@ -196,4 +203,35 @@ Fail any → realign; do not ship fiction.
 
 ---
 
-**One chain. One tree. Branches for work. Backups labeled backup. Everything else is how we got the mess.**
+## Article XI — Community self-reliance (no outside lever)
+
+**Ratified 2026-07-24 (founder directive):** WayChain must not depend on any
+external host, registry, CDN, font service, or API to operate. The community
+runs its own. This is operational survival, not preference — external deps are
+levers someone else holds (PulseChain precedent).
+
+1. **No hard external deps.** The following are forbidden as production
+   dependencies: Vercel (hosting), Cloudflare Tunnel (sole RPC ingress),
+   npmjs.org (package registry), cdn.jsdelivr.net (libs), googleapis/gstatic
+   (fonts), OpenRouter (agent tokens). Community-run equivalents are required.
+2. **Community-run stack (required path):**
+   - Frontend: our own **nginx** on community hardware serving `site/`.
+   - Packages: self-hosted **npm mirror** (Verdaccio) on community infra.
+   - Assets/fonts: **vendored into the repo** (`site/vendor/`, `site/fonts/`),
+     served from our host — no CDN, no Google Fonts.
+   - RPC: **multiple community-run nodes**; wallets fall back across them.
+     Cloudflare Tunnel may be ONE option among many, never the only path.
+   - Storage: community **object storage** (MinIO/S3-compatible) for member
+     frontends/backends.
+3. **Rent model (survival, not profit):** members pay **rent in WAY** for
+   resources they use (space, calls, bandwidth). Rent is custodial, spent ONLY
+   on the resource, transparent on-chain, non-extractive — surplus grows
+   capacity, never a treasury. Aligns with 98/2 TrustlessLock + foundation-pays-gas.
+4. **Audit is continuous.** Any new external URL in `site/`, `mobile/`, or
+   `consensus/` is a law violation unless it is OUR domain (`waychain.org`,
+   `api.waychain.org`) or an explicit, founder-approved exception. Flag and
+   remove external refs on sight.
+
+---
+
+**One chain. One tree. One community. No outside lever. Rent we pay ourselves to survive.**

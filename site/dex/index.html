@@ -176,9 +176,9 @@
   <div class="footer">WayChain DEX · SwapRoute 0x25 · Chain ID 10008 · Actually Decentralized</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="/vendor/tweetnacl.min.js"></script>
+<script src="/vendor/jsQR.js"></script>
+<script src="/vendor/qrcode.min.js"></script>
 <script src="/js/precompiles.js"></script>
 <script src="/js/wallet.js"></script>
 <script src="/js/rpc.js"></script>
@@ -386,8 +386,7 @@
   async function dexAuthKey() {
     const m = localStorage.getItem('waychain_mnemonic');
     if (!m) throw new Error('No recovery phrase on this browser — use the web wallet first.');
-    const { mnemonicToSeedSync } = await import('https://cdn.jsdelivr.net/npm/@scure/bip39@1.2.2/+esm');
-    const seed = mnemonicToSeedSync(m.trim());
+    const { mnemonicToSeedSync } = await import('/vendor/scure-bip39.esm.js');
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey('raw', seed, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     return key;

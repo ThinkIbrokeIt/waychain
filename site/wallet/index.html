@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>WayChain Wallet</title>
-  <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+  <script src="/vendor/tweetnacl.min.js"></script>
+  <script src="/vendor/jsQR.js"></script>
   <script type="module">
     // BIP39 mnemonic support via @scure/bip39 (browser ESM; the old UMD
     // dist/index.browser.min.js was removed from bip39 v3 and 404s).
-    import { generateMnemonic, mnemonicToSeedSync } from 'https://cdn.jsdelivr.net/npm/@scure/bip39@1.2.2/+esm';
-    import { wordlist } from 'https://cdn.jsdelivr.net/npm/@scure/bip39@1.2.2/wordlists/english.js/+esm';
+    import { generateMnemonic, mnemonicToSeedSync } from '/vendor/scure-bip39.esm.js';
+    import { wordlist } from '/vendor/scure-bip39-english.esm.js';
     window.bip39 = {
       entropyToMnemonic: (hex) => generateMnemonic(wordlist), // wallet generates 16B entropy internally
       mnemonicToSeed: (m, pwd) => mnemonicToSeedSync(m, pwd || ''),
