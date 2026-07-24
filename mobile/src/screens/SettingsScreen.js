@@ -36,10 +36,16 @@ export default function SettingsScreen({ navigation }) {
   const savePin = async () => {
     if (!/^\d{4,8}$/.test(pin)) { Alert.alert('Invalid PIN', 'Use 4–8 digits.'); return; }
     if (pin !== confirm) { Alert.alert('Mismatch', 'PINs do not match.'); return; }
-    await setPin(pin);
-    setPrefs({ ...prefs, pinSet: true, enabled: true });
-    setPinVal(''); setConfirm('');
-    Alert.alert('Saved', 'App lock enabled.');
+    try {
+      await setPin(pin);
+      const next = { ...prefs, pinSet: true, enabled: true };
+      await setAuthPrefs(next);
+      setPrefs(next);
+      setPinVal(''); setConfirm('');
+      Alert.alert('Saved', 'App lock enabled.');
+    } catch (e) {
+      Alert.alert('PIN not saved', e?.message || String(e));
+    }
   };
 
   // ── Wallet management ──────────────────────────────────────────────
@@ -142,16 +148,14 @@ export default function SettingsScreen({ navigation }) {
           <Switch value={prefs.biometric} onValueChange={toggleBio} trackColor={{ true: COLORS.copper }} />
         </View>
       )}
-      {!prefs.pinSet && (
-        <View style={styles.pinBox}>
-          <Text style={styles.label}>Set PIN</Text>
-          <TextInput value={pin} onChangeText={setPinVal} placeholder="PIN (4–8 digits)" placeholderTextColor={COLORS.muted}
-            style={styles.input} secureTextEntry keyboardType="numeric" maxLength={8} />
-          <TextInput value={confirm} onChangeText={setConfirm} placeholder="Confirm PIN" placeholderTextColor={COLORS.muted}
-            style={styles.input} secureTextEntry keyboardType="numeric" maxLength={8} />
-          <Button label="Save PIN" onPress={savePin} style={styles.btn} />
-        </View>
-      )}
+      <View style={styles.pinBox}>
+        <Text style={styles.label}>{prefs.pinSet ? 'Change PIN' : 'Set PIN'}</Text>
+        <TextInput value={pin} onChangeText={setPinVal} placeholder="PIN (4–8 digits)" placeholderTextColor={COLORS.muted}
+          style={styles.input} secureTextEntry keyboardType="numeric" maxLength={8} />
+        <TextInput value={confirm} onChangeText={setConfirm} placeholder="Confirm PIN" placeholderTextColor={COLORS.muted}
+          style={styles.input} secureTextEntry keyboardType="numeric" maxLength={8} />
+        <Button label="Save PIN" onPress={savePin} style={styles.btn} />
+      </View>
       <Text style={styles.note}>Keys never leave your device. Lock uses Android Keystore-backed SecureStore.</Text>
     </ScrollView>
   );
