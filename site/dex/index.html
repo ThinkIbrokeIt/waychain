@@ -99,6 +99,13 @@
     <div class="wallet-bar">
       <span id="wallet-display" class="wallet-addr" style="display:none;">Connected: <span id="dex-wallet"></span></span>
       <button class="btn btn-sm" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+      <button class="btn btn-sm" id="mobileBtn" onclick="startMobileSign()">📱 Connect via Mobile</button>
+      <div id="mobileBox" style="display:none; margin-top:12px;">
+        <div id="dexQr" class="qrbox"></div>
+        <div class="hint">Scan this with the WayChain mobile app (Scan to Pay → WayChain). It signs the swap with your phone's wallet, then scan the result back below.</div>
+        <button class="btn btn-sm" onclick="scanSignedResult()">📷 Scan signed result</button>
+        <div id="mobileStatus" class="status"></div>
+      </div>
     </div>
     <div id="reserves" class="reserves">Pool reserves: loading…</div>
 
@@ -170,6 +177,8 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="/js/precompiles.js"></script>
 <script src="/js/wallet.js"></script>
 <script src="/js/rpc.js"></script>
@@ -343,6 +352,98 @@
     }
   }
   window.doAddLiquidity = doAddLiquidity;
+
+  // ── Shared wallet (tandem with /wallet via same-origin localStorage) ──
+  (function buildWayChainWallet() {
+    const LP = 'waychain_p', LS = 'waychain_s', LA = 'waychain_a';
+    function toH(a){return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');}
+    function frH(h){h=(''+h).replace('0x','');if(h.length%2)h='0'+h;const r=new Uint8Array(h.length/2);for(let i=0;i<h.length;i+=2)r[i/2]=parseInt(h.substr(i,2),16);return r;}
+    function b2B(n,l){const b=new Uint8Array(l);let v=BigInt(n);for(let i=l-1;i>=0;i--){b[i]=Number(v&0xFFn);v>>=8n;}return b;}
+    function cat(a){const l=a.reduce((s,x)=>s+x.length,0);const r=new Uint8Array(l);let o=0;for(const x of a)r.set(x,o),o+=x.length;return r;}
+    function bld(n,fB,tB,v,gL,gP,d,e){return cat([b2B(n,8),new Uint8Array([fB.length]),fB,new Uint8Array([tB.length]),tB,b2B(v,32),b2B(gL,8),b2B(gP,8),b2B(d.length,4),d,b2B(e.length,4),e]);}
+    async function rpc(m,p){const r=await fetch(RPC,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:m,params:p})});const d=await r.json();if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));return d.result;}
+    function load(){const p=localStorage.getItem(LP),s=localStorage.getItem(LS),a=localStorage.getItem(LA);if(p&&s&&a)return{publicKey:frH(p),secretKey:frH(s),address:a};return null;}
+    const w = load();
+    window.WayChainWallet = {
+      isUnlocked(){ return !!w; },
+      async connect(){ if(!w) throw new Error('No wallet — open /wallet to create or import one'); return { address: w.address }; },
+      getAccount(){ return w ? { address: w.address } : null; },
+      async sendTx({ to, data, gasLimit, gasPrice, value = 0 }){
+        const n = BigInt(await rpc('eth_getTransactionCount',[w.address,'pending']));
+        const fB = w.publicKey, tB = frH(to);
+        const u = bld(n, fB, tB, BigInt(value), BigInt(gasLimit), BigInt(gasPrice), frH(data||'0x'), new Uint8Array(0));
+        const sig = nacl.sign.detached(u, w.secretKey);
+        const tx = '0x' + toH(cat([u, sig]));
+        return rpc('eth_sendRawTransaction', [tx]);
+      }
+    };
+  })();
+
+  // ── Mobile sign flow (DEX <-> phone air-gap) ──
+  // Request QR: HMAC-tagged unsigned tx (only this user's phone, holding the
+  // same mnemonic, can parse it). Signed result: phone returns 0x+hex(u+sig);
+  // DEX scans + submits. Auth tag derivation matches mobile qrAuth.js.
+  async function dexAuthKey() {
+    const m = localStorage.getItem('waychain_mnemonic');
+    if (!m) throw new Error('No recovery phrase on this browser — use the web wallet first.');
+    const { mnemonicToSeedSync } = await import('https://cdn.jsdelivr.net/npm/@scure/bip39@1.2.2/+esm');
+    const seed = mnemonicToSeedSync(m.trim());
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', seed, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    return key;
+  }
+  async function tagQr(key, payload) {
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+    const tag = Array.from(new Uint8Array(sig)).slice(0, 8).map(b => b.toString(16).padStart(2, '0')).join('');
+    return payload + '#t=' + tag;
+  }
+  async function startMobileSign() {
+    const box = document.getElementById('mobileBox');
+    box.style.display = 'block';
+    const amt = parseFloat(document.getElementById('amountIn').value);
+    if (!amt || amt <= 0) { show(document.getElementById('mobileStatus'), 'Enter a swap amount first.', 'bad'); return; }
+    const inWei = toWei(amt), outWei = quoteOut(inWei), minOut = (outWei * 99n) / 100n;
+    const data = buildSwapCalldata(inWei, minOut);
+    const payload = ['dexSign', SWAP_ADDR, data, '200000', '1', '10008'].join('|');
+    try {
+      const key = await dexAuthKey();
+      const tagged = await tagQr(key, payload);
+      const el = document.getElementById('dexQr');
+      el.innerHTML = '';
+      QRCode.toCanvas(tagged, { width: 220, margin: 2, color: { dark: '#2A2A2A', light: '#FFF8F0' } }, (err, cv) => {
+        if (err) show(document.getElementById('mobileStatus'), 'QR gen failed: ' + err, 'bad');
+      });
+      show(document.getElementById('mobileStatus'), 'Scan this QR with the WayChain app (Scan to Pay → WayChain).', 'info');
+    } catch (e) { show(document.getElementById('mobileStatus'), e.message, 'bad'); }
+  }
+  window.startMobileSign = startMobileSign;
+
+  async function scanSignedResult() {
+    show(document.getElementById('mobileStatus'), 'Opening camera… point at the phone’s signed QR.', 'info');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const video = document.createElement('video');
+      video.srcObject = stream; await video.play();
+      const canvas = document.createElement('canvas');
+      const tick = async () => {
+        if (video.readyState < 2) { requestAnimationFrame(tick); return; }
+        canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d'); ctx.drawImage(video, 0, 0);
+        const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR ? window.jsQR(img.data, img.width, img.height) : null;
+        if (code && code.data.startsWith('0x')) {
+          stream.getTracks().forEach(t => t.stop());
+          const raw = code.data.split('#t=')[0]; // strip HMAC auth tag; submit signed tx
+          const res = await window.WayChainRPC.call('eth_sendRawTransaction', [raw]);
+          show(document.getElementById('mobileStatus'), 'Swap submitted ✓ via mobile: ' + (res.txHash || 'pending'), 'ok');
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    } catch (e) { show(document.getElementById('mobileStatus'), 'Camera scan failed: ' + e.message, 'bad'); }
+  }
+  window.scanSignedResult = scanSignedResult;
 
   loadReserves();
 })();
