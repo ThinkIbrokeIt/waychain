@@ -387,7 +387,6 @@
     const m = localStorage.getItem('waychain_mnemonic');
     if (!m) throw new Error('No recovery phrase on this browser — use the web wallet first.');
     const { mnemonicToSeedSync } = await import('/vendor/scure-bip39.esm.js');
-    const seed = mnemonicToSeedSync(m.trim());
     const enc = new TextEncoder();
     const key = await crypto.subtle.importKey('raw', seed, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
     return key;
