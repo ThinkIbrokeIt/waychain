@@ -14,14 +14,19 @@ func runAsNode() {
 	nodeID := getEnv("WAYCHAIN_NODE_ID", "devnet-val-1")
 	listenAddr := getEnv("WAYCHAIN_LISTEN", ":9100")
 	peers := getEnv("WAYCHAIN_PEERS", "")
+	seeds := getEnv("WAYCHAIN_SEEDS", "")
 
 	fmt.Printf("═══ WayChain Node: %s ═══\n", nodeID)
 	fmt.Printf("  Listen: %s\n", listenAddr)
 	fmt.Printf("  Peers: %s\n", peers)
+	fmt.Printf("  Seeds: %s\n", seeds)
 	fmt.Println()
 
 	// Start P2P
 	node := NewP2PNode(nodeID, listenAddr)
+	if seeds != "" {
+		node.Seeds = splitComma(seeds)
+	}
 	err := node.Start()
 	if err != nil {
 		fmt.Printf("❌ Failed to start: %v\n", err)
@@ -94,4 +99,24 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// splitComma parses a comma-separated env value into a slice (peer/seed lists).
+func splitComma(s string) []string {
+	var out []string
+	cur := ""
+	for _, c := range s {
+		if c == ',' {
+			if cur != "" {
+				out = append(out, cur)
+				cur = ""
+			}
+			continue
+		}
+		cur += string(c)
+	}
+	if cur != "" {
+		out = append(out, cur)
+	}
+	return out
 }

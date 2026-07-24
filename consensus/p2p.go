@@ -19,6 +19,7 @@ const (
 	MsgPeerList   P2PMessageType = 4 // Peer discovery exchange
 	MsgStateReq   P2PMessageType = 5 // Request current chain state
 	MsgStateResp  P2PMessageType = 6 // Chain state response
+	MsgSeedDown   P2PMessageType = 7 // Founder/seed node unreachable — community activation signal
 )
 
 func init() {
@@ -63,6 +64,14 @@ type P2PNode struct {
 	seq      uint64
 	seqLock  sync.Mutex
 	done     chan struct{}
+
+	// Seed/founder node addresses (WAYCHAIN_SEEDS env). When ALL seeds are
+	// unreachable, the node gossips MsgSeedDown — the community's cue to
+	// spin up replacement nodes (decentralization doctrine: a single node down
+	// is a rallying signal, not a death).
+	Seeds            []string
+	seedDownSignaled bool
+	seedLock        sync.Mutex
 }
 
 // NewP2PNode creates a new P2P node for a validator
@@ -226,6 +235,22 @@ func (n *P2PNode) readLoop(peer *Peer) {
 			continue
 		}
 
+		// Seed-down alert — relay + surface. The community's cue to deploy
+		// replacement nodes (decentralization doctrine). Don't loop it forever:
+		// only log + re-broadcast once per node.
+		if msg.Type == MsgSeedDown {
+			n.seedLock.Lock()
+			if !n.seedDownSignaled {
+				n.seedDownSignaled = true
+				n.seedLock.Unlock()
+				fmt.Printf("  🚨 RECEIVED SEED_DOWN from %s — founder nodes unreachable. Community: deploy replacement WayChain nodes NOW.\n", msg.From)
+				n.Broadcast(P2PMessage{Type: MsgSeedDown, From: n.ID, Seq: n.nextSeq(), Payload: []byte("seed-down")})
+			} else {
+				n.seedLock.Unlock()
+			}
+			continue
+		}
+
 		// Forward to handler
 		select {
 		case n.Incoming <- msg:
@@ -258,6 +283,34 @@ func (n *P2PNode) heartbeatLoop() {
 			}
 			fmt.Printf("  💓 [%s] %d active peers\n", n.ID, len(n.Peers))
 			n.peerLock.Unlock()
+
+			// ── Seed-down detection (decentralization doctrine) ──
+			// If ALL configured seed/founder nodes are unreachable, gossip
+			// MsgSeedDown across the mesh. This is the community's cue to
+			// deploy replacement nodes — a single point of failure is a
+			// rallying signal, not a network death.
+			n.seedLock.Lock()
+			if len(n.Seeds) > 0 && !n.seedDownSignaled {
+				allDown := true
+				n.peerLock.RLock()
+				for _, s := range n.Seeds {
+					if _, ok := n.Peers[s]; ok {
+						allDown = false
+						break
+					}
+				}
+				n.peerLock.RUnlock()
+				if allDown {
+					n.seedDownSignaled = true
+					n.seedLock.Unlock()
+					fmt.Printf("  🚨 SEED DOWN — all founder nodes unreachable. Gossiping MsgSeedDown. Community: deploy replacement nodes.\n")
+					n.Broadcast(P2PMessage{Type: MsgSeedDown, From: n.ID, Seq: n.nextSeq(), Payload: []byte("seed-down")})
+				} else {
+					n.seedLock.Unlock()
+				}
+			} else {
+				n.seedLock.Unlock()
+			}
 		case <-n.done:
 			return
 		}
