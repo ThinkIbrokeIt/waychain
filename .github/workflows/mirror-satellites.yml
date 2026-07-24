@@ -1,0 +1,92 @@
+name: mirror-satellites
+
+# Keeps ALL WayChain satellite repos in sync with the monorepo (REPO_LAW Article II:
+# satellites are READ-ONLY MIRRORS of the monorepo — the single source of truth).
+# Each satellite maps to one monorepo subdir. On any push touching a subdir, that
+# satellite is force-synced so public mirrors never serve stale code/docs.
+#
+# Satellites:
+#   consensus/      -> waychain-consensus   (Go module github.com/ThinkIbrokeIt/waychain-consensus)
+#   site/           -> waychain-site
+#   mobile/         -> waychain-mobile
+#   blueprint/      -> WAYCHAIN_BLUEPRINT
+#   contracts/      -> waychain-contracts   (legacy Solidity reference — not the protocol)
+#
+# Requires secret MIRROR_PUSH_TOKEN (PAT with push to all satellites).
+
+on:
+  push:
+    paths:
+      - 'consensus/**'
+      - 'site/**'
+      - 'mobile/**'
+      - 'blueprint/**'
+      - 'contracts/**'
+      - '.github/workflows/mirror-satellites.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - subdir: consensus
+            repo: waychain-consensus
+            keep: '.github .gitignore'
+          - subdir: site
+            repo: waychain-site
+            keep: '.github .gitignore'
+          - subdir: mobile
+            repo: waychain-mobile
+            keep: '.github .gitignore .easignore .expo node_modules'
+          - subdir: blueprint
+            repo: WAYCHAIN_BLUEPRINT
+            keep: '.github .gitignore'
+          - subdir: contracts
+            repo: waychain-contracts
+            keep: '.github .gitignore'
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v4
+        with:
+          path: mono
+          fetch-depth: 0
+
+      - name: Checkout mirror repo
+        uses: actions/checkout@v4
+        with:
+          repository: ThinkIbrokeIt/${{ matrix.repo }}
+          path: mirror
+          token: ${{ secrets.MIRROR_PUSH_TOKEN }}
+          fetch-depth: 0
+
+      - name: Sync ${{ matrix.subdir }}/ -> ${{ matrix.repo }}
+        run: |
+          cd mirror
+          # Remove everything except git + repo-specific files we preserve.
+          KEEP=".git ${{ matrix.keep }}"
+          find . -maxdepth 1 -not -name '.' \
+            $(for k in $KEEP; do echo " -not -name $k"; done) \
+            -exec rm -rf {} +
+          # Copy monorepo subdir contents in.
+          cp -r ../mono/${{ matrix.subdir }}/. .
+          # Add SoT banner to top-level README.md / AGENTS.md if missing (no stale "not SoT" confusion).
+          BANNER=$'\n> **This repository is a READ-ONLY MIRROR of the [WayChain monorepo](https://github.com/ThinkIbrokeIt/waychain).**\n> The monorepo is the single source of truth. Edit there; this mirror syncs automatically.\n'
+          for f in README.md AGENTS.md; do
+            if [ -f "$f" ] && ! grep -q "READ-ONLY MIRROR of the WayChain monorepo" "$f"; then
+              printf '%s\n' "$BANNER" >> "$f"
+            fi
+          done
+          git config user.name "mirror-bot"
+          git config user.email "mirror@waychain.org"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "no changes — ${{ matrix.repo }} already current"
+            exit 0
+          fi
+          git add -A
+          git commit -m "mirror: sync from monorepo/${{ matrix.subdir }} ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push
