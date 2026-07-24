@@ -128,7 +128,6 @@ The 1% = the deploy flip (needs node capacity / the actual seed-down event).
 
 Step 2 is the highest-leverage first move: it removes the most pervasive
 external calls AND unblocks the Vercel problem by making the site portable.
-
 ---
 
 **One chain. One community. No outside lever. Rent we pay ourselves to survive.**
