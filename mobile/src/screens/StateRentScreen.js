@@ -36,8 +36,8 @@ export default function StateRentScreen() {
     setLoading(true);
     try {
       const [s, d] = await Promise.allSettled([
-        waychainRPC.precompileCall('0x1E', 'getStatus', pad32(account.address)),
-        waychainRPC.precompileCall('0x1E', 'getDue', pad32(account.address)),
+        waychainRPC.precompileCall('0x1E', 'getStatus', pad32(account.publicKey)),
+        waychainRPC.precompileCall('0x1E', 'getDue', pad32(account.publicKey)),
       ]);
       setStatus(s.status === 'fulfilled' ? s.value : 'err');
       setDue(d.status === 'fulfilled' ? d.value : 'err');

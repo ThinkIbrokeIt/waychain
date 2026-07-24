@@ -53,7 +53,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
   // Derive the vault ID + BTC address once we have an account.
   useEffect(() => {
     if (account && !vaultId) {
-      const id = pad32(account.address);
+      const id = pad32(account.publicKey);
       setVaultId(id);
       setVaultAddr(derivedVaultBTCAddress(id));
     }
@@ -63,7 +63,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
     if (!account) return;
     setLoading(true);
     try {
-      const id = vaultId || pad32(account.address);
+      const id = vaultId || pad32(account.publicKey);
       const [has, v] = await Promise.allSettled([
         waychainRPC.precompileCall('0x22', 'getUserVault', ''),
         waychainRPC.precompileCall('0x22', 'getVault', id),
@@ -81,7 +81,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
 
   const createVault = async () => {
     if (!account) { Alert.alert('No wallet', 'Create or import a wallet.'); return; }
-    const id = (vaultId || pad32(account.address)).replace(/^0x/, '');
+    const id = (vaultId || pad32(account.publicKey)).replace(/^0x/, '');
     if (!/^[0-9a-fA-F]{64}$/.test(id)) { Alert.alert('Invalid vault ID', 'Enter 32-byte (64 hex).'); return; }
     setBusy('Create');
     try {
@@ -99,7 +99,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
 
   const deposit = async () => {
     if (!account) { Alert.alert('No wallet'); return; }
-    const id = (vaultId || pad32(account.address)).replace(/^0x/, '');
+    const id = (vaultId || pad32(account.publicKey)).replace(/^0x/, '');
     const t = txid.trim().replace(/^0x/, '');
     if (!/^[0-9a-fA-F]{64}$/.test(t)) { Alert.alert('Invalid txid', 'Enter the 32-byte (64 hex) BTC txid.'); return; }
     if (BigInt(btcHeld || '0') <= 0n) { Alert.alert('Enter BTC held', 'Enter how much BTC (sats) the vault holds.'); return; }
@@ -120,7 +120,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
 
   const mint = async () => {
     if (!account) { Alert.alert('No wallet'); return; }
-    const id = (vaultId || pad32(account.address)).replace(/^0x/, '');
+    const id = (vaultId || pad32(account.publicKey)).replace(/^0x/, '');
     const amt = mintAmount || btcHeld;
     if (BigInt(amt || '0') <= 0n) { Alert.alert('Enter mint amount', 'Enter sats worth of 1WAY to mint (or use BTC held).'); return; }
     setBusy('Mint');
@@ -137,7 +137,7 @@ export default function BitcoinRegistryScreen({ navigation }) {
 
   const repay = async () => {
     if (!account) { Alert.alert('No wallet'); return; }
-    const id = (vaultId || pad32(account.address)).replace(/^0x/, '');
+    const id = (vaultId || pad32(account.publicKey)).replace(/^0x/, '');
     const amt = mintAmount || btcHeld;
     if (BigInt(amt || '0') <= 0n) { Alert.alert('Enter repay amount', 'Enter 1WAY to burn (repay loan).'); return; }
     setBusy('Repay');

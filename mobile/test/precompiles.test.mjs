@@ -11,13 +11,13 @@ const ok = (msg) => console.log('  ✓ ' + msg);
 console.log('Precompile registry drift check');
 console.log('================================');
 
-// 1. Count + address range
+// 1. Count + address range (0x0C-0x27 = 28 precompiles per protocol-manifest.json)
 const addrs = PRECOMPILE_LIST.map((p) => p.addr);
-if (addrs.length !== 27) fail(`expected 27 precompiles, got ${addrs.length}`);
-else ok(`27 precompiles present`);
+if (addrs.length !== 28) fail(`expected 28 precompiles, got ${addrs.length}`);
+else ok(`28 precompiles present`);
 
 const expected = [];
-for (let i = 0x0c; i <= 0x26; i++) expected.push('0x' + i.toString(16).toUpperCase().padStart(2, '0'));
+for (let i = 0x0c; i <= 0x27; i++) expected.push('0x' + i.toString(16).toUpperCase().padStart(2, '0'));
 const missing = expected.filter((a) => !addrs.includes(a));
 const extra = addrs.filter((a) => !expected.includes(a));
 if (missing.length) fail(`missing addresses: ${missing.join(',')}`);

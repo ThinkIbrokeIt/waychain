@@ -59,7 +59,7 @@ export default function GovernanceScreen() {
   const getCredits = useCallback(async () => {
     if (!account) return;
     try {
-      const c = await waychainRPC.precompileCall('0x1D', 'getCredits', pad32(account.address));
+      const c = await waychainRPC.precompileCall('0x1D', 'getCredits', pad32(account.publicKey));
       setCredits(c);
     } catch { setCredits(null); }
   }, [account]);

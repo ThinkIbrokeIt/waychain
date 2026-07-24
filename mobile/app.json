@@ -15,10 +15,18 @@
     ],
     "android": {
       "package": "org.waychain.mobile",
-      "versionCode": 1
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "USE_FINGERPRINT"
+      ]
     },
     "ios": {
-      "bundleIdentifier": "org.waychain.mobile"
+      "bundleIdentifier": "org.waychain.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "WayChain needs camera access to scan QR codes for payments and wallet import.",
+        "NSFaceIDUsageDescription": "WayChain uses Face ID to secure your wallet and authorize transactions."
+      }
     },
     "extra": {
       "eas": {
