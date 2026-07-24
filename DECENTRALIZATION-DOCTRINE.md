@@ -115,11 +115,19 @@ the ocean in one turn.
    back across them; demote Cloudflare Tunnel to one option among many.
 6. **Community storage** (MinIO) + rent ledger for member-hosted apps.
 7. **LLM/agent** — move off OpenRouter to a community-run or self-hosted model.
+8. **Seed-down → community activation** (founder directive 2026-07-24): the node
+   gossip layer detects when ALL seed/founder nodes are unreachable and
+   gossips `MsgSeedDown`. That alert is the community's bat-signal to
+   **deploy replacement nodes** and tell family/friends. A single point of
+   failure is a rallying signal, not a network death. See
+   `docs/COMMUNITY-NODE-RUN.md`.
 
-Each step is its own issue + branch + PR (REPO_LAW Article III). Step 2 is the
-highest-leverage first move: it removes the most pervasive external calls AND
-unblocks the Vercel problem by making the site portable to our own host.
+Each step is its own issue + branch + PR (REPO_LAW Article III). Steps 1–7
+(build) + 8 (gossip alert) are now **coded + staged** (PRs #165/#166/#168/#169).
+The 1% = the deploy flip (needs node capacity / the actual seed-down event).
 
+Step 2 is the highest-leverage first move: it removes the most pervasive
+external calls AND unblocks the Vercel problem by making the site portable.
 ---
 
 **One chain. One community. No outside lever. Rent we pay ourselves to survive.**

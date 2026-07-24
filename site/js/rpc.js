@@ -3,17 +3,28 @@
 // Depends on js/precompiles.js (registry) + js/wallet.js (auth) + js/tx.js (signer).
 (function (global) {
   'use strict';
-  const RPC = global.WayChainWallet ? global.WayChainWallet.RPC_URL : 'https://api.waychain.org';
+  // Multiple community RPC endpoints — wallets fall back across the list so
+  // no single host is a hard dependency (DECENTRALIZATION-DOCTRINE.md Step 4).
+  const RPC_URLS = (global.WayChainWallet && global.WayChainWallet.RPC_URLS) || [
+    'https://api.waychain.org',
+    // Add more community-run RPC endpoints here as nodes come online.
+  ];
   const REGISTRY = global.WayChainPrecompiles || (global.PRECOMPILES);
   const call = async (method, params) => {
-    const res = await fetch(RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-    });
-    const json = await res.json();
-    if (json.error) throw new Error(json.error.message || JSON.stringify(json.error));
-    return json.result ?? null;
+    let lastErr;
+    for (const url of RPC_URLS) {
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error.message || JSON.stringify(json.error));
+        return json.result ?? null;
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error('All RPC endpoints unreachable');
   };
   const hexToNum = (hex) => {
     if (!hex || hex === '0x' || hex === '0x0') return 0;
