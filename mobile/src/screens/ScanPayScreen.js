@@ -8,6 +8,7 @@ import { wallet } from '../services/wallet';
 import { satsToUsd, btcToUsd } from '../services/price';
 import { encodePsbtFrames, decodePsbtFrames, buildCosignRequest } from '../services/btcCosign';
 import { tagQr, verifyQr, hasAuthTag } from '../services/qrAuth';
+import { buildAndSignTx, getNonce, hexToBytes } from '../services/tx';
 import QRCode from 'react-native-qrcode-svg';
 
 // Scan-to-pay (issue #82). Greenfield camera+sign; reuses wallet.js BTC derivation.
@@ -88,7 +89,7 @@ export default function ScanPayScreen({ navigation }) {
     }
   }, [navigation]);
 
-  const onScan = useCallback((res) => {
+  const onScan = useCallback(async (res) => {
     if (scanned) return;
     setScanned(true);
     const raw = res.data || '';
@@ -116,6 +117,11 @@ export default function ScanPayScreen({ navigation }) {
     if (!verified) {
       Alert.alert('QR blocked', 'Authentication tag invalid. This QR is not from your wallet — refused.');
       setScanned(false); return;
+    }
+    // DEX air-gap sign request (from site/dex "Connect via Mobile").
+    if (verified.startsWith('dexSign|')) {
+      await signDexRequest(verified);
+      return;
     }
     const p = parseQr(verified);
     if (!p.addr) { Alert.alert('Unrecognized QR', 'Scan a bitcoin: or waychain: QR.'); setScanned(false); return; }
@@ -196,6 +202,34 @@ export default function ScanPayScreen({ navigation }) {
       Alert.alert('Signed (WAY)', 'WayChain tx signed with your Ed25519 key. Scan the frames with your computer companion to broadcast.');
     } catch (e) {
       Alert.alert('Sign failed', e?.message || 'err');
+    } finally { setBusy(''); }
+  };
+
+  // DEX air-gap sign: phone signs the swap the DEX QR requested, returns the
+  // exact 0x+hex(u+sig) the node accepts (built via tx.js buildAndSignTx, real
+  // nonce from chain). Shown as an authenticated QR the DEX scans to broadcast.
+  const signDexRequest = async (payload) => {
+    if (!account || !account.privateKey) { Alert.alert('No wallet', 'Import your recovery phrase first.'); return; }
+    setBusy('Sign');
+    try {
+      const [, to, data, gasLimit, gasPrice] = payload.split('|');
+      const nonce = await getNonce(account.address);
+      const { rawHex } = await buildAndSignTx({
+        fromPrivHex: account.privateKey,
+        fromPub64: account.publicKey,
+        to,
+        valueWei: 0,
+        nonce,
+        gasLimit: Number(gasLimit),
+        gasPrice: Number(gasPrice),
+        data: data && data !== '0x' ? hexToBytes(data) : new Uint8Array(0),
+      });
+      const tagged = tagQr(account.mnemonic, rawHex); // authenticated QR for DEX to scan
+      setSigned(rawHex);
+      setSignedFrames([tagged]);
+      Alert.alert('Signed (DEX)', 'Swap signed with your phone. Show this QR to the DEX "Scan signed result" button.');
+    } catch (e) {
+      Alert.alert('DEX sign failed', e?.message || String(e));
     } finally { setBusy(''); }
   };
 
