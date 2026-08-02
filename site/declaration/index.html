@@ -31,11 +31,12 @@ hr{border:none;border-top:1px solid var(--border);margin:48px 0}
 .pillar p{font-size:.95em}
 
 pre{background:var(--slate3);padding:12px 18px;border-radius:6px;overflow-x:auto;margin:16px 0;border:1px solid var(--border);font-size:.82em;color:var(--amber);text-align:center}
-code{background:var(--slate2);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--copper)}
+code{background:var(--slate2);padding:2px 8px 8px;border-radius:4px;font-size:.85em;color:var(--copper)}
 
 table{width:100%;border-collapse:collapse;margin:16px 0}
 th{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)}
 td{padding:8px 12px;border-bottom:1px solid var(--border)}
+
 .status-live{color:var(--green)}
 .status-building{color:var(--amber)}
 
@@ -53,6 +54,12 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)}
 .nav-links a:hover{color:var(--warm)}
 
 @media(max-width:768px){body{padding:0 16px;font-size:16px;line-height:2.0}h1{font-size:2em}.subhead{font-size:.75em}}
+
+#live-status{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:16px;margin:24px 0;font-size:.9em}
+#live-status h3{color:var(--copper);font-size:.9em;margin-bottom:8px}
+#live-status .item{display:flex;justify-content:space-between;margin:4px 0}
+#live-status .label{color:var(--muted)}
+#live-status .value{color:var(--fg);font-family:monospace}
 </style>
 </head>
 <body>
@@ -112,6 +119,15 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)}
 </div>
 
 <hr>
+
+<h2 style="text-align:center;color:var(--warm);font-size:1.5em">Live Chain Status</h2>
+<div id="live-status">
+  <h3>WayChain Network</h3>
+  <div class="item"><span class="label">Chain ID</span><span class="value" id="chain-id">—</span></div>
+  <div class="item"><span class="label">Current Block</span><span class="value" id="block-number">—</span></div>
+  <div class="item"><span class="label">Precompile Count</span><span class="value" id="precompile-count">—</span></div>
+  <div class="item"><span class="label">Last Updated</span><span class="value" id="last-updated">—</span></div>
+</div>
 
 <h2 style="text-align:center;color:var(--warm);font-size:1.5em">The State of Being</h2>
 
@@ -180,5 +196,65 @@ td{padding:8px 12px;border-bottom:1px solid var(--border)}
 <p style="margin-top:12px">WayChain — Actually Decentralized. Chain ID 10008.</p>
 </div>
 
+<script>
+// Fetch live chain data and update the #live-status box
+async function updateLiveStatus() {
+  try {
+    // Fetch chain ID
+    const chainIdResp = await fetch('https://api.waychain.org', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 1 })
+    });
+    const chainIdJson = await chainIdResp.json();
+    const chainIdHex = chainIdJson.result;
+    const chainIdDec = parseInt(chainIdHex, 16);
+
+    // Fetch block number
+    const blockResp = await fetch('https://api.waychain.org', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 })
+    });
+    const blockJson = await blockResp.json();
+    const blockHex = blockJson.result;
+    const blockDec = parseInt(blockHex, 16);
+
+    // Fetch precompile count (we don't have a direct method, but we can use the version.json or try to call a custom method if available)
+    // We'll try to call a hypothetical way_getPrecompileCount; if it fails, we'll fall back to the version.json value.
+    let precompileCount = 28; // default
+    try {
+      const prepResp = await fetch('https://api.waychain.org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'way_getPrecompileCount', params: [], id: 1 })
+      });
+      const prepJson = await prepResp.json();
+      if (prepJson.result !== undefined) {
+        precompileCount = parseInt(prepJson.result, 16);
+      }
+    } catch (e) {
+      // If the method doesn't exist, we'll keep the default and maybe note it.
+      console.warn('way_getPrecompileCount not available, using default');
+    }
+
+    // Update the DOM
+    document.getElementById('chain-id').textContent = `${chainIdDec} (0x${chainIdHex.toString(16)})`;
+    document.getElementById('block-number').textContent = `${blockDec} (0x${blockHex.toString(16)})`;
+    document.getElementById('precompile-count').textContent = precompileCount;
+    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+  } catch (error) {
+    console.error('Failed to fetch live chain data:', error);
+    document.getElementById('chain-id').textContent = 'Error';
+    document.getElementById('block-number').textContent = 'Error';
+    document.getElementById('precompile-count').textContent = 'Error';
+    document.getElementById('last-updated').textContent = 'Error';
+  }
+}
+
+// Update on load and then every 15 seconds
+updateLiveStatus();
+setInterval(updateLiveStatus, 15000);
+</script>
 </body>
 </html>

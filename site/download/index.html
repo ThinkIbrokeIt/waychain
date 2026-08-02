@@ -14,6 +14,7 @@
 body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.7}
 h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
 a{color:var(--copper);text-decoration:none}
+a:hover{color:var(--warm)}
 .container{max-width:760px;margin:0 auto;padding:0 24px}
 .nav{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
 .nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.3em;color:var(--warm);letter-spacing:1px}
@@ -44,6 +45,11 @@ a{color:var(--copper);text-decoration:none}
 .divider{height:1px;background:var(--border);margin:40px 0}
 .footer{text-align:center;color:var(--muted);font-size:.8em;padding:32px 24px 48px}
 .footer a{color:var(--copper)}
+.live-status{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:16px;margin:20px 0;font-size:.9em}
+.live-status h3{color:var(--copper);font-size:.9em;margin-bottom:8px}
+.live-status .item{display:flex;justify-content:space-between;margin:4px 0}
+.live-status .label{color:var(--muted)}
+.live-status .value{color:var(--fg);font-family:monospace}
 </style>
 </head>
 <body>
@@ -59,6 +65,12 @@ a{color:var(--copper);text-decoration:none}
 </header>
 
 <div class="container">
+  <!-- Live Chain Status -->
+  <div class="live-status">
+    <h3>Live Chain Status</h3>
+    <div class="item"><span class="label">Chain ID</span><span class="value" id="chain-id">—</span></div>
+    <div class="item"><span class="label">Latest Block</span><span class="value" id="block-number">—</span></div>
+  </div>
 
   <!-- WEB WALLET — live now -->
   <div class="card">
@@ -119,9 +131,50 @@ npx eas build -p android --profile preview</div>
   </div>
 
   <div class="footer">
-    WayChain — a self-sovereign L1. <a href="/docs">Docs</a> · <a href="/explorer">Explorer</a> · <a href="https://github.com/ThinkIbrokeIt" target="_blank" rel="noopener">GitHub</a>
+    WayChain — a self-sovereign L1. <a href=\"/docs\">Docs</a> · <a href=\"/explorer\">Explorer</a> · <a href=\"https://github.com/ThinkIbrokeIt\" target=\"_blank\" rel=\"noopener\">GitHub</a>
   </div>
-
 </div>
+
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+<script src="/js/precompiles.js"></script>
+<script>
+  // Fetch live chain data and update the live-status box
+  async function updateLiveStatus() {
+    try {
+      // Fetch chain ID
+      const chainIdResp = await fetch('https://api.waychain.org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 1 })
+      });
+      const chainIdJson = await chainIdResp.json();
+      const chainIdHex = chainIdJson.result;
+      const chainIdDec = parseInt(chainIdHex, 16);
+
+      // Fetch block number
+      const blockResp = await fetch('https://api.waychain.org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 })
+      });
+      const blockJson = await blockResp.json();
+      const blockHex = blockJson.result;
+      const blockDec = parseInt(blockHex, 16);
+
+      // Update the DOM
+      document.getElementById('chain-id').textContent = `${chainIdDec} (0x${chainIdHex.toString(16)})`;
+      document.getElementById('block-number').textContent = `${blockDec} (0x${blockHex.toString(16)})`;
+    } catch (error) {
+      console.error('Failed to fetch live chain data:', error);
+      document.getElementById('chain-id').textContent = 'Error';
+      document.getElementById('block-number').textContent = 'Error';
+    }
+  }
+
+  // Update on load and then every 15 seconds
+  updateLiveStatus();
+  setInterval(updateLiveStatus, 15000);
+</script>
 </body>
 </html>

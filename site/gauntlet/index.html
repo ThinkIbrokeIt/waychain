@@ -29,7 +29,6 @@ body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
 }
 .hero h1 { color: var(--copper); margin-bottom: 10px; }
 .hero .countdown { color: var(--green); font-size: 1.2em; font-weight: 600; margin: 15px 0; }
-
 .tier {
   background: #1e1e1e;
   border: 1px solid var(--copper);
@@ -41,7 +40,6 @@ body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
 .tier .reward { color: var(--green); font-weight: 600; }
 .tier ul { margin: 10px 0 0 20px; }
 .tier li { margin: 5px 0; font-size: 14px; }
-
 .prize-pool {
   background: #1a1a1a;
   border: 1px solid var(--copper);
@@ -49,7 +47,7 @@ body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
   padding: 15px;
   margin: 15px 0;
 }
-.btn { 
+.btn {
   background: var(--copper);
   color: var(--slate);
   border: none;
@@ -66,11 +64,9 @@ body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
   border: 1px solid var(--copper);
   color: var(--copper);
 }
-
 .legend { background: #1a1a1a; padding: 15px; border-radius: 6px; margin-top: 20px; }
 .legend h4 { color: var(--amber); margin-bottom: 8px; }
 .legend p { font-size: 13px; color: #9A9A9A; }
-
 .audit-status {
   background: #1a1a18;
   border: 1px solid var(--amber);
@@ -83,11 +79,49 @@ body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
   font-weight: 600;
   margin-bottom: 10px;
 }
+.live-status {
+  background: var(--slate2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 20px 0;
+  font-size: 0.9em;
+}
+.live-status h3 {
+  color: var(--copper);
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+.live-status .item {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+}
+.live-status .label {
+  color: var(--muted);
+}
+.live-status .value {
+  color: var(--fg);
+  font-family: monospace;
+}
+/* Define colors for live-status that are not in the root */
+:root {
+  --slate2:#1E1E1E;
+  --border:#3A3A3A;
+  --fg:#E8E4DD;
+  --muted:#9A9A9A;
+}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="container">
+  <div class="live-status">
+    <h3>Live Chain Status</h3>
+    <div class="item"><span class="label">Chain ID</span><span class="value" id="chain-id">—</span></div>
+    <div class="item"><span class="label">Latest Block</span><span class="value" id="block-number">—</span></div>
+  </div>
+
   <div class="hero">
     <h1>WIFR Gauntlet</h1>
     <p>A 3-tier certification bootcamp. Earn WAY. Become a WayChain Oracle Professional.</p>
@@ -165,5 +199,44 @@ body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
     <p style="margin-top:8px"><a href="/wifr" style="color:var(--copper)">← Back to WIFR</a></p>
   </div>
 </div>
+
+<script>
+  // Fetch live chain data and update the live-status box
+  async function updateLiveStatus() {
+    try {
+      // Fetch chain ID
+      const chainIdResp = await fetch('https://api.waychain.org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 1 })
+      });
+      const chainIdJson = await chainIdResp.json();
+      const chainIdHex = chainIdJson.result;
+      const chainIdDec = parseInt(chainIdHex, 16);
+
+      // Fetch block number
+      const blockResp = await fetch('https://api.waychain.org', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 })
+      });
+      const blockJson = await blockResp.json();
+      const blockHex = blockJson.result;
+      const blockDec = parseInt(blockHex, 16);
+
+      // Update the DOM
+      document.getElementById('chain-id').textContent = `${chainIdDec} (0x${chainIdHex.toString(16)})`;
+      document.getElementById('block-number').textContent = `${blockDec} (0x${blockHex.toString(16)})`;
+    } catch (error) {
+      console.error('Failed to fetch live chain data:', error);
+      document.getElementById('chain-id').textContent = 'Error';
+      document.getElementById('block-number').textContent = 'Error';
+    }
+  }
+
+  // Update on load and then every 15 seconds
+  updateLiveStatus();
+  setInterval(updateLiveStatus, 15000);
+</script>
 </body>
 </html>
