@@ -70,15 +70,11 @@ a:hover{color:var(--warm)}
 
 <div class="container">
   <div class="card">
-    <h3>Demo Task — Deploy BTC Observer Oracle</h3>
-    <p class="note">This page imports the shared primitive (<code>dapps/_shared/verify-ladder.js</code>). In production each dApp references the same module instead of re-implementing ladder logic.</p>
-    <div id="steps"></div>
-    <div class="bar"><div id="bar" style="width:0%"></div></div>
-    <div class="status" id="vlStatus" style="margin-top:12px"></div>
-    <button class="btn btn-sm" onclick="autoVerify()">Run autopilot (objective only)</button>
-    <button class="btn btn-sm btn-outline" onclick="humanVerify()">Human L2+ sign-off</button>
+    <h3>Your Verify Ladder</h3>
+    <div class="level-line">Current level: <span class="level-val" id="levelVal">—</span></div>
+    <div id="ladder"></div>
+    <div class="status" id="ladderStatus"></div>
   </div>
-  <p class="foot">Truth-first: the primitive enforces the founder rule that subjective steps cannot be auto-verified. Real on-chain verify routes through TaskRegistry (0x23) taskVerify / OracleVerifier (0x0E) — this demo shows the state machine only.</p>
 </div>
 
 <div class="footer">
@@ -86,39 +82,70 @@ a:hover{color:var(--warm)}
   <p style="margin-top:8px"><a href="https://waychain.org">waychain.org</a></p>
 </div>
 
+<script src="/js/wallet.js"></script>
+<script src="/js/rpc.js"></script>
+<script src="/js/precompiles.js"></script>
 <script type="module">
-import { VerifyLadder, STEP_KIND } from '/dapps/_shared/verify-ladder.js';
+  // Ladder definition mirrored from doxdev dApp (single source of truth)
+  const LADDER = [
+    { key:'0', name:'Unverified', note:'No badge. Cannot verify or earn.' },
+    { key:'1', name:'Basic', note:'Extremely easy to verify (witness a cross-chain event / 0x1F attest). Earns L1 tasks.' },
+    { key:'2', name:'Professional', note:'Verifier. Can verify subjective quests (taskVerify). Earns L2 tasks.' },
+    { key:'3p', name:'L3 Professional', note:'Governed professional. Can govern / set autopilot. Apply with docs + payment addr.' },
+    { key:'3t', name:'L3 Task', note:'Task autopilot. Auto-verifies + pays objective quests from 0x03. Apply with docs + payment addr.' },
+  ];
 
-let task = VerifyLadder.createTask('deploy-btc-observer', 'Deploy BTC observer oracle', [
-  { id: 'hash-check', kind: STEP_KIND.OBJECTIVE, label: 'On-chain hash matches' },
-  { id: 'oracle-sig', kind: STEP_KIND.ATTESTATION, label: 'Oracle attests vault funding' },
-  { id: 'curator-sign', kind: STEP_KIND.SIGNOFF, label: 'L3 curator sign-off' },
-]);
+  function renderLadder(level) {
+    const el = document.getElementById('ladder');
+    el.innerHTML = '';
+    LADDER.forEach(s => {
+      const on = String(level) === s.key;
+      const row = document.createElement('div');
+      row.className = 'lad-row' + (on ? ' on' : '');
+      row.innerHTML = `<div class="lad-key">${s.key}</div><div class="lad-body"><div class="lad-name">${s.name}</div><div class="lad-note">${s.note}</div></div>`;
+      el.appendChild(row);
+    });
+    document.getElementById('levelVal').textContent = level;
+  }
 
-function render() {
-  const wrap = document.getElementById('steps');
-  wrap.innerHTML = task.steps.map(s => `
-    <div class="step ${s.verified?'done':''}">
-      <div class="k">${s.verified?'✓':'•'}</div>
-      <div class="body"><div class="name">${s.label}</div><div class="meta">${s.kind}${s.verifier?(' · by '+s.verifier):''}</div></div>
-      <div class="badge">${s.kind}</div>
-    </div>`).join('');
-  document.getElementById('bar').style.width = (VerifyLadder.progress(task)*100).toFixed(0)+'%';
-  const st = document.getElementById('vlStatus');
-  if (VerifyLadder.isComplete(task)) { st.className='status ok'; st.textContent='Task complete — all steps verified.'; }
-  else { st.className='status info'; st.textContent='Progress: '+(VerifyLadder.progress(task)*100).toFixed(0)+'% — objective steps auto-verify; subjective need oracle/human.'; }
-}
-function autoVerify() {
-  // autopilot only verifies objective steps; subjective are left for humans.
-  task.steps.filter(s=>s.kind===STEP_KIND.OBJECTIVE && !s.verified).forEach(s=>VerifyLadder.verifyStep(task,s.id,'autopilot'));
-  render();
-}
-function humanVerify() {
-  // simulate a human L2+ / oracle signing off the remaining subjective steps.
-  task.steps.filter(s=>!s.verified).forEach(s=>VerifyLadder.verifyStep(task,s.id, s.kind===STEP_KIND.ATTESTATION?'oracle:0x'+'ab'.repeat(32):'human-L2'));
-  render();
-}
-render();
+  function setStatus(el, msg, type) { el.textContent = msg; el.className = 'status ' + (type||''); }
+
+  async function connectAndUpdate() {
+    const statusEl = document.getElementById('ladderStatus');
+    if (!window.WayChainWallet) { window.location.href = '/wallet'; return; }
+    try {
+      const acc = await WayChainWallet.connect();
+      document.querySelector('.wallet-bar .addr').textContent = acc.address;
+      // getDoxLevel expects 64-hex pubkey; we have acc.address (20-byte) and acc.publicKey (64-hex)
+      const lookup = acc.publicKey || acc.address; // fallback, but getDoxLevel will resolve internally
+      const lvl = await WayChainRPC.getDoxLevel(lookup);
+      renderLadder(lvl);
+      setStatus(statusEl, `Connected. Your Dox level is ${lvl}.`, 'ok');
+    } catch (e) {
+      setStatus(statusEl, 'Connect failed: ' + e.message, 'err');
+      window.location.href = '/wallet';
+    }
+  }
+
+  // On load: if wallet already connected, refresh level.
+  window.addEventListener('load', async () => {
+    if (window.WayChainWallet && window.waychainAccount) {
+      const acc = window.waychainAccount;
+      document.querySelector('.wallet-bar .addr').textContent = acc.address;
+      try {
+        const lvl = await WayChainRPC.getDoxLevel(acc);
+        renderLadder(lvl);
+        document.getElementById('ladderStatus').textContent = `Connected. Your Dox level is ${lvl}.`;
+        document.getElementById('ladderStatus').className = 'status ok';
+      } catch (e) {
+        document.getElementById('ladderStatus').textContent = 'Failed to fetch level: ' + e.message;
+        document.getElementById('ladderStatus').className = 'status err';
+      }
+    } else {
+      // Not connected yet; show connect button? We'll just call connectAndUpdate which will prompt.
+      connectAndUpdate();
+    }
+  });
 </script>
 </body>
 </html>
