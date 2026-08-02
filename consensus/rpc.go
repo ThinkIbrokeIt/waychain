@@ -581,8 +581,21 @@ func (rpc *RPCServer) handleMethod(method string, params json.RawMessage) (inter
 			tx.GasPrice = 1
 		}
 
-		// Balance check
-		txCost := new(big.Int).SetUint64(tx.GasLimit * tx.GasPrice)
+		// Balance check — for precompile calls use fixed gas (not tx.GasLimit)
+		// so GasFaucet (0x27, Gas=0) works for zero-balance users.
+		expectedGas := tx.GasLimit
+		if raw, err := hex.DecodeString(strings.TrimPrefix(tx.To, "0x")); err == nil && len(raw) >= 1 {
+			isPC := true
+			for _, x := range raw[:len(raw)-1] {
+				if x != 0 { isPC = false; break }
+			}
+			if isPC && raw[len(raw)-1] >= 0x0C && raw[len(raw)-1] <= 0x27 {
+				if pcGas := evm.PrecompileGas(raw[len(raw)-1]); pcGas < expectedGas {
+					expectedGas = pcGas
+				}
+			}
+		}
+		txCost := new(big.Int).SetUint64(expectedGas * tx.GasPrice)
 		txCost.Add(txCost, tx.Value)
 		if sender.Balance.Cmp(txCost) < 0 {
 			return nil, fmt.Errorf("insufficient balance: have %d, need %d", sender.Balance, txCost)

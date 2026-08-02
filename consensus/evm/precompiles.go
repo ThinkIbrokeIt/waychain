@@ -186,7 +186,7 @@ var PrecompilesTable = map[byte]*Precompile{
 	0x27: {
 		Address: 0x27,
 		Name:    "GasFaucet", // drips WAY for gas to new accounts / quest trackers
-		Gas:     3000,
+		Gas:     0,           // zero gas: new users with 0 WAY can call before their first tx
 		Fn:      faucetPrecompile,
 	},
 }

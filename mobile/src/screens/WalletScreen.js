@@ -176,6 +176,9 @@ export default function WalletScreen({ navigation }) {
             </TouchableOpacity>
           )}
 
+          {/* ── Actionable alerts banner ── */}
+          <AlertBanner navigation={navigation} active={active} />
+
           <View style={styles.hero}>
             <Text style={styles.heroLabel}>Total Balance</Text>
             <Text style={styles.balance}>{balance}<Text style={styles.balanceUnit}> WAY</Text></Text>
@@ -200,40 +203,69 @@ export default function WalletScreen({ navigation }) {
             ))}
           </ScrollView>
 
-          <Text style={styles.sectionTitle}>Wallet</Text>
+          <Text style={styles.sectionTitle}>Actions</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
             <Pill label="Receive" onPress={() => navigation.navigate('Receive', { address: active?.address })} />
             <Pill label="Send" onPress={goSend} />
             <Pill label="History" onPress={() => navigation.navigate('History')} />
-            <Pill label="Address Book" onPress={() => navigation.navigate('AddressBook')} />
             <Pill label="Tokens" onPress={() => navigation.navigate('Tokens')} />
-            <Pill label="Identity" onPress={() => navigation.navigate('Identity')} />
-            <Pill label="Locks" onPress={() => navigation.navigate('Locks')} />
-            <Pill label="Protocol" onPress={() => navigation.navigate('Protocol')} />
+            <Pill label="Scan Pay" onPress={() => navigation.navigate('ScanPay')} />
+            <Pill label="Quests" onPress={() => navigation.navigate('Quests')} />
+            <Pill label="Bridge" onPress={() => navigation.navigate('BitcoinRegistry')} />
+            <Pill label="DEX" onPress={() => navigation.navigate('SwapRoute')} />
           </ScrollView>
 
-          <Text style={styles.sectionTitle}>Protocol Precompiles</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
-            <Pill label="TwoWay Vault" onPress={() => navigation.navigate('TwoWayVault')} />
-            <Pill label="Swap Route" onPress={() => navigation.navigate('SwapRoute')} />
-            <Pill label="Stability Pool" onPress={() => navigation.navigate('StabilityPool')} />
-            <Pill label="Bitcoin Reg" onPress={() => navigation.navigate('BitcoinRegistry')} />
-            <Pill label="Dead Man's" onPress={() => navigation.navigate('DeadMansSwitch')} />
-            <Pill label="Account Mgr" onPress={() => navigation.navigate('AccountManager')} />
-            <Pill label="State Rent" onPress={() => navigation.navigate('StateRent')} />
-            <Pill label="Mineral Rts" onPress={() => navigation.navigate('MineralRights')} />
-            <Pill label="Templates" onPress={() => navigation.navigate('TemplateRegistry')} />
-            <Pill label="Keccak256" onPress={() => navigation.navigate('Keccak256')} />
-          </ScrollView>
-
-          <Text style={styles.sectionTitle}>Dox_Dev & Community</Text>
+          <Text style={styles.sectionTitle}>Protocol</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
             <Pill label="Dox_Dev" onPress={() => navigation.navigate('DoxDev')} />
-            <Pill label="Community Tasks" onPress={() => navigation.navigate('CommunityTasks')} />
+            <Pill label="Stake" onPress={() => navigation.navigate('Staking')} />
+            <Pill label="Governance" onPress={() => navigation.navigate('Governance')} />
+            <Pill label="All Precompiles →" onPress={() => navigation.navigate('Protocol')} />
           </ScrollView>
         </View>
       )}
     </ScrollView>
+  );
+}
+
+function AlertBanner({ navigation, active }) {
+  const [alerts, setAlerts] = useState([]);
+
+  useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    (async () => {
+      const items = [];
+      // Check for pending governance votes
+      try {
+        const proposals = await waychainRPC.call('way_govProposals', []);
+        if (proposals && Array.isArray(proposals)) {
+          proposals.filter(p => p && p[1] === '0').forEach(p => {
+            items.push({ key: 'vote', text: '🗳️ Governance vote active — cast your vote', screen: 'Governance' });
+          });
+        }
+      } catch {}
+      // Check for pending quest verifications (if Dox_Dev L2+)
+      try {
+        const level = await waychainRPC.call('way_getDoxLevel', [active.publicKey]);
+        if (level && parseInt(level, 16) >= 2) {
+          items.push({ key: 'verify', text: '✅ Pending quest verifications — review tasks', screen: 'CommunityTasks' });
+        }
+      } catch {}
+      if (!cancelled) setAlerts(items);
+    })();
+    return () => { cancelled = true; };
+  }, [active]);
+
+  if (!alerts.length) return null;
+  return (
+    <View style={styles.alertBanner}>
+      {alerts.map(a => (
+        <TouchableOpacity key={a.key} style={styles.alertItem} onPress={() => navigation.navigate(a.screen)}>
+          <Text style={styles.alertText}>{a.text}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 }
 
@@ -295,4 +327,7 @@ const styles = StyleSheet.create({
   gateTitle: { fontFamily: FONTS.display, fontSize: 24, color: COLORS.charcoal, textAlign: 'center', marginBottom: 12 },
   gateText: { fontFamily: FONTS.body, fontSize: 15, color: COLORS.muted, textAlign: 'center', lineHeight: 22, marginBottom: 20 },
   gateBtn: { marginTop: 8 },
+  alertBanner: { backgroundColor: 'rgba(255,191,0,0.12)', borderRadius: 12, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: COLORS.amber },
+  alertItem: { paddingVertical: 6 },
+  alertText: { fontFamily: FONTS.medium, fontSize: 13, color: COLORS.amber },
 });
