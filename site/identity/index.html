@@ -23,11 +23,14 @@
     .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
     .gate{font-size:13px;color:#666;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     #wallet-widget{margin-bottom:20px}
+    .loading{color:#999;font-style:italic}
+    .error{color:#E53935}
+    .success{color:#4CAF50}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Identity &amp; Governance</h1>
+    <h1>Identity & Governance</h1>
     <div class="sub">Dox_Dev reputation, on-chain governance, and the TaskRegistry that lets professionals earn WAY.</div>
 
     <div id="wallet-widget"></div>
@@ -36,10 +39,10 @@
     <div class="card">
       <div class="tok"><h2>Dox_Dev Badge</h2><span class="addr">0x0000…0013</span></div>
       <div class="row">
-        <div class="stat"><div class="k">Your Level</div><div class="v" id="dox-level">—</div></div>
-        <div class="stat"><div class="k">Verified</div><div class="v" id="dox-verified">—</div></div>
-        <div class="stat"><div class="k">Total Badges (chain)</div><div class="v" id="dox-total">—</div></div>
-        <div class="stat"><div class="k">Curators</div><div class="v" id="dox-curators">—</div></div>
+        <div class="stat"><div class="k">Your Level</div><div class="v" id="dox-level">Loading...</div></div>
+        <div class="stat"><div class="k">Verified</div><div class="v" id="dox-verified">Loading...</div></div>
+        <div class="stat"><div class="k">Total Badges (chain)</div><div class="v" id="dox-total">Loading...</div></div>
+        <div class="stat"><div class="k">Curators</div><div class="v" id="dox-curators">Loading...</div></div>
       </div>
     </div>
 
@@ -47,7 +50,8 @@
     <div class="card">
       <div class="tok"><h2>Governance</h2><span class="addr">0x0000…001D</span></div>
       <div class="row">
-        <div class="stat"><div class="k">Your Credits</div><div class="v" id="gov-credits">—</div></div>
+        <div class="stat"><div class="k">Your Credits</div><div class="v" id="gov-credits">Loading...</div></div>
+      </div>
       <div class="note">Proposals/votes are Dox_Dev-weighted (Direct / Quadratic / Futarchy). Write ops (createProposal, vote, finalize) require an unlocked wallet — you'll see a confirm modal before broadcasting.</div>
       <div class="gate">
         <input id="gov-pid" placeholder="proposal ID (32-byte hex)" style="width:360px">
@@ -86,7 +90,6 @@
   <script src="/js/rpc.js"></script>
   <script src="/js/abi.js"></script>
   <script src="/js/wallet-ui.js"></script>
-
   <script>
     const P = window.WayChainPrecompiles;
     const RPC = window.WayChainRPC;
@@ -94,22 +97,63 @@
     const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
     const boolRes = (b) => (b && b !== '0x' && BigInt(b || '0x0') !== 0n) ? 'yes' : 'no';
 
-    async function readIdentity(addr) {
-      if (!addr) return;
+    // Update identity data (DoxDev and Governance credits)
+    async function updateIdentityData() {
+      const addr = window.waychainAccount?.address;
+      if (!addr) {
+        // If no account, show loading or connect wallet?
+        document.getElementById('dox-level').textContent = 'Connect wallet';
+        document.getElementById('dox-verified').textContent = 'Connect wallet';
+        document.getElementById('dox-total').textContent = 'Connect wallet';
+        document.getElementById('dox-curators').textContent = 'Connect wallet';
+        document.getElementById('gov-credits').textContent = 'Connect wallet';
+        return;
+      }
       try {
         const lvl = await RPC.precompileCall('0x13', 'getLevel', ABI.encodeAddress(addr));
         document.getElementById('dox-level').textContent = hexToNum(lvl);
+        document.getElementById('dox-level').className = '';
+      } catch (e) {
+        document.getElementById('dox-level').textContent = 'Error';
+        document.getElementById('dox-level').className = 'error';
+        console.error('Failed to fetch dox level:', e);
+      }
+      try {
         const v = await RPC.precompileCall('0x13', 'isVerified', ABI.encodeAddress(addr));
         document.getElementById('dox-verified').textContent = boolRes(v);
+        document.getElementById('dox-verified').className = '';
+      } catch (e) {
+        document.getElementById('dox-verified').textContent = 'Error';
+        document.getElementById('dox-verified').className = 'error';
+        console.error('Failed to fetch verified status:', e);
+      }
+      try {
         const tb = await RPC.precompileCall('0x13', 'getTotalBadges', '');
         document.getElementById('dox-total').textContent = hexToNum(tb);
+        document.getElementById('dox-total').className = '';
+      } catch (e) {
+        document.getElementById('dox-total').textContent = 'Error';
+        document.getElementById('dox-total').className = 'error';
+        console.error('Failed to fetch total badges:', e);
+      }
+      try {
         const cc = await RPC.precompileCall('0x13', 'getCuratorCount', '');
         document.getElementById('dox-curators').textContent = hexToNum(cc);
-      } catch (e) { document.getElementById('dox-level').textContent = 'err'; }
+        document.getElementById('dox-curators').className = '';
+      } catch (e) {
+        document.getElementById('dox-curators').textContent = 'Error';
+        document.getElementById('dox-curators').className = 'error';
+        console.error('Failed to fetch curator count:', e);
+      }
       try {
         const cr = await RPC.precompileCall('0x1D', 'getCredits', '');
         document.getElementById('gov-credits').textContent = hexToNum(cr);
-      } catch (e) { document.getElementById('gov-credits').textContent = 'err'; }
+        document.getElementById('gov-credits').className = '';
+      } catch (e) {
+        document.getElementById('gov-credits').textContent = 'Error';
+        document.getElementById('gov-credits').className = 'error';
+        console.error('Failed to fetch gov credits:', e);
+      }
     }
 
     async function loadProposal() {
@@ -121,6 +165,7 @@
         // out[0]=voteType, out[1]=status (1=active)
         const status = (p && p.length >= 4) ? Number(BigInt('0x' + p.slice(2, 4))) : 0;
         document.getElementById('gov-status').textContent = status === 1 ? 'active' : (status === 2 ? 'passed' : 'pending/' + status);
+        document.getElementById('gov-status').className = status === 1 ? 'success' : (status === 2 ? 'success' : 'info');
         document.getElementById('gov-proposal').style.display = 'flex';
       } catch (e) { alert('getProposal failed: ' + e.message); }
       const a = window.waychainAccount && window.waychainAccount.address;
@@ -128,6 +173,7 @@
         try {
           const v = await RPC.precompileCall('0x1D', 'getVote', arg);
           document.getElementById('gov-vote').textContent = (v && v !== '0x') ? 'recorded' : 'none';
+          document.getElementById('gov-vote').className = (v && v !== '0x') ? 'success' : 'info';
         } catch (e) {}
       }
     }
@@ -140,8 +186,10 @@
         await window.WayChainWallet.unlock();
         await RPC.precompileCall('0x23', 'taskClaim', ABI.pad32(tid), { write: true });
         alert('Task claimed. Check the TaskRegistry on-chain.');
+        // Optionally refresh user's task status? Not stored in identity, but we could refetch something else.
       } catch (e) { alert('Claim failed: ' + e.message); }
     }
+
     async function verifyTask() {
       const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
       const tid = document.getElementById('task-id').value.trim().replace(/^0x/, '');
@@ -190,21 +238,36 @@
       } catch (e) { alert('Create failed: ' + e.message); }
     }
 
+    // Wallet connection handler: update UI when wallet connects/disconnects
     const origConnect = window.WayChainWallet && window.WayChainWallet.connect;
     if (origConnect) {
       window.WayChainWallet.connect = async function () {
         const acc = await origConnect.apply(this, arguments);
-        ['task-claim', 'task-verify', 'gov-vote', 'gov-create'].forEach((id) => {
+        // Update UI for connected
+        await updateIdentityData();
+        // Enable buttons that require wallet
+        ['gov-vote', 'gov-create', 'task-claim', 'task-verify'].forEach((id) => {
           const el = document.getElementById(id);
           if (el) { el.disabled = false; el.textContent = el.textContent.replace(' (connect)', ''); }
         });
-        await readIdentity(acc.address);
         return acc;
       };
     }
-    window.addEventListener('load', () => {
+
+    // Initial load
+    window.addEventListener('load', async () => {
+      await updateIdentityData();
+      // If already connected, enable buttons and fetch data
       const a = window.waychainAccount && window.waychainAccount.address;
-      if (a) readIdentity(a);
+      if (a) {
+        await updateIdentityData();
+        ['gov-vote', 'gov-create', 'task-claim', 'task-verify'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) { el.disabled = false; el.textContent = el.textContent.replace(' (connect)', ''); }
+        });
+      }
+      // Refresh identity data every 15 seconds
+      setInterval(updateIdentityData, 15000);
     });
   </script>
 </body>

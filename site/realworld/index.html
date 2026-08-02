@@ -23,27 +23,43 @@
     .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
     .gate{font-size:13px;color:#666;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     #wallet-widget{margin-bottom:20px}
+    .loading{color:#999;font-style:italic}
+    .error{color:#E53935}
+    .success{color:#4CAF50}
+    .live-status{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:16px;margin:20px 0;font-size:.9em}
+    .live-status h3{color:var(--copper);font-size:.9em;margin-bottom:8px}
+    .live-status .item{display:flex;justify-content:space-between;margin:4px 0}
+    .live-status .label{color:var(--muted)}
+    .live-status .value{color:var(--fg);font-family:monospace}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Assets &amp; Utility</h1>
+    <h1>Assets & Utility</h1>
     <div class="sub">Real-world asset rights, the BTC bridge that mints 1WAY, dead-man switches, and storage endowment.</div>
 
     <div id="wallet-widget"></div>
+
+    <!-- Live Chain Status -->
+    <div class="live-status">
+      <h3>Live Chain Status</h3>
+      <div class="item"><span class="label">Chain ID</span><span class="value" id="chain-id">—</span></div>
+      <div class="item"><span class="label">Latest Block</span><span class="value" id="block-number">—</span></div>
+    </div>
 
     <!-- BitcoinRegistry 0x16 — the 1WAY mint source -->
     <div class="card">
       <div class="tok"><h2>Bitcoin Registry</h2><span class="addr">0x0000…0016</span></div>
       <div class="note">This is where <strong>1WAY (the BTC-pegged stablecoin) is minted</strong>. Lock BTC → attest commitment → 1WAY is issued. (The Vault at 0x18 mints 2WAY, not 1WAY.)</div>
       <div class="row">
-        <div class="stat"><div class="k">Total BTC Committed</div><div class="v" id="btc-committed">—</div></div>
-        <div class="stat"><div class="k">Total Withdrawn</div><div class="v" id="btc-withdrawn">—</div></div>
+        <div class="stat"><div class="k">Total BTC Committed</div><div class="v" id="btc-committed">Loading...</div></div>
+        <div class="stat"><div class="k">Total Withdrawn</div><div class="v" id="btc-withdrawn">Loading...</div></div>
         <div class="stat"><div class="k">Your BTC Balance</div><div class="v" id="btc-bal">—</div></div>
       </div>
       <div class="gate">
         <button id="btc-attest" disabled onclick="btcAttest()">Attest BTC Commitment (connect)</button>
       </div>
+      <div class="note">To attest a BTC commitment, you must have deposited BTC to the deposit address derived from your WayChain address. This call submits the attestation to mint 1WAY. (Requires wallet signer.)</div>
     </div>
 
     <!-- MineralRights 0x20 -->
@@ -57,6 +73,7 @@
         <input id="mrt-id" placeholder="claim ID (32-byte hex)" style="width:360px">
         <button id="mrt-get" onclick="mrtLookup()">Look Up</button>
       </div>
+      <div class="note>Enter a Mineral Rights claim ID (32-byte hex) to check if the claim exists and how many MRT tokens you hold for that claim. Claims are made via the registerClaim precompile (write).</div>
     </div>
 
     <!-- DeadMansSwitch 0x15 -->
@@ -70,14 +87,18 @@
         <input id="dms-id" placeholder="switch ID (uint64)" style="width:200px">
         <button id="dms-get" onclick="dmsLookup()">Look Up</button>
       </div>
+      <div class="note>Enter a Dead Man's Switch ID (uint64, decimal) to check if the switch is set and get its info (beneficiary, deadline, etc.). Switches are created via the createSwitch precompile (write).</div>
     </div>
 
     <!-- StorageEndowment 0x17 (no-selector) -->
     <div class="card">
       <div class="tok"><h2>Storage Endowment</h2><span class="addr">0x0000…0017</span></div>
       <div class="sub" style="margin-top:6px">Pays ongoing storage rent from a locked endowment. This is a no-selector precompile (raw signed-input layout). Read/endow are write-gated behind a connected wallet.</div>
+      <div class="note>There is no read method for the endowment balance; the endowment is locked and only the storage rent payments are made from it. To fund the endowment, call the `endow` method (write).</div>
     </div>
   </div>
+
+  <div id="wallet-widget"></div>
 
   <script src="/vendor/tweetnacl.min.js"></script>
   <script src="/js/precompiles.js"></script>
@@ -85,28 +106,92 @@
   <script src="/js/rpc.js"></script>
   <script src="/js/abi.js"></script>
   <script src="/js/wallet-ui.js"></script>
-
   <script>
     const RPC = window.WayChainRPC;
     const ABI = window.WayChainABI;
     const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
 
-    async function readAssets(addr) {
-      if (!addr) return;
+    // Update live chain status (chain ID and block number)
+    async function updateLiveStatus() {
+      try {
+        // Fetch chain ID
+        const chainIdResp = await fetch('https://api.waychain.org', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_chainId', params: [], id: 1 })
+        });
+        const chainIdJson = await chainIdResp.json();
+        const chainIdHex = chainIdJson.result;
+        const chainIdDec = parseInt(chainIdHex, 16);
+
+        // Fetch block number
+        const blockResp = await fetch('https://api.waychain.org', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 1 })
+        });
+        const blockJson = await blockResp.json();
+        const blockHex = blockJson.result;
+        const blockDec = parseInt(blockHex, 16);
+
+        // Update the DOM
+        document.getElementById('chain-id').textContent = `${chainIdDec} (0x${chainIdHex.toString(16)})`;
+        document.getElementById('block-number').textContent = `${blockDec} (0x${blockHex.toString(16)})`;
+      } catch (error) {
+        console.error('Failed to fetch live chain data:', error);
+        document.getElementById('chain-id').textContent = 'Error';
+        document.getElementById('block-number').textContent = 'Error';
+      }
+    }
+
+    // Update assets data (Bitcoin Registry, Mineral Rights, Dead Man's Switch)
+    async function updateAssetsData() {
+      const addr = window.waychainAccount?.address;
+      if (!addr) {
+        document.getElementById('btc-committed').textContent = 'Connect wallet';
+        document.getElementById('btc-withdrawn').textContent = 'Connect wallet';
+        document.getElementById('btc-bal').textContent = '—';
+        document.getElementById('mrt-claim').textContent = '—';
+        document.getElementById('mrt-tokens').textContent = '—';
+        document.getElementById('dms-total').textContent = 'Connect wallet';
+        document.getElementById('dms-info').textContent = '—';
+        return;
+      }
       try {
         const c = await RPC.precompileCall('0x16', 'getTotalCommitted', '');
         document.getElementById('btc-committed').textContent = hexToNum(c);
+        document.getElementById('btc-committed').className = '';
+      } catch (e) {
+        document.getElementById('btc-committed').textContent = 'Error';
+        document.getElementById('btc-committed').className = 'error';
+        console.error('Failed to fetch BTC committed:', e);
+      }
+      try {
         const w = await RPC.precompileCall('0x16', 'getTotalWithdrawn', '');
         document.getElementById('btc-withdrawn').textContent = hexToNum(w);
+        document.getElementById('btc-withdrawn').className = '';
+      } catch (e) {
+        document.getElementById('btc-withdrawn').textContent = 'Error';
+        document.getElementById('btc-withdrawn').className = 'error';
+        console.error('Failed to fetch BTC withdrawn:', e);
+      }
+      try {
         const b = await RPC.precompileCall('0x16', 'getBalance', ABI.encodeAddress(addr));
         document.getElementById('btc-bal').textContent = hexToNum(b);
-      } catch (e) { document.getElementById('btc-committed').textContent = 'err'; }
-      try {
-        const t = await RPC.precompileCall('0x15', 'totalSwitches', '');
-        document.getElementById('dms-total').textContent = hexToNum(t);
-      } catch (e) { document.getElementById('dms-total').textContent = 'err'; }
+        document.getElementById('btc-bal').className = '';
+        // Enable the attest button if we have a wallet
+        document.getElementById('btc-attest').disabled = false;
+        document.getElementById('btc-attest').textContent = 'Attest BTC Commitment';
+      } catch (e) {
+        document.getElementById('btc-bal').textContent = 'Error';
+        document.getElementById('btc-bal').className = 'error';
+        console.error('Failed to fetch BTC balance:', e);
+        document.getElementById('btc-attest').disabled = true;
+        document.getElementById('btc-attest').textContent = 'Attest BTC Commitment (connect)';
+      }
     }
 
+    // Mineral Rights lookup
     async function mrtLookup() {
       const id = document.getElementById('mrt-id').value.trim().replace(/^0x/, '');
       if (id.length !== 64) return alert('Enter a 32-byte claim ID');
@@ -114,16 +199,26 @@
       try {
         const c = await RPC.precompileCall('0x20', 'getClaim', arg);
         document.getElementById('mrt-claim').textContent = (c && c !== '0x') ? 'exists' : 'none';
-      } catch (e) { alert('MRT read failed: ' + e.message); }
+        document.getElementById('mrt-claim').className = (c && c !== '0x') ? 'success' : 'info';
+      } catch (e) {
+        alert('MRT read failed: ' + e.message);
+        console.error(e);
+      }
       const a = window.waychainAccount && window.waychainAccount.address;
       if (a) {
         try {
           const t = await RPC.precompileCall('0x20', 'getTokens', arg + ABI.encodeAddress(a));
           document.getElementById('mrt-tokens').textContent = hexToNum(t);
-        } catch (e) {}
+          document.getElementById('mrt-tokens').className = '';
+        } catch (e) {
+          // Ignore errors for token count if the claim doesn't exist
+          document.getElementById('mrt-tokens').textContent = '0';
+          document.getElementById('mrt-tokens').className = '';
+        }
       }
     }
 
+    // Dead Man's Switch lookup
     async function dmsLookup() {
       const id = document.getElementById('dms-id').value.trim();
       if (!id) return alert('Enter a switch ID');
@@ -131,28 +226,60 @@
       try {
         const i = await RPC.precompileCall('0x15', 'getSwitchInfo', arg);
         document.getElementById('dms-info').textContent = (i && i !== '0x') ? 'set' : 'none';
-      } catch (e) { alert('DMS read failed: ' + e.message); }
+        document.getElementById('dms-info').className = (i && i !== '0x') ? 'success' : 'info';
+      } catch (e) {
+        alert('DMS read failed: ' + e.message);
+        console.error(e);
+      }
+      try {
+        const t = await RPC.precompileCall('0x15', 'totalSwitches', '');
+        document.getElementById('dms-total').textContent = hexToNum(t);
+        document.getElementById('dms-total').className = '';
+      } catch (e) {
+        document.getElementById('dms-total').textContent = 'Error';
+        document.getElementById('dms-total').className = 'error';
+        console.error('Failed to fetch total switches:', e);
+      }
     }
 
+    // BTC Attestation (write)
     async function btcAttest() {
-      const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
-      try { await RPC.precompileCall('0x16', 'attestCommitment', '', { write: true }); }
-      catch (e) { alert('Web write not implemented yet (signer port pending): ' + e.message); }
+      const a = window.waychainAccount;
+      if (!a) return alert('Connect wallet first');
+      try {
+        await RPC.precompileCall('0x16', 'attestCommitment', '', { write: true });
+        alert('BTC commitment attested. Tx submitted!');
+        // Refresh BTC balance after a short delay
+        setTimeout(() => {
+          updateAssetsData();
+        }, 5000);
+      } catch (e) {
+        alert('Web write not implemented yet (signer port pending): ' + e.message);
+      }
     }
 
+    // Wallet connection handler: update UI when wallet connects/disconnects
     const origConnect = window.WayChainWallet && window.WayChainWallet.connect;
     if (origConnect) {
       window.WayChainWallet.connect = async function () {
         const acc = await origConnect.apply(this, arguments);
+        // Update UI for connected
+        await updateAssetsData();
+        // Enable buttons that require wallet
         document.getElementById('btc-attest').disabled = false;
         document.getElementById('btc-attest').textContent = 'Attest BTC Commitment';
-        await readAssets(acc.address);
         return acc;
       };
     }
-    window.addEventListener('load', () => {
-      const a = window.waychainAccount && window.waychainAccount.address;
-      if (a) readAssets(a);
+
+    // Initial load
+    window.addEventListener('load', async () => {
+      await updateLiveStatus();
+      await updateAssetsData();
+      // Refresh live chain status every 15 seconds
+      setInterval(updateLiveStatus, 15000);
+      // Refresh assets data every 10 seconds if wallet connected
+      setInterval(() => { if (window.waychainAccount) updateAssetsData(); }, 10000);
     });
   </script>
 </body>

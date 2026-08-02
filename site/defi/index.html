@@ -1,33 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WayChain · DeFi & Security</title>
-  <link rel="stylesheet" href="/assets/site.css">
-  <style>
-    body{font-family:Inter,system-ui,sans-serif;background:var(--parchment,#FFF8F0);color:#2A2A2A;margin:0}
-    .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
-    h1{font-size:28px;color:#B87333;margin-bottom:4px}
-    .sub{color:#666;margin-bottom:24px}
-    .card{background:#fff;border:1px solid #e7ddd0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(42,42,42,.05)}
-    .tok{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
-    .tok h2{font-size:19px;margin:0}
-    .addr{font-family:monospace;font-size:12px;color:#999}
-    .row{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
-    .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999}
-    .stat .v{font-size:18px;font-weight:600;color:#B87333;font-family:monospace}
-    input{font-family:monospace;padding:7px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;width:320px}
-    button{background:#B87333;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
-    button:disabled{background:#ccc;cursor:not-allowed}
-    .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
-    .gate{font-size:13px;color:#666;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    #wallet-widget{margin-bottom:20px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain · DeFi & Security</title>
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+  body{font-family:Inter,system-ui,sans-serif;background:var(--parchment,#FFF8F0);color:#2A2A2A;margin:0}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:28px;color:#B87333;margin-bottom:4px}
+  .sub{color:#666;margin-bottom:24px}
+  .card{background:#fff;border:1px solid #e7ddd0;border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(42,42,42,.05)}
+  .tok{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .tok h2{font-size:19px;margin:0}
+  .addr{font-family:monospace;font-size:12px;color:#999}
+  .row{display:flex;gap:24px;flex-wrap:wrap;margin-top:10px}
+  .stat .k{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#999}
+  .stat .v{font-size:18px;font-weight:600;color:#B87333;font-family:monospace}
+  input{font-family:monospace;padding:7px 10px;border:1px solid #ccc;border-radius:8px;font-size:13px;width:320px}
+  button{background:#B87333;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer}
+  button:disabled{background:#ccc;cursor:not-allowed}
+  .note{font-size:12px;color:#a0792f;background:rgba(255,191,0,.1);border:1px solid #FFBF00;border-radius:8px;padding:8px 12px;margin-top:10px}
+  .gate{font-size:13px;color:#666;margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  #wallet-widget{margin-bottom:20px}
+  .loading{color:#999;font-style:italic}
+  .error{color:#E53935}
+  .success{color:#4CAF50}
+</style>
 </head>
 <body>
   <div class="wrap">
-    <h1>DeFi &amp; Security</h1>
+    <h1>DeFi & Security</h1>
     <div class="sub">Stake 2WAY, provide stability liquidity, lock funds trustlessly, and recover your account via guardians.</div>
 
     <div id="wallet-widget"></div>
@@ -36,8 +39,8 @@
     <div class="card">
       <div class="tok"><h2>TwoWay Vault</h2><span class="addr">0x0000…0018</span></div>
       <div class="row">
-        <div class="stat"><div class="k">Vault Count</div><div class="v" id="tw-count">—</div></div>
-        <div class="stat"><div class="k">1WAY Price (dummy)</div><div class="v" id="tw-price">—</div></div>
+        <div class="stat"><div class="k">Vault Count</div><div class="v" id="tw-count">Loading...</div></div>
+        <div class="stat"><div class="k">1WAY Price (oralce)</div><div class="v" id="tw-price">Loading...</div></div>
       </div>
       <div class="note">The 2WAY mint + LP engine. When a user chooses a vault, the protocol mints them <strong>2WAY</strong> and LPs it into the Stability Pool, earning the fees. (1WAY — the BTC-pegged stablecoin — is minted separately by BTC deposit via the Bitcoin bridge, 0x16.) Write ops (deposit/mint/withdraw) require a connected wallet signer.</div>
     </div>
@@ -46,13 +49,14 @@
     <div class="card">
       <div class="tok"><h2>2WAY Stability Pool</h2><span class="addr">0x0000…0019</span></div>
       <div class="row">
-        <div class="stat"><div class="k">Pool TVL (2WAY)</div><div class="v" id="sp-tvl">—</div></div>
-        <div class="stat"><div class="k">Your Deposit</div><div class="v" id="sp-deposit">—</div></div>
+        <div class="stat"><div class="k">Pool TVL (2WAY)</div><div class="v" id="sp-tvl">Loading...</div></div>
+        <div class="stat"><div class="k">Your Deposit</div><div class="v" class="v" id="sp-deposit">—</div></div>
       </div>
       <div class="gate">
         <input id="sp-amt" placeholder="amount (2WAY)" style="width:200px">
         <button id="sp-deposit-btn" disabled onclick="spDeposit()">Deposit (connect)</button>
       </div>
+      <div class="note">Deposit 2WAY into the Stability Pool to support the system and earn fees. Withdrawals are subject to a delay if the system is undercollateralized.</div>
     </div>
 
     <!-- TrustlessLock 0x1A -->
@@ -76,6 +80,7 @@
       <div class="gate">
         <button id="ar-recover" disabled onclick="arRecover()">Recover Account (connect)</button>
       </div>
+      <div class="note">If you lose access to your wallet, you can recover it using your guardians. This call requires the guardian signatures to be provided via the transaction data (see tx.js).</div>
     </div>
   </div>
 
@@ -85,70 +90,148 @@
   <script src="/js/rpc.js"></script>
   <script src="/js/abi.js"></script>
   <script src="/js/wallet-ui.js"></script>
-
   <script>
     const RPC = window.WayChainRPC;
     const ABI = window.WayChainABI;
     const hexToNum = (h) => { if (!h || h === '0x') return 0; try { return Number(BigInt(h)); } catch { return 0; } };
 
-    async function readDefi(addr) {
-      if (!addr) return;
+    // Update DeFi stats with data from the chain
+    async function updateDefiStats() {
       try {
-        const c = await RPC.precompileCall('0x18', 'vaultCount', '');
-        document.getElementById('tw-count').textContent = hexToNum(c);
-        const p = await RPC.precompileCall('0x18', 'getStablecoinPrice', ABI.pad32('00'.repeat(32)));
-        document.getElementById('tw-price').textContent = (p && p !== '0x') ? 'set' : '—';
-      } catch (e) { document.getElementById('tw-count').textContent = 'err'; }
+        // TwoWayVault: vaultCount
+        const vaultCountHex = await RPC.precompileCall('0x18', 'vaultCount', '');
+        document.getElementById('tw-count').textContent = hexToNum(vaultCountHex);
+        document.getElementById('tw-count').className = '';
+      } catch (e) {
+        document.getElementById('tw-count').textContent = 'Error';
+        document.getElementById('tw-count').className = 'error';
+        console.error('Failed to fetch vault count:', e);
+      }
+
       try {
-        const tvl = await RPC.precompileCall('0x19', 'getPoolStats', '');
-        // (totalDeposited, totalDebt, rewards) — show first word as TVL
-        document.getElementById('sp-tvl').textContent = (tvl && tvl.length >= 66) ? hexToNum('0x' + tvl.slice(2, 66)) : '0';
-        const d = await RPC.precompileCall('0x19', 'getUserDeposit', ABI.encodeAddress(addr));
-        document.getElementById('sp-deposit').textContent = hexToNum(d);
-      } catch (e) { document.getElementById('sp-tvl').textContent = 'err'; }
+        // TwoWayVault: getStablecoinPrice (returns bytes32, nonzero if set)
+        const priceHex = await RPC.precompileCall('0x18', 'getStablecoinPrice', ABI.pad32('00'.repeat(32)));
+        const price = hexToNum(priceHex);
+        if (price > 0) {
+          document.getElementById('tw-price').textContent = price + ' wei (1e-18)'; // or format as 1 WAY = 1e18 wei
+          document.getElementById('tw-price').className = '';
+        } else {
+          document.getElementById('tw-price').textContent = 'Not set';
+          document.getElementById('tw-price').className = 'info';
+        }
+      } catch (e) {
+        document.getElementById('tw-price').textContent = 'Error';
+        document.getElementById('tw-price').className = 'error';
+        console.error('Failed to fetch stablecoin price:', e);
+      }
+
+      try {
+        // StabilityPool: getPoolStats (returns bytes: totalDeposited, totalDebt, rewards)
+        const poolStatsHex = await RPC.precompileCall('0x19', 'getPoolStats', '');
+        if (poolStatsHex && poolStatsHex.length >= 66) { // at least 32 bytes for totalDeposited
+          const totalDepositedHex = '0x' + poolStatsHex.slice(2, 66); // 32 bytes
+          const totalDeposited = hexToNum(totalDepositedHex);
+          document.getElementById('sp-tvl').textContent = totalDeposited;
+          document.getElementById('sp-tvl').className = '';
+        } else {
+          document.getElementById('sp-tvl').textContent = '0';
+          document.getElementById('sp-tvl').className = '';
+        }
+      } catch (e) {
+        document.getElementById('sp-tvl').textContent = 'Error';
+        document.getElementById('sp-tvl').className = 'error';
+        console.error('Failed to fetch pool stats:', e);
+      }
     }
 
+    // Update user-specific data if wallet is connected
+    async function updateUserData() {
+      const addr = window.waychainAccount?.address;
+      if (!addr) {
+        document.getElementById('sp-deposit').textContent = 'Connect wallet';
+        document.getElementById('sp-deposit').className = 'info';
+        return;
+      }
+      try {
+        const depositHex = await RPC.precompileCall('0x19', 'getUserDeposit', ABI.encodeAddress(addr));
+        const deposit = hexToNum(depositHex);
+        document.getElementById('sp-deposit').textContent = deposit;
+        document.getElementById('sp-deposit').className = '';
+        // Enable deposit button if we have a wallet
+        document.getElementById('sp-deposit-btn').disabled = false;
+        document.getElementById('sp-deposit-btn').textContent = 'Deposit';
+      } catch (e) {
+        document.getElementById('sp-deposit').textContent = 'Error';
+        document.getElementById('sp-deposit').className = 'error';
+        console.error('Failed to fetch user deposit:', e);
+      }
+    }
+
+    // Trustless Lock lookup
     async function tlLookup() {
       const id = document.getElementById('tl-id').value.trim().replace(/^0x/, '');
       if (id.length !== 64) return alert('Enter a 32-byte lock ID');
       const arg = ABI.pad32(id);
       try {
         const lk = await RPC.precompileCall('0x1A', 'getLock', arg);
-        // (status uint8, unlockTime uint64, amount uint256, released bool)
         document.getElementById('tl-status').textContent = (lk && lk !== '0x') ? 'exists' : 'none';
+        document.getElementById('tl-status').className = (lk && lk !== '0x') ? 'success' : 'info';
         const r = await RPC.precompileCall('0x1A', 'releasableAmount', arg);
-        document.getElementById('tl-release').textContent = hexToNum(r);
-      } catch (e) { alert('TrustlessLock read failed: ' + e.message); }
+        const releasable = hexToNum(r);
+        document.getElementById('tl-release').textContent = releasable;
+        document.getElementById('tl-release').className = '';
+      } catch (e) {
+        alert('TrustlessLock read failed: ' + e.message);
+        console.error(e);
+      }
     }
 
+    // Deposit to Stability Pool (write)
     async function spDeposit() {
-      const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
+      const a = window.waychainAccount;
+      if (!a) return alert('Connect wallet first');
       const amt = document.getElementById('sp-amt').value.trim();
       if (!amt) return alert('Enter amount');
-      try { await RPC.precompileCall('0x19', 'deposit', ABI.encodeUint256(amt), { write: true }); }
-      catch (e) { alert('Web write not implemented yet (signer port pending): ' + e.message); }
-    }
-    async function arRecover() {
-      const a = window.waychainAccount; if (!a) return alert('Connect wallet first');
-      try { await RPC.precompileCall('0x11', 'recover', '', { write: true }); }
-      catch (e) { alert('Web write not implemented yet (signer port pending): ' + e.message); }
+      try {
+        await RPC.precompileCall('0x19', 'deposit', ABI.encodeUint256(amt), { write: true });
+        alert('Deposit submitted!');
+        // Refresh user deposit after a short delay
+        setTimeout(updateUserData, 5000);
+      } catch (e) {
+        alert('Web write not implemented yet (signer port pending): ' + e.message);
+      }
     }
 
+    // Account Recovery (write)
+    async function arRecover() {
+      const a = window.waychainAccount;
+      if (!a) return alert('Connect wallet first');
+      try {
+        await RPC.precompileCall('0x11', 'recover', '', { write: true });
+        alert('Recovery submitted!');
+      } catch (e) {
+        alert('Web write not implemented yet (signer port pending): ' + e.message);
+      }
+    }
+
+    // Wallet connection handler: update UI when wallet connects/disconnects
     const origConnect = window.WayChainWallet && window.WayChainWallet.connect;
     if (origConnect) {
       window.WayChainWallet.connect = async function () {
         const acc = await origConnect.apply(this, arguments);
-        document.getElementById('sp-deposit-btn').disabled = false;
-        document.getElementById('sp-deposit-btn').textContent = 'Deposit';
-        document.getElementById('ar-recover').disabled = false;
-        document.getElementById('ar-recover').textContent = 'Recover Account';
-        await readDefi(acc.address);
+        // Update UI for connected = await updateUserData();
         return acc;
       };
     }
-    window.addEventListener('load', () => {
-      const a = window.waychainAccount && window.waychainAccount.address;
-      if (a) readDefi(a);
+
+    // Initial load
+    window.addEventListener('load', async () => {
+      await updateDefiStats();
+      await updateUserData();
+      // Refresh stats every 15 seconds
+      setInterval(updateDefiStats, 15000);
+      // Refresh user data every 10 seconds if wallet connected
+      setInterval(() => { if (window.waychainAccount) updateUserData(); }, 10000);
     });
   </script>
 </body>
