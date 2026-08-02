@@ -61,11 +61,8 @@ function Tabs() {
       })}
     >
       <Tab.Screen name="Wallet" component={WalletScreen} />
-      <Tab.Screen name="DEX" component={SwapRouteScreen} />
-      <Tab.Screen name="Stake" component={StakingScreen} />
       <Tab.Screen name="Bridge" component={BitcoinRegistryScreen} />
-      <Tab.Screen name="Governance" component={GovernanceScreen} />
-      <Tab.Screen name="WIFR" component={WIFRScreen} />
+      <Tab.Screen name="Quest" component={QuestsScreen} />
     </Tab.Navigator>
   );
 }
