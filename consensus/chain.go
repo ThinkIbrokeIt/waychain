@@ -4,7 +4,9 @@ package main
 import (
 	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"math/big"
@@ -484,7 +486,23 @@ func (c *Chain) ProduceBlock(proposer ValidatorID) *BlockWithTx {
 		}
 
 		// Check sender has enough balance for gas + value
-		txCost := new(big.Int).SetUint64(tx.GasLimit * gasPrice)
+		// For precompile calls, use the precompile's fixed gas (not tx.GasLimit)
+		// — GasFaucet (0x27) has Gas=0 so zero-balance users can call it.
+		expectedGas := tx.GasLimit
+		if raw, err := hex.DecodeString(strings.TrimPrefix(tx.To, "0x")); err == nil && len(raw) >= 1 {
+			// Precompile detection: all bytes before the last must be zero
+			isPC := true
+			for _, x := range raw[:len(raw)-1] {
+				if x != 0 { isPC = false; break }
+			}
+			if isPC && raw[len(raw)-1] >= 0x0C && raw[len(raw)-1] <= 0x27 {
+				pcGas := evm.PrecompileGas(raw[len(raw)-1])
+				if pcGas < expectedGas {
+					expectedGas = pcGas
+				}
+			}
+		}
+		txCost := new(big.Int).SetUint64(expectedGas * gasPrice)
 		txCost.Add(txCost, tx.Value)
 		if sender.Balance.Cmp(txCost) < 0 {
 			continue // Insufficient funds
