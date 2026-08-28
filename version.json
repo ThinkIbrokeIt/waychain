@@ -4,11 +4,11 @@
   "chain_id_hex": "0x2718",
   "name": "WayChain",
   "tagline": "Actually Decentralized",
-  "deployed_at": "2026-07-14",
+  "deployed_at": "2026-08-19",
   "whitepaper_sections": 22,
   "live_features": 24,
   "spec_features": 6,
-  "precompiles": 22,
+  "precompiles": 27,
   "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
   "blueprint_files": 29,
   "blueprint_lines": 11947,
@@ -27,6 +27,7 @@
     "Version consistency: all sources now say 4.0.0",
     "CHANGELOG backfilled v3.0.2–v3.1.1",
     "Navigation links for Binary Journal, TrustlessLock, DEX, Declaration now visible in header and footer",
-    "Precompile count updated from 20 to 27 (added 0x0E-0x12, 0x22-0x26)"
+    "Precompile count corrected from 28 to 27 (removed erroneous GasFaucet entry at 0x27)",
+    "Corrected precompile count drift: version.json showed 28, corrected to 27 to match protocol spec (0x0C-0x26)"
   ]
 }
