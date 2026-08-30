@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# Wrapper for version-drift-check.sh with fingerprint-based duplicate avoidance
+# Debug version
+
+set -euo pipefail
+
+REPO="ThinkIbrokeIt/waychain"
+DRIFT_CHECK_SCRIPT="/home/wink/projects/waychain/scripts/version-drift-check.sh"
+
+echo "DEBUG: Starting wrapper" >&2
+echo "DEBUG: REPO=$REPO" >&2
+echo "DEBUG: DRIFT_CHECK_SCRIPT=$DRIFT_CHECK_SCRIPT" >&2
+echo "DEBUG: Script exists: $(test -f "$DRIFT_CHECK_SCRIPT" && echo "yes" || echo "no")" >&2
+echo "DEBUG: Script executable: $(test -x "$DRIFT_CHECK_SCRIPT" && echo "yes" || echo "no")" >&2
+
+# Run the drift check, capture output
+echo "DEBUG: About to run drift check" >&2
+DRIFT_OUTPUT=$("$DRIFT_CHECK_SCRIPT" 2>&1)
+DRIFT_EXIT=$?
+echo "DEBUG: Drift check completed" >&2
+echo "DEBUG: DRIFT_EXIT=$DRIFT_EXIT" >&2
+echo "DEBUG: DRIFT_OUTPUT first 100 chars: '${DRIFT_OUTPUT:0:100}'" >&2
+
+if [[ $DRIFT_EXIT -eq 0 ]]; then
+    echo "DEBUG: No drift detected" >&2
+    echo "��������������✅ No drift detected"
+    exit 0
+fi
+
+echo "DEBUG: Drift detected, outputting DRIFT_OUTPUT" >&2
+echo "$DRIFT_OUTPUT"
+
+# Extract drift fingerprint from output
+echo "DEBUG: Extracting fingerprint" >&2
+DRIFT_FINGERPRINT=""
+DRIFT_TYPE="unknown"
+
+# Binary hash drift
+if echo "$DRIFT_OUTPUT" | grep -q "Binary hash mismatch"; then
+    echo "DEBUG: Found binary hash mismatch" >&2
+    LIVE_HASH=$(echo "$DRIFT_OUTPUT" | grep "live binary hash:" | awk '{print $NF}')
+    LOCAL_HASH=$(echo "$DRIFT_OUTPUT" | grep "local binary hash:" | awk '{print $NF}')
+    DRIFT_FINGERPRINT="${LIVE_HASH}:${LOCAL_HASH}"
+    DRIFT_TYPE="binary-hash"
+fi
+
+echo "DEBUG: After binary hash check: fingerprint='$DRIFT_FINGERPRINT', type='$DRIFT_TYPE'" >&2
+
+# Precompile count drift (if version.json precompiles != manifest)
+if echo "$DRIFT_OUTPUT" | grep -q "precompile"; then
+    echo "DEBUG: Found precompile keyword" >&2
+    if [[ -z "$DRIFT_FINGERPRINT" ]]; then
+        VJSON_PRE=$(jq -r '.precompiles' /home/wink/projects/waychain/version.json 2>/dev/null || echo "unknown")
+        DRIFT_FINGERPRINT="precompile:${VJSON_PRE}"
+        DRIFT_TYPE="precompile-count"
+    fi
+fi
+
+echo "DEBUG: After precompile check: fingerprint='$DRIFT_FINGERPRINT', type='$DRIFT_TYPE'" >&2
+
+# Version number drift
+if echo "$DRIFT_OUTPUT" | grep -q "version"; then
+    echo "DEBUG: Found version keyword" >&2
+    if [[ -z "$DRIFT_FINGERPRINT" ]]; then
+        VJSON_VER=$(jq -r '.version' /home/wink/projects/waychain/version.json 2>/dev/null || echo "unknown")
+        DRIFT_FINGERPRINT="version:${VJSON_VER}"
+        DRIFT_TYPE="version-number"
+    fi
+fi
+
+echo "DEBUG: After version check: fingerprint='$DRIFT_FINGERPRINT', type='$DRIFT_TYPE'" >&2
+
+# Chain ID drift
+if echo "$DRIFT_OUTPUT" | grep -q "Chain ID mismatch"; then
+    echo "DEBUG: Found Chain ID mismatch" >&2
+    if [[ -z "$DRIFT_FINGERPRINT" ]]; then
+        LIVE_CHAIN=$(echo "$DRIFT_OUTPUT" | grep "live chain_id:" | awk '{print $NF}')
+        DRIFT_FINGERPRINT="chainid:${LIVE_CHAIN}"
+        DRIFT_TYPE="chain-id"
+    fi
+fi
+
+echo "DEBUG: After chain id check: fingerprint='$DRIFT_FINGERPRINT', type='$DRIFT_TYPE'" >&2
+
+if [[ -z "$DRIFT_FINGERPRINT" ]]; then
+    echo "DEBUG: No fingerprint determined" >&2
+    echo "��������������⚠��������������️  Could not determine drift fingerprint, proceeding to create issue"
+    DRIFT_FINGERPRINT="unknown:$(date +%s)"
+fi
+
+echo "DEBUG: Final fingerprint: $DRIFT_FINGERPRINT" >&2
+echo "DEBUG: Drift type: $DRIFT_TYPE" >&2
+echo "Drift type: $DRIFT_TYPE"
+echo "Fingerprint: $DRIFT_FINGERPRINT"
+
+# Check for existing issue with matching fingerprint
+echo "DEBUG: Checking for existing issue" >&2
+EXISTING_ISSUE=$(gh issue list --repo "$REPO" --search "[DRIFT]" --state open --json number,body -q ".[] | select(.body | contains(\"${DRIFT_FINGERPRINT}\")) | .number" 2>/dev/null | head -1 || true)
+echo "DEBUG: EXISTING_ISSUE='$EXISTING_ISSUE'" >&2
+
+if [[ -n "$EXISTING_ISSUE" ]]; then
+    echo "DEBUG: Found existing issue #$EXISTING_ISSUE" >&2
+    echo "Issue #$EXISTING_ISSUE already open for this drift (fingerprint: $DRIFT_FINGERPRINT). Skipping duplicate."
+    # Optionally: add comment with latest output
+    gh issue comment "$EXISTING_ISSUE" --repo "$REPO" --body "**Latest drift check update ($(date -u +%Y-%m-%dT%H:%M:%SZ)):**
+
+\`\`\`
+$DRIFT_OUTPUT
+\`\`\`" 2>/dev/null || true
+    exit 0
+fi
+
+echo "DEBUG: No existing issue found, creating new one" >&2
+
+# No matching issue - create new one with fingerprint in body
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+ISSUE_TITLE="[DRIFT] ${DRIFT_TYPE}: $(echo $DRIFT_FINGERPRINT | cut -d: -f1 | cut -c1-16)..."
+ISSUE_BODY="## Drift Detection Report
+
+**Timestamp:** $TIMESTAMP
+**Drift type:** $DRIFT_TYPE
+**Fingerprint:** \`$DRIFT_FINGERPRINT\`
+
+### Findings
+
+\`\`\`
+$DRIFT_OUTPUT
+\`\`\`
+
+### Action Required
+Investigate and resolve the $DRIFT_TYPE drift. Ensure the monorepo source matches live node reality (or vice versa), then rebuild/redeploy as needed.
+
+---
+*Auto-generated by version-drift-check wrapper with fingerprint-based deduplication*"
+
+echo "DEBUG: Creating issue with title: $ISSUE_TITLE" >&2
+gh issue create --repo "$REPO" --title "$ISSUE_TITLE" --body "$ISSUE_BODY" --label "drift"
+echo "DEBUG: Issue created" >&2
