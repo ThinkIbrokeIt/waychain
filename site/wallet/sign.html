@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WayChain Creator Wallet</title>
+  <style>
+    body { font-family: monospace; background: #0a0a0a; color: #e0e0e0; padding: 20px; }
+    .card { background: #1a1a1a; border: 1px solid #555; padding: 20px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>WayChain Creator Wallet</h1>
+  <div class="card">
+    <h3>Connect</h3>
+    <button onclick="connect()">Connect Wallet</button>
+    <p id="addr"></p>
+  </div>
+  <script>
+    async function connect() {
+      if (window.ethereum) {
+        const acc = await ethereum.request({method:'eth_requestAccounts'});
+        document.getElementById('addr').textContent = acc[0];
+      }
+    }
+  </script>
+</body>
+</html>

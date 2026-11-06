@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gauntlet Leaderboard — Grandmaster Race</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; --red:#E53935; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
+.container { max-width: 700px; margin: 0 auto; }
+h1 { color: var(--copper); margin-bottom: 10px; }
+.countdown { 
+  background: var(--amber); color: var(--slate); padding: 12px 20px;
+  border-radius: 6px; font-weight: 600; text-align: center; margin-bottom: 20px;
+}
+
+.leaderboard { background: #1e1e1e; border-radius: 8px; overflow: hidden; }
+.row { 
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 15px; border-bottom: 1px solid #333; font-family: monospace;
+}
+.row:last-child { border-bottom: none; }
+.row.winner { border-left: 3px solid var(--green); }
+.rank { width: 40px; color: var(--amber); font-weight: 600; }
+.addr { flex: 1; font-size: 14px; }
+.tier { 
+  padding: 3px 10px; border-radius: 3px; font-size: 12px; font-weight: 600;
+}
+.tier.pioneer { background: var(--copper); color: var(--slate); }
+.tier.specialist { background: var(--amber); color: var(--slate); }
+.tier.oracle { background: var(--green); color: var(--slate); }
+
+.legend { 
+  background: #1a1a1a; padding: 15px; border-radius: 8px; margin-top: 20px;
+  font-size: 14px; color: #9A9A9A;
+}
+.legend h4 { color: var(--amber); margin-bottom: 8px; }
+.btn { 
+  background: var(--copper); color: var(--slate); border: none;
+  padding: 10px 20px; border-radius: 6px; cursor: pointer;
+  font-weight: 600; display: inline-block; text-decoration: none;
+  margin-top: 15px;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <h1>Gauntlet Leaderboard</h1>
+  <div class="countdown">🥇 13/20 Grandmaster spots remaining</div>
+  
+  <div class="leaderboard">
+    <!-- Header -->
+    <div class="row" style="background:#1a1a1a;color:var(--amber);font-weight:600">
+      <div class="rank">#</div>
+      <div class="addr">Address</div>
+      <div class="tier">Tier</div>
+    </div>
+    
+    <!-- Grandmasters (filled spots) -->
+    <div class="row winner">
+      <div class="rank">1</div>
+      <div class="addr">7x8...9f2a</div>
+      <div class="tier oracle">Oracle Pro</div>
+    </div>
+    <div class="row winner">
+      <div class="rank">2</div>
+      <div class="addr">3mK...1b5c</div>
+      <div class="tier oracle">Oracle Pro</div>
+    </div>
+    <div class="row winner">
+      <div class="rank">3</div>
+      <div class="addr">9qR...4e7d</div>
+      <div class="tier oracle">Oracle Pro</div>
+    </div>
+    
+    <!-- Specialists -->
+    <div class="row">
+      <div class="rank">4</div>
+      <div class="addr">p2L...8x3m</div>
+      <div class="tier specialist">Specialist</div>
+    </div>
+    <div class="row">
+      <div class="rank">5</div>
+      <div class="addr">a9B...2n7q</div>
+      <div class="tier specialist">Specialist</div>
+    </div>
+    
+    <!-- Pioneers -->
+    <div class="row">
+      <div class="rank">6</div>
+      <div class="addr">k4R...5t1y</div>
+      <div class="tier pioneer">Pioneer</div>
+    </div>
+  </div>
+  
+  <p style="margin-top:15px;font-size:13px;color:#9A9A9A">
+    Live from WayChain explorer. Grandmaster prize pool: 100,000 WAY (first 20).
+  </p>
+  
+  <a href="/gauntlet" class="btn">← Back to Gauntlet</a>
+  
+  <div class="legend">
+    <h4>Race Mechanics</h4>
+    <p>Tier 3 requires 24-hour oracle uptime. Not a gas war—sustained participation determines winners. Each Grandmaster gets 5,000 WAY + revenue share.</p>
+  </div>
+</div>
+</body>
+</html>

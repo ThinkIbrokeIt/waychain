@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIF (WIFR) — WayChain Is Free Receipt</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { 
+  background: var(--slate);
+  color: var(--warm);
+  line-height: 1.6;
+  padding: 40px 20px;
+}
+.container { max-width: 700px; margin: 0 auto; }
+h1 { color: var(--copper); font-size: 2.5em; margin-bottom: 10px; }
+h2 { color: var(--amber); font-size: 1.3em; margin: 30px 0 15px; }
+p { margin-bottom: 15px; }
+.code { 
+  background: #1a1a1a;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  color: var(--copper);
+}
+.btn { 
+  display: inline-block;
+  background: var(--copper);
+  color: var(--slate);
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  margin: 20px 0;
+}
+.btn:hover { background: var(--amber); }
+.btn.outline {
+  background: transparent;
+  border: 1px solid var(--copper);
+  color: var(--copper);
+}
+.badge { 
+  display: inline-block;
+  background: var(--amber);
+  color: var(--slate);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.claim-box {
+  background: #1e1e1e;
+  border: 1px solid var(--copper);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 30px 0;
+}
+.stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
+.stat:last-child { border-bottom: none; }
+.highlight {
+  background: #1e1e1e;
+  border: 1px solid var(--amber);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 25px 0;
+  text-align: center;
+}
+.highlight h3 { color: var(--amber); margin-bottom: 10px; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <h1>WIFR <span style="font-size:0.4em;color:var(--amber)">WayChain Is Free Receipt</span></h1>
+  
+  <p><strong>You don't burn your whole stack. Use the burn bridge as one quest task.</strong></p>
+  
+  <p>Quest rewards are resolved by the live WayChain runtime. Complete quests, claim WAY, keep your WIFR.</p>
+  
+  <a href="/wifr/quests" class="btn">View Quests</a>
+  <a href="/wifr/bridge" class="btn outline">Burn Bridge</a>
+  
+  <div class="highlight">
+    <h3>Earn WAY. Keep WIFR.</h3>
+    <p>Each quest completed guarantees WAY from the pool. The burn bridge is just one path.</p>
+  </div>
+  
+  <div class="claim-box">
+    <h2>Pool Status</h2>
+    <div class="stat"><span>Early Worm Bonus:</span> <span style="color:var(--green)">ACTIVE</span></div>
+    <div class="stat"><span>Quest Completions:</span> <span id="claims">0/10,000</span></div>
+    <div class="stat"><span>Pool Balance:</span> <span id="pool">1M+ WAY</span></div>
+    <div class="stat"><span>Conversion:</span> <span>1,000 WIFR = 1 WAY <span class="badge">IMMUTABLE</span></span></div>
+  </div>
+  
+  <h2>Earning Paths</h2>
+  <ul>
+    <li>Bridge Builder Quest — burn WIFR to claim WAY</li>
+    <li>Testnet Warrior — deploy and test for WAY rewards</li>
+    <li>Oracle Attester — earn WAY for on-chain contributions</li>
+    <li>Meme Captain — creative WIFR memes rewarded</li>
+    <li>Social Signal — retweets count toward WAY</li>
+  </ul>
+  
+  <h2>The Hook</h2>
+  <p>We didn't ask you to buy a promise. We just left a pile of WAY on the other side of a bridge and handed out the keys for free.</p>
+  
+  <p style="font-size:12px;color:#9A9A9A">The rug you can't find. Keep your WIFR. We hope it moons.</p>
+</div>
+</body>
+</html>

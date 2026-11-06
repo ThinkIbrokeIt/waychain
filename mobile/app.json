@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "WayChain Mobile",
+    "slug": "waychain-mobile",
+    "version": "0.1.2",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "adaptiveIcon": {
+      "foregroundImage": "./assets/adaptive-icon.png",
+      "backgroundColor": "#2A2A2A"
+    },
+    "userInterfaceStyle": "automatic",
+    "runtimeVersion": "1.0.0",
+    "sdkVersion": "53.0.0",
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
+    "android": {
+      "package": "org.waychain.mobile",
+      "versionCode": 6,
+      "permissions": [
+        "CAMERA",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "org.waychain.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "WayChain needs camera access to scan QR codes for payments and wallet import.",
+        "NSFaceIDUsageDescription": "WayChain uses Face ID to secure your wallet and authorize transactions."
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "4d21c7ab-45bf-4e61-af0e-0379a69aaeb2"
+      }
+    },
+    "owner": "winc_hood"
+  }
+}

@@ -1,0 +1,113 @@
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { AppState } from 'react-native';
+import WalletScreen from './screens/WalletScreen';
+import SwapRouteScreen from './screens/SwapRouteScreen';
+import StakingScreen from './screens/StakingScreen';
+import BitcoinRegistryScreen from './screens/BitcoinRegistryScreen';
+import GovernanceScreen from './screens/GovernanceScreen';
+import SendScreen from './screens/SendScreen';
+import HistoryScreen from './screens/HistoryScreen';
+import ReceiveScreen from './screens/ReceiveScreen';
+import AddressBookScreen from './screens/AddressBookScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import WIFRScreen from './screens/WIFRScreen';
+import QuestsScreen from './screens/QuestsScreen';
+import StablecoinScreen from './screens/StablecoinScreen';
+import TokensScreen from './screens/TokensScreen';
+import IdentityScreen from './screens/IdentityScreen';
+import LocksScreen from './screens/LocksScreen';
+import TwoWayVaultScreen from './screens/TwoWayVaultScreen';
+import StabilityPoolScreen from './screens/StabilityPoolScreen';
+import DeadMansSwitchScreen from './screens/DeadMansSwitchScreen';
+import AccountManagerScreen from './screens/AccountManagerScreen';
+import StateRentScreen from './screens/StateRentScreen';
+import MineralRightsScreen from './screens/MineralRightsScreen';
+import TemplateRegistryScreen from './screens/TemplateRegistryScreen';
+import Keccak256Screen from './screens/Keccak256Screen';
+import ProtocolScreen from './screens/ProtocolScreen';
+import CommunityTasksScreen from './screens/CommunityTasksScreen';
+import DoxDevScreen from './screens/DoxDevScreen';
+import ScanPayScreen from './screens/ScanPayScreen';
+import AppLock from './components/AppLock';
+import { COLORS } from './theme';
+import { markBackground } from './services/secure';
+
+const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
+
+function Tabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarStyle: { backgroundColor: COLORS.card, borderTopColor: COLORS.copper },
+        tabBarActiveTintColor: COLORS.amber,
+        tabBarInactiveTintColor: '#9A9A9A',
+        tabBarLabelStyle: { fontFamily: 'Inter-Regular', fontSize: 11 },
+        tabBarIcon: ({ color, size }) => {
+          const icons = {
+            Wallet: 'wallet',
+            DEX: 'swap-horizontal',
+            Stake: 'bank',
+            Bridge: 'bridge',
+            Governance: 'vote',
+          };
+          return <MaterialCommunityIcons name={icons[route.name] || 'circle'} color={color} size={size} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Wallet" component={WalletScreen} />
+      <Tab.Screen name="Bridge" component={BitcoinRegistryScreen} />
+      <Tab.Screen name="Quest" component={QuestsScreen} />
+    </Tab.Navigator>
+  );
+}
+
+export default function App() {
+  // Auto-lock: record background time so AppLock can gate on return.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'background') markBackground();
+    });
+    return () => sub.remove();
+  }, []);
+
+  return (
+    <AppLock>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Tabs" component={Tabs} />
+          <Stack.Screen name="Receive" component={ReceiveScreen} />
+          <Stack.Screen name="Send" component={SendScreen} />
+          <Stack.Screen name="History" component={HistoryScreen} />
+          <Stack.Screen name="AddressBook" component={AddressBookScreen} />
+          <Stack.Screen name="WIFR" component={WIFRScreen} />
+          <Stack.Screen name="Quests" component={QuestsScreen} />
+          <Stack.Screen name="Stablecoin" component={StablecoinScreen} />
+          <Stack.Screen name="Tokens" component={TokensScreen} />
+          <Stack.Screen name="Identity" component={IdentityScreen} />
+          <Stack.Screen name="Locks" component={LocksScreen} />
+          <Stack.Screen name="TwoWayVault" component={TwoWayVaultScreen} />
+          <Stack.Screen name="SwapRoute" component={SwapRouteScreen} />
+          <Stack.Screen name="StabilityPool" component={StabilityPoolScreen} />
+          <Stack.Screen name="BitcoinRegistry" component={BitcoinRegistryScreen} />
+          <Stack.Screen name="DeadMansSwitch" component={DeadMansSwitchScreen} />
+          <Stack.Screen name="AccountManager" component={AccountManagerScreen} />
+          <Stack.Screen name="StateRent" component={StateRentScreen} />
+          <Stack.Screen name="MineralRights" component={MineralRightsScreen} />
+          <Stack.Screen name="TemplateRegistry" component={TemplateRegistryScreen} />
+          <Stack.Screen name="Keccak256" component={Keccak256Screen} />
+          <Stack.Screen name="Protocol" component={ProtocolScreen} />
+          <Stack.Screen name="CommunityTasks" component={CommunityTasksScreen} />
+          <Stack.Screen name="DoxDev" component={DoxDevScreen} />
+          <Stack.Screen name="ScanPay" component={ScanPayScreen} />
+          <Stack.Screen name="Settings" component={SettingsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AppLock>
+  );
+}

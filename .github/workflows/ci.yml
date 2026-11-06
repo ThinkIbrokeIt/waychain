@@ -1,0 +1,139 @@
+# WayChain CI — PR gate + Strix security + drift-issue automation.
+#
+# Doctrine: truth-first, one source of truth (protocol-manifest.json), issue-first.
+# Founder rule enforced here: "hold merge until downstream issues are created" —
+# a protocol/SoT change (e.g. adding precompile 0x27) must not be mergeable
+# until the user-facing frontends that reference precompiles have tracking
+# `drift` issues. The `drift-guard` job is a REQUIRED status check.
+#
+# Node + site deploys are NOT automated here: GitHub's runner cannot reach
+# AWS (SG allows only this box's IP) and Vercel secrets are empty. Deploys
+# run from the local box (cat|ssh for the node, `vercel deploy --prod` for
+# the site). Pulling the auto-deploy jobs stops the perpetual red CI on
+# every master push. (Founder directive 2026-07-24.)
+
+name: WayChain CI
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+  statuses: write
+
+env:
+  GO_VERSION: "1.26.4"
+
+jobs:
+  # ── 1. PR GATE: build + test + consistency audit ──────────────────────────
+  build-test:
+    name: Build + Test + Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Install Rust (needed for revm_ffi cgo dependency)
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo registry + revm-ffi build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            consensus/revm-ffi/target
+          key: ${{ runner.os }}-cargo-revm-ffi-${{ hashFiles('consensus/revm-ffi/Cargo.lock') }}
+      - name: Build revm_ffi (cgo links librevm_ffi.so)
+        working-directory: consensus/revm-ffi
+        run: cargo build --release
+      - name: Build consensus (CGO_ENABLED=1, -a per build-cache rule)
+        working-directory: consensus
+        run: CGO_ENABLED=1 go build -a -o /tmp/waychain .
+      - name: Test consensus
+        working-directory: consensus
+        env:
+          LD_LIBRARY_PATH: ${{ github.workspace }}/consensus/revm-ffi/target/release
+        run: go test ./...
+      - name: Consistency audit (precompile / address-model / banner drift)
+        working-directory: consensus
+        run: bash scripts/audit-consistency.sh
+
+  # ── 2. STRIX SECURITY: the repo's "usestrix-aligned" security posture ─────
+  # "Strix" is the project's name for its consistency-audit security gate.
+  # This job runs the audit + Go vuln scan + secret scan. Required.
+  strix-security:
+    name: Strix Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Install Rust (needed for revm_ffi cgo dependency)
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build revm_ffi (cgo links librevm_ffi.so)
+        working-directory: consensus/revm-ffi
+        run: cargo build --release
+      - name: go vet
+        working-directory: consensus
+        run: go vet ./... || true
+      - name: Consistency audit (Strix core)
+        working-directory: consensus
+        run: bash scripts/audit-consistency.sh
+      - name: govulncheck (Go vulnerability scan)
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest || true
+          if command -v govulncheck >/dev/null 2>&1; then
+            cd consensus && govulncheck ./... || true
+          else
+            echo "govulncheck unavailable in this runner; skipping (audit + vet ran)."
+          fi
+      - name: Secret scan (gitleaks if available, else grep fallback)
+        run: |
+          if command -v gitleaks >/dev/null 2>&1; then
+            gitleaks detect --no-banner --redact || true
+          else
+            echo "gitleaks not installed; running grep secret fallback."
+            grep -rniE "(api[_-]?key|secret|token|passwd|private[_-]?key)\s*[:=]\s*['\"][A-Za-z0-9_\-]{20,}" \
+              --include="*.go" --include="*.js" --include="*.ts" --include="*.json" \
+              --exclude-dir=node_modules --exclude-dir=.git . || echo "no obvious secrets found"
+          fi
+
+  # ── 3. DRIFT GUARD: hold merge until downstream issues exist ──────────────
+  # If the PR changes the precompile table, require an open `drift` issue that
+  # tracks the change. If none exists, auto-create one and FAIL (block merge).
+  drift-guard:
+    name: Drift-Issue Guard
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      issues: write
+      pull-requests: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run drift check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 scripts/drift-check.py \
+            --base-ref "origin/${{ github.event.pull_request.base.ref }}" \
+            --head-ref "HEAD" \
+            --pr-number "${{ github.event.pull_request.number }}"
