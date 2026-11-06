@@ -69,6 +69,10 @@ mobile/android/
 # Vercel local
 .vercel/
 
+# Mobile working subtree (canonical source lives in waychain-mobile mirror)
+# This local copy is a parallel dev tree; ignore to keep git status clean.
+/mobile/
+
 # Nested VCS mistakes
 **/.git/
 consensus/waychain-full
