@@ -8,7 +8,7 @@
   "whitepaper_sections": 22,
   "live_features": 24,
   "spec_features": 6,
-  "precompiles": 27,
+  "precompiles": 28,
   "state_rent_pricing": "cloud-benchmarked ($0.12/MB/year)",
   "blueprint_files": 29,
   "blueprint_lines": 11947,
@@ -27,7 +27,7 @@
     "Version consistency: all sources now say 4.0.0",
     "CHANGELOG backfilled v3.0.2–v3.1.1",
     "Navigation links for Binary Journal, TrustlessLock, DEX, Declaration now visible in header and footer",
-    "Precompile count corrected from 28 to 27 (removed erroneous GasFaucet entry at 0x27)",
-    "Corrected precompile count drift: version.json showed 28, corrected to 27 to match protocol spec (0x0C-0x26)"
+    "Precompile count reconciled to 28 (0x0C-0x27, includes GasFaucet 0x27 per consensus/evm/precompiles.go)",
+    "Corrected manifest/version undercount: live node + precompiles.go serve 28 (0x0C-0x27); protocol-manifest.json updated to match"
   ]
 }
