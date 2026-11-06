@@ -1,0 +1,54 @@
+:root {
+  --parchment: #FFF8F0;
+  --ink: #2A2A2A;
+  --copper: #B87333;
+  --amber: #FFBF00;
+  --line: rgba(42, 42, 42, 0.12);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  background: var(--parchment);
+  color: var(--ink);
+  line-height: 1.5;
+}
+.shell { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+.masthead { text-align: center; border-bottom: 2px solid var(--copper); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+.crest { font-size: 2.4rem; color: var(--copper); }
+h1 { margin: 0.25rem 0; letter-spacing: 0.04em; }
+.tagline { color: var(--copper); font-style: italic; margin: 0; }
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 0 var(--line);
+}
+.card h2 { margin-top: 0; color: var(--copper); border-bottom: 1px solid var(--line); padding-bottom: 0.4rem; }
+.rows { display: grid; gap: 0.4rem; margin-bottom: 1rem; }
+.row { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--line); padding: 0.25rem 0; }
+.row b { font-variant-numeric: tabular-nums; }
+button {
+  background: var(--copper); color: var(--parchment); border: 0; border-radius: 6px;
+  padding: 0.6rem 1.1rem; font-size: 0.95rem; cursor: pointer; font-family: inherit;
+}
+button:hover { background: #a3652d; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+.note, .warn { font-size: 0.82rem; color: #6a5; }
+.warn { color: #a33; }
+.steps { padding-left: 1.2rem; }
+.steps code, .form code { background: rgba(184,115,51,0.12); padding: 0 0.3rem; border-radius: 4px; }
+.form { display: grid; gap: 0.8rem; margin: 1rem 0; }
+.form label { display: grid; gap: 0.25rem; font-size: 0.85rem; }
+.form input {
+  padding: 0.55rem; border: 1px solid var(--line); border-radius: 6px;
+  font-family: "SF Mono", ui-monospace, monospace; font-size: 0.85rem;
+}
+.result { margin-top: 1rem; padding: 0.9rem; border-radius: 8px; background: rgba(184,115,51,0.08); }
+.placeholder { color: #888; font-style: italic; margin: 0; }
+.result.ok { border-left: 4px solid #4a4; }
+.result.wait { border-left: 4px solid var(--amber); }
+.result.err { border-left: 4px solid #a33; }
+.foot { text-align: center; font-size: 0.8rem; color: #777; }

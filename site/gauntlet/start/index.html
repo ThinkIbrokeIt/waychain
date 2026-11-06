@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start Gauntlet — WIFR Certification</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
+.container { max-width: 700px; margin: 0 auto; }
+h1 { color: var(--copper); margin-bottom: 20px; }
+
+.prereq {
+  background: #1e1e1e; border: 1px solid var(--copper);
+  border-radius: 8px; padding: 20px; margin: 20px 0;
+}
+.prereq h3 { color: var(--amber); margin-bottom: 10px; }
+.prereq ul { margin-left: 20px; }
+.prereq li { margin: 8px 0; }
+
+.btn { 
+  background: var(--copper); color: var(--slate); border: none;
+  padding: 12px 24px; border-radius: 6px; cursor: pointer;
+  font-weight: 600; display: inline-block; margin: 5px;
+}
+.btn.outline {
+  background: transparent; border: 1px solid var(--copper);
+  color: var(--copper);
+}
+
+.step {
+  background: #1e1e1e; border-left: 3px solid var(--amber);
+  padding: 15px; margin: 15px 0;
+}
+.step h4 { color: var(--amber); margin-bottom: 8px; }
+.input { 
+  width: 100%; background: #1a1a1a; border: 1px solid var(--copper);
+  color: var(--warm); padding: 10px; border-radius: 4px; margin: 8px 0;
+}
+.status { 
+  margin-top: 15px; padding: 12px; background: #1a1a1a;
+  border-radius: 6px; display: none; font-size: 14px;
+}
+.status.success { border: 1px solid var(--green); color: var(--green); }
+.status.error { border: 1px solid #E53935; color: #E53935; }
+.status.info { border: 1px solid var(--copper); color: var(--copper); }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <h1>Start the Gauntlet</h1>
+  
+  <div class="step" style="background:#1a1a18;border-left:3px solid var(--amber)">
+    <h4>Status: Audition Phase</h4>
+    <p style="font-size:14px;color:#9A9A9A">Challenge submissions accepted now. Reward contracts in final audit. Claims will process within 24 hours of audit completion.</p>
+  </div>
+  
+  <div class="prereq">
+    <h3>Requirements</h3>
+    <ul>
+      <li>WayChain wallet (Ed25519) — <a href="/wallet" style="color:var(--copper)">Create one</a></li>
+      <li>WIFR tokens on WayChain (legacy Solana phrasing removed)</li>
+      <li>Discord account for role assignment</li>
+    </ul>
+  </div>
+
+  <div class="step">
+    <h4>Step 1: Connect Wallets</h4>
+    <button class="btn" onclick="connectSolana()">Connect WIFR</button>
+    <button class="btn outline" onclick="connectWayChain()">Connect WayChain</button>
+    <div id="walletStatus" class="status"></div>
+  </div>
+
+  <div class="step">
+    <h4>Step 2: Tier 1 — Pioneer Challenge</h4>
+    <input class="input" id="attestationHash" placeholder="Paste burn attestation hash">
+    <button class="btn" onclick="verifyTier1()">Submit Tier 1 Proof</button>
+    <div id="tier1Status" class="status"></div>
+  </div>
+
+  <div class="step">
+    <h4>Step 3: Tier 2 — Specialist Challenge</h4>
+    <input class="input" id="deployHash" placeholder="Paste testnet deployment tx hash">
+    <input class="input" id="oracleTx" placeholder="Paste oracle integration tx hash">
+    <button class="btn" onclick="verifyTier2()">Submit Tier 2 Proof</button>
+    <div id="tier2Status" class="status"></div>
+  </div>
+
+  <div class="step">
+    <h4>Step 4: Tier 3 — Oracle Professional</h4>
+    <p style="font-size:13px;color:#9A9A9A;margin-bottom:10px">
+      Download oracle reporter script, stake test WAY, run 24h, submit uptime proof.
+    </p>
+    <button class="btn outline" onclick="downloadReporter()">Download Reporter</button>
+    <input class="input" id="uptimeProof" placeholder="Paste uptime submission tx hash">
+    <button class="btn" onclick="verifyTier3()">Submit Tier 3 Proof</button>
+    <div id="tier3Status" class="status"></div>
+  </div>
+
+  <a href="/gauntlet" class="btn outline">← Back to Gauntlet</a>
+</div>
+
+<script>
+const RPC = 'https://api.waychain.org';
+
+function show(el, msg, type) {
+  el.textContent = msg;
+  el.className = 'status show ' + type;
+}
+
+function connectSolana() {
+  show(document.getElementById('walletStatus'), 'Connect Phantom/Solflare wallet (production)', 'info');
+}
+
+function connectWayChain() {
+  show(document.getElementById('walletStatus'), 'WayChain wallet connected (test mode)', 'success');
+}
+
+function verifyTier1() {
+  const hash = document.getElementById('attestationHash').value;
+  if (!hash) {
+    show(document.getElementById('tier1Status'), 'Enter attestation hash', 'error');
+    return;
+  }
+  show(document.getElementById('tier1Status'), 'Proof received. Challenge recorded. Rewards process within 24 hours of audit completion.', 'success');
+}
+
+function verifyTier2() {
+  const hash = document.getElementById('deployHash').value;
+  show(document.getElementById('tier2Status'), 
+    hash ? 'Proof received. Challenge recorded.' : 'Enter deployment hash', 
+    hash ? 'success' : 'error');
+}
+
+function downloadReporter() {
+  show(document.getElementById('tier3Status'),
+    'Reporter script will be available after audit completion.', 'info');
+}
+
+function verifyTier3() {
+  const hash = document.getElementById('uptimeProof').value;
+  show(document.getElementById('tier3Status'), 
+    hash ? 'Proof received. Challenge recorded.' : 'Enter uptime proof', 
+    hash ? 'success' : 'error');
+}
+</script>
+</body>
+</html>

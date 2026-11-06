@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain Feature Chips - Whitepaper Links</title>
+<style>
+:root {
+  --warm:#FFF8F0; --slate:#2A2A2A; --slate2:#1E1E1E; --copper:#B87333; --amber:#FFBF00;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { 
+  font-family: Inter, sans-serif; 
+  background: var(--slate); 
+  color: var(--warm); 
+  line-height: 1.8; 
+  font-size: 18px;
+  padding: 40px 20px;
+}
+.container { max-width: 800px; margin: 0 auto; }
+h1 { 
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 28px; 
+  color: var(--warm);
+  margin-bottom: 10px;
+}
+.subtitle { 
+  color: #9A9A9A; 
+  font-size: 14px; 
+  margin-bottom: 30px;
+}
+.chips { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 12px; 
+  margin-bottom: 40px;
+}
+.chip {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--slate2);
+  border: 1px solid var(--copper);
+  border-radius: 20px;
+  font-size: 14px;
+  color: var(--warm);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.chip:hover {
+  background: var(--copper);
+  color: var(--slate);
+}
+.section {
+  background: var(--slate2);
+  border: 1px solid #3A3A3A;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.section h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  color: var(--copper);
+  margin-bottom: 10px;
+}
+.section p {
+  color: #9A9A9A;
+  font-size: 14px;
+  line-height: 1.6;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <h1>WayChain Features</h1>
+  <p class="subtitle">Click any chip to read the full whitepaper section</p>
+  
+  <div class="chips">
+    <a href="/whitepaper#one-human-one-vote" class="chip">One Human, One Vote</a>
+    <a href="/whitepaper#self-sovereign" class="chip">Self-Sovereign</a>
+    <a href="/whitepaper#anti-extractive" class="chip">Anti-Extractive</a>
+    <a href="/whitepaper#bitcoin-stablecoin" class="chip">Bitcoin → 1WAY</a>
+    <a href="/whitepaper#gold-claims" class="chip">Gold Claims</a>
+    <a href="/whitepaper#community-work" class="chip">Community Work</a>
+    <a href="/whitepaper#dex-swap" class="chip">DEX Swap</a>
+  </div>
+
+  <div class="section">
+    <h2>One Human, One Vote</h2>
+    <p>Every Dox_Dev-verified human runs one validator with equal voting power. No whales. No vote buying. 200 badges = 200 validators.</p>
+  </div>
+
+  <div class="section">
+    <h2>Self-Sovereign</h2>
+    <p>Bitcoin-backed stablecoin (1WAY). Native oracle attestations. Dead Man's Switch inheritance protocol. No wrapping, no bridging.</p>
+  </div>
+
+  <div class="section">
+    <h2>Anti-Extractive</h2>
+    <p>Fixed gas fees, state rent with 60% burn, sqrt-weighted proposer lottery, no MEV. The chain doesn't extract from its users.</p>
+  </div>
+
+  <div class="section">
+    <h2>Bitcoin → 1WAY</h2>
+    <p>Native BTC deposits to Treasury mint 1WAY stablecoin. No wrapping. No bridging. 1WAY = $1.00 (troy oz silver equivalent).</p>
+  </div>
+
+  <div class="section">
+    <h2>Gold Claims</h2>
+    <p>Professional geologists, surveyors, engineers submit verified claims. Oracle Aggregator (0x0C) accepts submissions. MRT Registry (0x20) tracks commodity rights.</p>
+  </div>
+
+  <div class="section">
+    <h2>Community Work</h2>
+    <p>Build, verify, contribute. Earn WAY tokens. Dox_Dev Level 1 (Lantern) through Level 3 (Lighthouse). No whale capture.</p>
+  </div>
+
+  <div class="section">
+    <h2>DEX Swap</h2>
+    <p>WAY to 1WAY conversion with no MEV. Provide liquidity. Earn fees. Fixed gas fees. Anti-fragile economics.</p>
+  </div>
+</div>
+</body>
+</html>

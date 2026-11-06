@@ -1,0 +1,15 @@
+# WIFR Certification Gauntlet - Monitoring Crontab
+# Install: crontab /home/wink/projects/waychain-site/scripts/monitor/wifr-crontab.txt
+
+# Pre-reveal checks (every 5-10 minutes)
+*/5 * * * * /home/wink/projects/waychain-site/scripts/monitor/check_token.sh
+*/10 * * * * /home/wink/projects/waychain-site/scripts/monitor/check_social.sh
+
+# Gauntlet page status (hidden but should be up)
+*/5 * * * * curl -s -o /dev/null -w "%{http_code}" https://waychain.org/gauntlet
+
+# At reveal time - July 11, 22:39
+39 22 11 7 * /home/wink/projects/waychain-site/scripts/monitor/reveal_checks.sh
+
+# Post-reveal ongoing (every 5 minutes)
+*/5 * * * * /home/wink/projects/waychain-site/scripts/monitor/check_pool_balances.sh

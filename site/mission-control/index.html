@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain Mission Control — Economic Health</title>
+<meta name="description" content="WayChain Mission Control: live economic health of the WayChain economy — GBP, phase, employment, velocity, yield spread, and the SWAY reward projection.">
+<base href="/mission-control/">
+<style>
+  :root {
+    --bg: #2A2A2A; --bg2: #1E1E1E; --bg3: #333;
+    --fg: #E8E4DD; --fg2: #9A9A9A;
+    --accent: #B87333; --accent2: #FFBF00; --accent3: #FFBF00;
+    --green: #4CAF50; --red: #E53935; --yellow: #FFBF00;
+    --border: #3A3A3A;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.8; font-size: 18px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
+  }
+  .header h1 { font-size: 1.3em; color: var(--accent); }
+  .header .nav a {
+    font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-left: 20px; color: var(--fg2);
+  }
+  .header .nav a:hover { color: var(--accent); }
+  .status-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 0; font-size: 0.85em; color: var(--fg2);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--fg2); display: inline-block; }
+  .dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.err { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .phase-pill {
+    padding: 4px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9em;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .phase-expansion { background: rgba(76,175,80,0.15); color: var(--green); border: 1px solid var(--green); }
+  .phase-consolidation { background: rgba(184,115,51,0.15); color: var(--accent); border: 1px solid var(--accent); }
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px; padding: 30px 0;
+  }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 22px; transition: border-color .2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card .label {
+    font-size: 0.72em; text-transform: uppercase; letter-spacing: 2px; color: var(--fg2);
+    margin-bottom: 10px;
+  }
+  .card .value {
+    font-family: 'Playfair Display', Georgia, serif; font-size: 2.1em; color: var(--accent3);
+  }
+  .card .sub { font-size: 0.78em; color: var(--fg2); margin-top: 6px; }
+  .card.wide { grid-column: 1 / -1; }
+  .note {
+    font-size: 0.8em; color: var(--fg2); border-left: 3px solid var(--accent);
+    padding-left: 14px; margin: 8px 0 24px;
+  }
+  .projection .value { color: var(--accent); }
+  footer { border-top: 1px solid var(--border); padding: 24px 0; font-size: 0.8em; color: var(--fg2); }
+  .raw { font-family: monospace; font-size: 0.72em; color: var(--fg2); word-break: break-all; }
+  .err-box { background: rgba(229,57,53,0.1); border: 1px solid var(--red); color: var(--fg); padding: 16px; border-radius: 8px; margin: 20px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>⚓ Mission Control</h1>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/explorer">Explorer</a>
+      <a href="/dex">DEX</a>
+    </nav>
+  </div>
+
+  <div class="status-bar">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Connecting to WayChain node…</span>
+    <span style="margin-left:auto;">RPC: <span id="rpcUrl" class="raw">api.waychain.org</span></span>
+    <span>Updated: <span id="lastUpdate">—</span></span>
+  </div>
+
+  <div id="errBox"></div>
+
+  <div class="note">
+    Live economic health of the WayChain economy, read directly from the Go-core
+    engine (<code>way_econoIndicators</code> / <code>way_econoPolicy</code>). The SWAY
+    projection below is <strong>READ-ONLY</strong> — 3% of yearly earnings is a
+    <em>proposed</em> emission model, not yet hardcoded.
+  </div>
+
+  <div class="status-bar" style="border:none; padding-bottom:0;">
+    <span>Current Phase:</span>
+    <span class="phase-pill" id="phasePill">—</span>
+  </div>
+
+  <div class="grid" id="grid">
+    <div class="card">
+      <div class="label">Gross Blockchain Product</div>
+      <div class="value" id="gbp">—</div>
+      <div class="sub">WAY-denominated output / epoch window</div>
+    </div>
+    <div class="card">
+      <div class="label">GDP Equivalent</div>
+      <div class="value" id="gdp">—</div>
+      <div class="sub">tasks + rent + MRT + storage</div>
+    </div>
+    <div class="card">
+      <div class="label">Network Employment</div>
+      <div class="value" id="employment">—</div>
+      <div class="sub">active task-takers / addresses (bps)</div>
+    </div>
+    <div class="card">
+      <div class="label">Token Velocity</div>
+      <div class="value" id="velocity">—</div>
+      <div class="sub">token handoffs / circulating (bps)</div>
+    </div>
+    <div class="card">
+      <div class="label">Task Yield Spread</div>
+      <div class="value" id="yieldSpread">—</div>
+      <div class="sub">avg pro payout / avg micro (bps)</div>
+    </div>
+    <div class="card">
+      <div class="label">MRT Claims Verified</div>
+      <div class="value" id="mrt">—</div>
+      <div class="sub">real-asset acquisition this window</div>
+    </div>
+    <div class="card projection wide">
+      <div class="label">SWAY Reward Projection (READ-ONLY · proposed 3% of GBP)</div>
+      <div class="value" id="swayProj">—</div>
+      <div class="sub" id="swaySub">projected SWAY / year at the proposed rate · hard ceiling 5B</div>
+    </div>
+  </div>
+
+  <footer>
+    WayChain Mission Control · actually decentralized · data sourced live from the
+    WayChain node via <code>way_econoIndicators</code>, <code>way_econoPolicy</code>,
+    and <code>way_swayEmissionProjection</code>.
+  </footer>
+</div>
+
+<script src="/js/rpc.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const RPC = window.WayChainRPC;
+  const REFRESH_MS = 15000;
+
+  // BigInt-friendly number formatting.
+  function fmt(v) {
+    if (v === null || v === undefined) return '—';
+    if (typeof v === 'object' && v.toString) v = v.toString();
+    const n = Number(v);
+    if (!isFinite(n)) return String(v);
+    if (n >= 1e12) return (n / 1e12).toFixed(2) + 'T';
+    if (n >= 1e9)  return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6)  return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3)  return (n / 1e3).toFixed(2) + 'K';
+    return n.toLocaleString();
+  }
+  // WAY/SWAY values arrive wei-denominated (1e18 = 1 token). Strip 18 decimals.
+  function fmtToken(v) {
+    if (v === null || v === undefined) return '—';
+    const s = (typeof v === 'object' && v.toString) ? v.toString() : String(v);
+    try {
+      const wei = BigInt(s);
+      const whole = wei / 10n ** 18n;
+      const rem = wei % 10n ** 18n;
+      const frac = Number(rem) / 1e18;
+      const n = Number(whole) + frac;
+      if (n >= 1e9)  return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6)  return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3)  return (n / 1e3).toFixed(2) + 'K';
+      return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    } catch { return String(v); }
+  }
+
+  function setStatus(state, text) {
+    const dot = $('statusDot');
+    dot.className = 'dot' + (state === 'live' ? ' live' : state === 'err' ? ' err' : '');
+    $('statusText').textContent = text;
+  }
+
+  function setPhase(phase, label) {
+    const pill = $('phasePill');
+    const isExp = phase === 1;
+    pill.textContent = label || (isExp ? 'Expansion' : 'Consolidation');
+    pill.className = 'phase-pill ' + (isExp ? 'phase-expansion' : 'phase-consolidation');
+  }
+
+  async function refresh() {
+    try {
+      const [ind, pol, proj] = await Promise.all([
+        RPC.call('way_econoIndicators', []),
+        RPC.call('way_econoPolicy', []),
+        RPC.call('way_swayEmissionProjection', []),
+      ]);
+      if (!ind) throw new Error('empty indicators response');
+
+      $('gbp').textContent = fmtToken(ind.grossBlockchainProduct ?? ind.gbp);
+      $('gdp').textContent = fmtToken(ind.gdpEquivalent ?? ind.gdp);
+      $('employment').textContent = fmt(ind.employmentBps) + ' bps';
+      $('velocity').textContent = fmt(ind.velocityBps) + ' bps';
+      $('yieldSpread').textContent = fmt(ind.yieldSpreadBps) + ' bps';
+      $('mrt').textContent = fmt(ind.mrtClaimsVerified);
+
+      setPhase(pol.phase, pol.phaseLabel);
+      setStatus('live', 'Connected — ' + (pol.phaseLabel || (pol.phase === 1 ? 'Expansion' : 'Consolidation')));
+
+      $('swayProj').textContent = fmtToken(proj.projectedSwayPerYear) + ' / yr';
+      $('swaySub').textContent =
+        'proposed ' + (Number(proj.proposedPctBps) / 100) + '% of GBP · hard ceiling ' +
+        fmt(proj.hardCeiling) + ' · ' + (proj.note || 'read-only');
+
+      $('lastUpdate').textContent = new Date().toLocaleTimeString();
+      $('errBox').innerHTML = '';
+    } catch (e) {
+      setStatus('err', 'Node unreachable — ' + (e.message || e));
+      $('errBox').innerHTML =
+        '<div class="err-box">Could not reach the WayChain node at <code>api.waychain.org</code>. ' +
+        'The economy engine may not be deployed to the live node yet, or the RPC is down. ' +
+        'Details: ' + (e.message || e) + '</div>';
+    }
+  }
+
+  // Initial load + auto-refresh.
+  refresh();
+  setInterval(refresh, REFRESH_MS);
+})();
+</script>
+</body>
+</html>

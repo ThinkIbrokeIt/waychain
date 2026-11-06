@@ -1,0 +1,35 @@
+# Verdaccio (self-hosted npm registry) — community package mirror.
+# Step 3 of DECENTRALIZATION-DOCTRINE.md. So community members build WayChain
+# wallets/node without hitting npmjs.org. Staged: run on node, expose on
+# :4873 behind nginx; flip = point .npmrc / CI at http://<node>:4873.
+#
+# Run: docker run -d --name verdaccio -p 4873:4873 -v $PWD/storage:/verdaccio/storage verdaccio/verdaccio
+# or: npm install -g verdaccio && verdaccio --config ./verdaccio.yaml
+storage: ./storage
+auth:
+  htpasswd:
+    file: ./htpasswd
+    max_users: 100          # community members can self-register up to cap
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/   # proxy upstream until community mirror is warm
+packages:
+  '@*/*':
+    access: $all
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: npmjs
+  'waychain-*':
+    access: $all
+    publish: $authenticated
+    unpublish: $authenticated
+  '**':
+    access: $all
+    publish: $authenticated
+    unpublish: $authenticated
+    proxy: npmjs
+log:
+  type: stdout
+  format: pretty
+  level: warn
+listen: 0.0.0.0:4873

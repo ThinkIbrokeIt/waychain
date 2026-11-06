@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Actually Decentralized</title>
+<meta name="description" content="WayChain: The first blockchain where one human = one vote. 200 validators. Dox_Dev verified. No whale capture.">
+<style>
+:root {
+  --bg: #0a0a1a;
+  --bg2: #12122a;
+  --bg3: #1a1a3a;
+  --fg: #e0e0f0;
+  --fg2: #8888bb;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #7b2ff7;
+  --green: #00ff88;
+  --red: #ff3355;
+  --border: #2a2a5a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Courier New', monospace;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 80px 20px 40px;
+  border-bottom: 1px solid var(--border);
+}
+.hero h1 {
+  font-size: 3.5em;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+.hero .tagline {
+  color: var(--fg2);
+  font-size: 1.1em;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-top: 12px;
+}
+.hero .status-line {
+  margin-top: 20px;
+  font-size: 0.85em;
+}
+.hero .status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--fg2);
+}
+.hero .status-dot.online { background: var(--green); }
+.hero .status-dot.offline { background: var(--red); }
+
+/* Stats */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  padding: 30px 0;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+.stat-card .value {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--accent);
+}
+.stat-card .label {
+  font-size: 0.75em;
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 5px;
+}
+
+/* Features */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 30px 0;
+}
+.feature {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 25px;
+}
+.feature h3 {
+  color: var(--accent);
+  font-size: 1em;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+.feature p {
+  font-size: 0.85em;
+  color: var(--fg2);
+  line-height: 1.7;
+}
+.feature .badge {
+  display: inline-block;
+  font-size: 0.7em;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-top: 8px;
+  border: 1px solid var(--fg2);
+  color: var(--fg2);
+}
+
+/* Sections */
+.section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 20px 0;
+  padding: 20px;
+}
+.section h2 {
+  font-size: 1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Search */
+.search-box {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.search-box input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85em;
+}
+.search-box input:focus { outline: none; border-color: var(--accent); }
+.search-box button {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.8em;
+}
+.search-box button:hover { opacity: 0.9; }
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.8em; }
+th { color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; font-size: 0.7em; }
+.hash { color: var(--accent); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.green { color: var(--green); }
+.red { color: var(--red); }
+
+/* Log */
+#log {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 0.75em;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+#log div { padding: 2px 0; border-bottom: 1px solid rgba(42,42,90,0.3); }
+#log .ok { color: var(--green); }
+#log .err { color: var(--red); }
+#log .info { color: var(--fg2); }
+
+/* Docs */
+.doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.doc-link {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 18px;
+  font-size: 0.8em;
+  color: var(--fg);
+  transition: border-color 0.2s;
+}
+.doc-link:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--fg2);
+  font-size: 0.75em;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Hero -->
+  <div class="hero">
+    <h1>⬡ WayChain</h1>
+    <div class="tagline">Actually Decentralized</div>
+    <div class="status-line">
+      <span class="status-dot offline" id="statusDot"></span>
+      <span id="statusText">Checking network...</span>
+      <span style="color:var(--fg2);margin-left:15px">Chain ID: 369</span>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" id="stats">
+    <div class="stat-card"><div class="value" id="blockHeight">—</div><div class="label">Block Height</div></div>
+    <div class="stat-card"><div class="value" id="validators">200</div><div class="label">Validators</div></div>
+    <div class="stat-card"><div class="value" id="supply">100M</div><div class="label">WAY Supply</div></div>
+    <div class="stat-card"><div class="value" id="tps">1.0</div><div class="label">Blocks/sec</div></div>
+  </div>
+
+  <!-- Features -->
+  <div class="features">
+    <div class="feature">
+      <h3>One Human, One Vote</h3>
+      <p>Every Dox_Dev-verified human runs one validator with equal voting power. No whales. No vote buying. 200 badges = 200 validators.</p>
+      <span class="badge">200 max validators</span>
+    </div>
+    <div class="feature">
+      <h3>Self-Sovereign</h3>
+      <p>Bitcoin-backed stablecoin (1WAY). Native oracle attestations. Dead Man's Switch inheritance protocol. No wrapping, no bridging.</p>
+      <span class="badge">Native Bitcoin</span>
+    </div>
+    <div class="feature">
+      <h3>Anti-Extractive</h3>
+      <p>Fixed gas fees, state rent with 60% burn, sqrt-weighted proposer lottery, no MEV. The chain doesn't extract from its users.</p>
+      <span class="badge">No MEV</span>
+    </div>
+  </div>
+
+  <!-- Explorer -->
+  <div class="section">
+    <h2>⧫ Block Explorer</h2>
+    <div class="search-box">
+      <input id="addressInput" type="text" placeholder="Search by address (e.g. alice, treasury, validator-1)" value="alice">
+      <button onclick="lookupAddress()">Lookup</button>
+    </div>
+    <div id="accountDetails" style="font-size:0.85em;color:var(--fg2);margin-bottom:15px">Enter an address to see details</div>
+
+    <h3 style="font-size:0.8em;color:var(--fg2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Recent Blocks</h3>
+    <table>
+      <thead><tr><th>Height</th><th>Hash</th><th>Proposer</th><th>Txs</th></tr></thead>
+      <tbody id="blocksList"><tr><td colspan="4" style="color:var(--fg2)">Waiting for blocks...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Documentation -->
+  <div class="section">
+    <h2>📖 Documentation</h2>
+    <div class="doc-links">
+      <a class="doc-link" href="/docs">Developer Guide</a>
+      <a class="doc-link" href="/rpc">RPC API Reference</a>
+      <a class="doc-link" href="/whitepaper">Whitepaper</a>
+      <a class="doc-link" href="/doxdev">Dox_Dev Badge</a>
+      <a class="doc-link" href="/binary-journal">Binary Journal</a>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="section">
+    <h2>Activity Log</h2>
+    <div id="log">
+      <div class="info">WayChain explorer initialized</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  WayChain v0.1.0 — "Actually Decentralized"<br>
+  <span style="font-size:0.85em">One Human. One Voice.</span><br><br>
+  <a href="https://github.com/wink/waychain-consensus">GitHub</a> &middot;
+  <a href="#">Explorer</a> &middot;
+  <a href="#">Community</a>
+</div>
+
+<script>
+const RPC_URL = window.location.origin + '/rpc'; // Change to http://127.0.0.1:9545 for local
+
+function log(msg, cls = 'info') {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = cls;
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.prepend(div);
+}
+
+async function rpc(method, params = []) {
+  const resp = await fetch(RPC_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 })
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
+}
+
+function toNumber(hex) {
+  if (typeof hex === 'number') return hex;
+  const str = (hex || '0x0').startsWith('0x') ? hex.slice(2) : hex;
+  return parseInt(str, 16) || 0;
+}
+
+async function refreshStats() {
+  try {
+    const blockNum = await rpc('eth_blockNumber');
+    const height = toNumber(blockNum);
+
+    document.getElementById('blockHeight').textContent = height.toLocaleString();
+    document.getElementById('statusText').textContent = 'Connected';
+    document.getElementById('statusDot').className = 'status-dot online';
+    log(`Connected at block ${height}`, 'ok');
+  } catch(e) {
+    document.getElementById('statusText').textContent = 'Offline';
+    document.getElementById('statusDot').className = 'status-dot offline';
+  }
+}
+
+async function lookupAddress() {
+  const addr = document.getElementById('addressInput').value.trim();
+  if (!addr) return;
+
+  const details = document.getElementById('accountDetails');
+  details.innerHTML = '<span style="color:var(--fg2)">Querying...</span>';
+  log(`Looking up: ${addr}`);
+
+  try {
+    const balance = await rpc('eth_getBalance', [addr]);
+    const nonce = await rpc('eth_getTransactionCount', [addr]);
+    const level = await rpc('way_getDoxLevel', [addr]);
+
+    const balVal = toNumber(balance);
+    const nonceVal = toNumber(nonce);
+    const levelVal = toNumber(level);
+
+    details.innerHTML = `
+      <table>
+        <tr><th style="width:120px">Address</th><td class="hash">${addr}</td></tr>
+        <tr><th>Balance</th><td>${balVal.toLocaleString()} WAY</td></tr>
+        <tr><th>Nonce</th><td>${nonceVal}</td></tr>
+        <tr><th>Dox_Dev</th><td>${levelVal > 0 ? `<span class="green">Level ${levelVal}</span>` : '<span class="red">Not verified</span>'}</td></tr>
+      </table>
+    `;
+    log(`Found: ${balVal.toLocaleString()} WAY, Dox_Dev L${levelVal}`, 'ok');
+  } catch(e) {
+    details.innerHTML = `<span class="red">Error: ${e.message}</span>`;
+    log(`Lookup error: ${e.message}`, 'err');
+  }
+}
+
+async function fetchBlocks() {
+  try {
+    const blockNum = await rpc('eth_blockNumber');
+    const height = toNumber(blockNum);
+    if (height === 0) return;
+
+    const tbody = document.getElementById('blocksList');
+    let rows = '';
+    const start = Math.max(0, height - 9);
+    for (let i = height; i >= start; i--) {
+      const block = await rpc('eth_getBlockByNumber', [`0x${i.toString(16)}`]);
+      if (!block) continue;
+      const hash = block.hash ? block.hash.slice(0, 14) + '...' : '—';
+      rows += `<tr><td>${block.number}</td><td class="hash">${hash}</td><td>${block.proposer || '—'}</td><td>${block.transactions || 0}</td></tr>`;
+    }
+    tbody.innerHTML = rows || '<tr><td colspan="4" style="color:var(--fg2)">No blocks</td></tr>';
+  } catch(e) {
+    // Silent — explorer works when RPC is connected
+  }
+}
+
+// Auto-refresh
+refreshStats();
+setInterval(refreshStats, 15000);
+setInterval(fetchBlocks, 5000);
+setTimeout(fetchBlocks, 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain Explorer — Actually Decentralized</title>
+<meta name="description" content="WayChain block explorer — view real blocks, transactions, and accounts on WayChain.">
+<base href="/explorer/">
+<style>
+:root {
+  --bg: #2A2A2A; --bg2: #1E1E1E; --bg3: #333;
+  --fg: #E8E4DD; --fg2: #9A9A9A;
+  --accent: #B87333; --accent2: #ff6b35; --accent3: #FFBF00;
+  --green: #4CAF50; --red: #E53935; --yellow: #FFBF00;
+  --border: #3A3A3A;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--fg);
+  line-height: 1.8; font-size: 18px;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { font-family: 'Playfair Display', Georgia, serif; }
+
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
+}
+.header h1 { font-size: 1.2em; color: var(--accent); }
+.header .nav a {
+  font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-left: 20px; color: var(--fg2);
+}
+.header .nav a:hover { color: var(--accent); }
+.header-logo { display: flex; align-items: center; gap: 10px; }
+.header-logo-img { height: 40px; width: auto; display: block; }
+
+.stats-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; padding: 15px 0;
+}
+.stat {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 12px; text-align: center;
+}
+.stat .val { font-size: 1.3em; font-weight: 700; color: var(--accent); }
+.stat .lbl { font-size: 0.65em; color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
+.stat .val.green { color: var(--green); }
+
+.search-box { display: flex; gap: 8px; margin: 15px 0; }
+.search-box input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--border);
+  color: var(--fg); padding: 10px 14px; border-radius: 6px;
+  font-family: 'Inter', -apple-system, sans-serif; font-size: 0.85em;
+}
+.search-box input:focus { outline: none; border-color: var(--accent); }
+.search-box button {
+  background: var(--accent); color: var(--bg); border: none;
+  padding: 10px 20px; border-radius: 6px;
+  font-family: 'Inter', -apple-system, sans-serif; font-weight: 700; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 1px; font-size: 0.8em;
+}
+.search-box button:hover { opacity: 0.9; }
+
+.section {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; margin: 15px 0; padding: 15px;
+}
+.section h2 {
+  font-size: 0.9em; color: var(--accent); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.75em; }
+th { color: var(--fg2); text-transform: uppercase; letter-spacing: 1px; font-size: 0.65em; }
+tr:hover td { background: var(--bg3); }
+.hash { color: var(--accent); max-width: 200px; overflow: hidden; text-overflow: ellipsis; word-break: break-all; }
+.addr { color: var(--fg2); word-break: break-all; }
+.hash.clickable { cursor: pointer; }
+.hash.clickable:hover { text-decoration: underline; }
+.addr.clickable { cursor: pointer; }
+.addr.clickable:hover { text-decoration: underline; color: var(--accent3); }
+.green { color: var(--green); }
+.red { color: var(--red); }
+.yellow { color: var(--yellow); }
+
+.detail { font-size: 0.8em; }
+.detail .row { display: flex; padding: 6px 0; border-bottom: 1px solid rgba(58,58,58,0.3); }
+.detail .label { width: 140px; color: var(--fg2); flex-shrink: 0; }
+.detail .value { flex: 1; word-break: break-all; }
+.detail .hash-value { color: var(--accent); }
+
+#log {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px; font-size: 0.7em; max-height: 120px; overflow-y: auto; margin-top: 10px;
+}
+#log div { padding: 2px 0; border-bottom: 1px solid rgba(58,58,58,0.1); }
+#log .ok { color: var(--green); }
+#log .err { color: var(--red); }
+#log .info { color: var(--fg2); }
+
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.online { background: var(--green); }
+.status-dot.offline { background: var(--red); }
+
+.footer {
+  text-align: center; padding: 30px 20px; color: var(--fg2);
+  font-size: 0.7em; border-top: 1px solid var(--border); margin-top: 30px;
+}
+
+@media (max-width: 768px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .header { flex-direction: column; align-items: flex-start; }
+  .header .nav a { margin-left: 0; margin-right: 15px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-logo">
+      <img src="/assets/waylogo.png" alt="WayChain" class="header-logo-img">
+      <h1>⬡ WayChain Explorer</h1>
+    </div>
+    <div class="nav">
+      <span><span class="status-dot offline" id="statusDot"></span><span id="statusText">Connecting…</span></span>
+      <a href="https://waychain.org">Dashboard</a>
+      <a href="/explorer/#tokens" onclick="showTokens()">Tokens</a>
+      <a href="/badge">Badge</a>
+    </div>
+  </div>
+
+  <!-- Real stats only — sourced from /api/stats. No hardcoded validators/chainId
+       (those need a validator-set snapshot + node constant; tracked in #28). -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><div class="val" id="statBlocks">—</div><div class="lbl">Block Height</div></div>
+    <div class="stat"><div class="val green" id="statTxs">—</div><div class="lbl">Transactions</div></div>
+    <div class="stat"><div class="val" id="statAddrs">—</div><div class="lbl">Addresses</div></div>
+    <div class="stat"><div class="val" id="statPending">—</div><div class="lbl">Pending</div></div>
+  </div>
+
+  <div class="search-box">
+    <input id="searchInput" type="text" placeholder="Search by block number, address, or tx hash…">
+    <button id="searchBtn">Search</button>
+    <button id="clearBtn" style="background:var(--bg3);color:var(--fg2)">Clear</button>
+  </div>
+
+  <div id="detailView" class="section" style="display:none">
+    <h2 id="detailTitle">Detail</h2>
+    <div id="detailContent"></div>
+  </div>
+
+  <div class="section" id="blocksSection">
+    <h2>⧫ Latest Blocks</h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Height</th><th>Hash</th><th>Proposer</th><th>Txs</th><th>Time</th>
+        </tr></thead>
+        <tbody id="blocksTable"><tr><td colspan="5" style="color:var(--fg2);text-align:center">Loading blocks…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="logsSection">
+    <h2>⧫ Event Logs</h2>
+    <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">Real EVM logs (precompile + time-task) indexed from the node. Filter by contract address and/or topic0.</p>
+    <div class="search-box" style="margin:8px 0">
+      <input id="logAddr" type="text" placeholder="Contract address (0x…)">
+      <input id="logTopic" type="text" placeholder="topic0 (0x…)">
+      <input id="logFrom" type="text" placeholder="from block" style="max-width:110px">
+      <input id="logTo" type="text" placeholder="to block" style="max-width:110px">
+      <button id="logSearchBtn">Filter</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Address</th><th>Topics</th><th>Data</th><th>Block</th><th>Tx</th>
+        </tr></thead>
+        <tbody id="logsTable"><tr><td colspan="5" style="color:var(--fg2);text-align:center">Loading logs…</td></tr></tbody>
+      </table>
+    </div>
+    <div style="margin-top:8px;font-size:.7em">
+      <button id="logPrev" onclick="logPrev()" style="background:var(--bg3);color:var(--fg2);border:none;padding:4px 10px;border-radius:4px;cursor:pointer">← Prev</button>
+      <span id="logPageLabel" style="margin:0 10px;color:var(--fg2)">Page 1</span>
+      <button id="logMore" onclick="logNext()" style="background:var(--accent);color:var(--bg);border:none;padding:4px 10px;border-radius:4px;cursor:pointer;display:none">Next →</button>
+    </div>
+  </div>
+
+  <div class="section" id="precompileSection">
+    <h2>⬡ Precompiles <span id="precompileCount" style="color:var(--fg2);font-weight:400"></span></h2>
+    <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">WayChain's 27 protocol precompiles (source of truth: protocol-manifest.json). Click for live on-chain state via node way_* reads.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Address</th><th>Name</th></tr></thead>
+        <tbody id="precompileTable"><tr><td colspan="2" style="color:var(--fg2);text-align:center">Loading precompiles…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="tokensSection" style="display:none">
+    <h2>🪙 Tokens <span id="tokenCount" style="color:var(--fg2);font-weight:400"></span></h2>
+    <p style="font-size:.7em;color:var(--fg2);margin-bottom:8px">Protocol tokens (1WAY / SWAY / BIJO). 1WAY total supply is live from the node; SWAY/BIJO supply is not yet exposed via a node read (shown as —, never fabricated). Click a token's address to open its precompile panel.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Symbol</th><th>Name</th><th>Address</th><th>Total Supply</th><th>Purpose</th></tr></thead>
+        <tbody id="tokenTable"><tr><td colspan="5" style="color:var(--fg2);text-align:center">Loading tokens…</td></tr></tbody>
+      </table>
+    </div>
+    <p style="margin-top:10px"><a href="#" onclick="hideTokens();return false;" style="color:var(--accent)">← Back to explorer</a></p>
+  </div>
+
+  <div class="section" id="activitySection">
+    <h2>Activity</h2>
+    <div id="log"><div class="info">Explorer initialized</div></div>
+  </div>
+</div>
+
+<div class="footer">
+  WayChain — "Actually Decentralized"<br>
+  <a href="https://waychain.org">waychain.org</a> · Explorer · data via explorer API
+</div>
+
+<!-- Public explorer API (CORS open). Override with ?api= for local dev.
+     Set explicitly so the deployed frontend works regardless of Vercel
+     rewrite config (see issue #41 re: waychain-site vs monorepo site/). -->
+<script>window.EXPLORER_API_BASE = 'https://api.waychain.org/api';</script>
+<script src="app.js"></script>
+</body>
+</html>

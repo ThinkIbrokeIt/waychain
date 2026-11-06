@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gauntlet Pool Verification — Immutable Proof</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; --blue:#2196F3; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
+.container { max-width: 700px; margin: 0 auto; }
+.pool { background: #1e1e1e; border: 1px solid var(--copper); border-radius: 8px; padding: 20px; margin: 15px 0; }
+.pool h3 { color: var(--amber); margin-bottom: 10px; }
+.pool .amount { color: var(--green); font-weight: 600; font-size: 1.2em; }
+.code { background: #1a1a1a; border: 1px solid var(--blue); border-radius: 4px; padding: 15px; font-family: monospace; font-size: 12px; color: #9A9A9A; margin-top: 10px; }
+.btn { background: var(--copper); color: var(--slate); border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 10px; display: inline-block; text-decoration: none; }
+.badge { background: var(--amber); color: var(--slate); padding: 2px 8px; border-radius: 3px; font-size: 11px; margin-left: 8px; }
+.note { color: #9A9A9A; font-size: 12px; margin-top: 5px; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <h2 style="text-align:center;color:var(--amber);margin-bottom:20px">🔐 WIFR Gauntlet Reward Pools</h2>
+
+  <div style="text-align:center;margin-bottom:20px">
+    <p style="font-size:14px">Reward pools are resolved by the live WayChain runtime. Check RPC for current state before assuming totals are static.</p>
+  </div>
+
+  <div class="pool">
+    <h3>Main Pool <span class="badge">1,000,000 WAY</span></h3>
+    <div class="amount">Pioneer (50) + Specialist (200) + Oracle Pro (1,000/5,000)</div>
+    <p class="note">Funds distributed as users complete certification tiers.</p>
+    <div class="code">// Source: WayChain precompile 0x21 (WIFRGantletRewards) • Immutable upon initialization<br>// Viewable on WayChain explorer</div>
+  </div>
+
+  <div class="pool">
+    <h3>Early Worm Bonus <span class="badge">100,000 WAY</span></h3>
+    <div class="amount">2x multiplier for first 10,000 Pioneer completers</div>
+    <p class="note">Separate from main pool to guarantee base rewards for all.</p>
+    <div class="code">// Claimed automatically on first Pioneer completion<br>
+// Prevents early participants from depleting main pool</div>
+  </div>
+
+  <div class="pool">
+    <h3>Grandmaster Prize <span class="badge">100,000 WAY</span></h3>
+    <div class="amount">5,000 WAY each for first 20 Oracle Professionals</div>
+    <p class="note">Race mechanics: 24-hour uptime requirement prevents bot spam.</p>
+    <div class="code">// Rank determined by earliest Tier 3 completion<br>
+// Leaderboard tracks: 13/20 slots filled</div>
+  </div>
+
+  <div style="text-align:center;margin-top:30px">
+    <a href="/gauntlet" class="btn">Enter Gauntlet</a>
+    <a href="/gauntlet/leaderboard" class="btn" style="background:transparent;border:1px solid var(--copper)">View Leaderboard</a>
+  </div>
+
+  <p style="text-align:center;margin-top:20px;font-size:12px;color:#9A9A9A">
+    Source: WayChain live runtime; legacy Solidity reference remains in contracts repo
+  </p>
+</div>
+</body>
+</html>

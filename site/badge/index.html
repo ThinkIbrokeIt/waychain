@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Dox_Dev Badge System</title>
+<link rel="icon" type="image/png" href="/assets/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:18px}
+h1,h2,h3,h4{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);text-decoration:none;transition:color .2s}
+a:hover{color:var(--warm)}
+
+.nav{position:sticky;top:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:12px 24px;background:rgba(42,42,42,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.nav-logo-text{font-family:'Playfair Display',Georgia,serif;font-size:1.2em;color:var(--warm);letter-spacing:1px}
+.nav-logo-text span{color:var(--copper)}
+.nav-links{display:flex;gap:4px}
+.nav-links a{font-size:.65em;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding:5px 8px;color:var(--muted);border-radius:4px;transition:all .2s}
+.nav-links a:hover{color:var(--warm);background:var(--slate2)}
+.nav-links a.active{color:var(--slate);background:var(--copper)}
+
+.container{max-width:700px;margin:0 auto;padding:0 24px}
+
+.hero{text-align:center;padding:80px 24px 60px;background:linear-gradient(180deg,#1a1a2e 0%,var(--slate) 100%)}
+.hero h1{font-size:2.8em;color:var(--warm);line-height:1.1;margin-bottom:8px;letter-spacing:2px}
+.hero .tagline{font-size:.8em;color:var(--copper);letter-spacing:4px;text-transform:uppercase;margin-bottom:12px}
+.hero .divider{width:50px;height:1px;background:var(--copper);margin:0 auto 16px}
+.hero p{color:var(--muted);font-size:.9em;max-width:500px;margin:0 auto}
+
+.card{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:24px;margin:20px 0}
+.card h3{color:var(--copper);font-size:1em;margin-bottom:12px;font-family:'Inter',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+
+.input-group{display:flex;gap:8px}
+.input-group input{flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px 16px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.input-group input:focus{border-color:var(--copper)}
+.input-group input::placeholder{color:var(--muted)}
+.input-group button{background:var(--copper);color:var(--warm);font-weight:700;padding:12px 24px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;transition:background .2s;white-space:nowrap;font-family:'Inter',sans-serif}
+.input-group button:hover{background:#a0642a}
+.input-group button:disabled{opacity:.5;cursor:not-allowed}
+
+.result-card{background:var(--slate3);border:1px solid var(--border);border-radius:8px;padding:20px;margin:16px 0;display:none}
+.result-card.visible{display:block}
+.result-card .addr{font-family:'SF Mono',Menlo,monospace;font-size:.78em;color:var(--muted);word-break:break-all}
+.result-card .level{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:8px 0}
+.level-0{background:var(--slate3);color:var(--muted)}
+.level-1{background:rgba(184,115,51,.2);color:var(--copper);border:1px solid var(--copper)}
+.level-2{background:rgba(255,191,0,.15);color:var(--amber);border:1px solid var(--amber)}
+.level-3{background:rgba(184,115,51,.25);color:var(--warm);border:1px solid var(--copper)}
+
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}
+.level-box{text-align:center;padding:20px 12px;background:var(--slate2);border-radius:8px;border-top:3px solid var(--border)}
+.level-box.l1{border-top-color:var(--copper)}
+.level-box.l2{border-top-color:var(--amber)}
+.level-box.l3{border-top-color:var(--copper)}
+.level-box .icon{font-size:1.8em;margin-bottom:6px}
+.level-box h4{font-size:.9em;color:var(--warm);margin-bottom:4px}
+.level-box .sub{font-size:.7em;color:var(--muted);margin-bottom:8px}
+.level-box .perms{font-size:.72em;color:var(--fg);line-height:1.6}
+.level-box .perms span{display:block}
+
+.btn{display:inline-block;background:var(--copper);color:var(--warm);font-weight:700;padding:12px 28px;border:none;border-radius:6px;font-size:.85em;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn:hover{background:#a0642a;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--fg)}
+.btn-outline:hover{background:var(--slate3);border-color:var(--copper);color:var(--copper)}
+.btn-sm{padding:8px 16px;font-size:.75em}
+
+.status-msg{padding:12px 16px;border-radius:6px;margin:12px 0;font-size:.82em;display:none}
+.status-msg.error{display:block;background:rgba(229,57,53,.12);border:1px solid var(--red);color:var(--red)}
+.status-msg.success{display:block;background:rgba(76,175,80,.12);border:1px solid var(--green);color:var(--green)}
+.status-msg.info{display:block;background:rgba(184,115,51,.1);border:1px solid var(--copper);color:var(--copper)}
+
+.tab-bar{display:flex;gap:0;margin:24px 0;border-bottom:1px solid var(--border)}
+.tab{flex:1;padding:12px;text-align:center;font-size:.78em;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.tab:hover{color:var(--fg)}
+.tab.active{color:var(--copper);border-bottom-color:var(--copper)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+.app-table{width:100%;border-collapse:collapse;font-size:.82em}
+.app-table th{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);color:var(--copper);font-weight:600}
+.app-table td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.app-table .pending{color:var(--amber)}
+.app-table .verified{color:var(--green)}
+.app-table .rejected{color:var(--red)}
+
+.footer{text-align:center;padding:40px 24px;color:var(--muted);font-size:.72em;border-top:1px solid var(--border);margin-top:40px}
+
+@media(max-width:768px){.level-grid{grid-template-columns:1fr}.nav-links{display:none}.hero h1{font-size:2em}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo-text">WAYCHAIN <span>⛓</span></div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/docs">Get Started</a>
+    <a href="/explorer">Explorer</a>
+    <a href="/badge" class="active">Badge</a>
+    <a href="/whitepaper">Whitepaper</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Dox_Dev Badge</h1>
+  <p class="tagline">The Lantern · The Compass · The Lighthouse</p>
+  <div class="divider"></div>
+  <p>WayChain's identity system. Three levels of verified humanity. No passport needed. No permission required. No king to ask.</p>
+</div>
+
+<div class="container">
+
+<div class="level-grid">
+  <div class="level-box l1">
+    <div class="icon">⬡</div>
+    <h4>The Lantern</h4>
+    <div class="sub">Level I — Verified Human</div>
+    <div class="perms"><span>✅ Class A contracts</span><span>✅ Oracle monitoring</span><span>✅ Basic governance</span></div>
+  </div>
+  <div class="level-box l2">
+    <div class="icon">⬡</div>
+    <h4>The Compass</h4>
+    <div class="sub">Level II — Verified Builder</div>
+    <div class="perms"><span>✅ Class B contracts</span><span>✅ Validator seat</span><span>✅ Oracle attestation</span><span>✅ Professional badges</span></div>
+  </div>
+  <div class="level-box l3">
+    <div class="icon">⬡</div>
+    <h4>The Lighthouse</h4>
+    <div class="sub">Level III — Elected Curator</div>
+    <div class="perms"><span>✅ Issue badges</span><span>✅ Governance proposals</span><span>✅ Emergency controls</span><span>✅ Community vote</span></div>
+  </div>
+</div>
+
+<div style="text-align:center;margin:20px 0">
+  <img src="/assets/badges.png" alt="Dox_Dev Badge NFTs" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.3)">
+</div>
+
+<div class="card">
+  <h3>Look Up an Address</h3>
+  <div class="input-group">
+    <input type="text" id="addrInput" placeholder="Enter a WayChain address (0x...)" onkeydown="if(event.key==='Enter')lookupBadge()">
+    <button onclick="lookupBadge()" id="lookupBtn">Look Up</button>
+  </div>
+  <div id="statusMsg" class="status-msg"></div>
+  <div id="resultCard" class="result-card">
+    <div class="addr" id="resultAddr"></div>
+    <div><span class="level" id="resultLevel"></span></div>
+    <div style="font-size:.82em;color:var(--muted)" id="resultDesc"></div>
+    <div style="margin-top:12px" id="actionArea"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Badge System</h3>
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('apply',this)">Apply</div>
+    <div class="tab" onclick="switchTab('curator',this)">Curator View</div>
+    <div class="tab" onclick="switchTab('info',this)">How It Works</div>
+  </div>
+
+  <div id="tab-apply" class="tab-content active">
+    <p style="font-size:.85em;color:var(--muted);margin-bottom:16px">To apply for a Dox_Dev badge or professional oracle badge, enter your WayChain address and submit.</p>
+    <div class="input-group" style="margin-bottom:12px">
+      <input type="text" id="applyAddr" placeholder="Your WayChain address (0x...)" style="flex:1">
+    </div>
+    <div class="input-group" style="margin-bottom:12px">
+      <select id="applyProfession" style="flex:1;background:var(--slate3);border:1px solid var(--border);color:var(--fg);padding:12px 16px;border-radius:6px;font-size:.85em;font-family:'Inter',sans-serif;outline:none">
+        <option value="">— Select profession —</option>
+        <option value="geologist">Geologist (Level 1 badge)</option>
+        <option value="lawyer">Lawyer (Level 1 badge)</option>
+        <option value="surveyor">Surveyor (Level 1 badge)</option>
+        <option value="engineer">Engineer (Level 1 badge)</option>
+      </select>
+    </div>
+    <button class="btn" onclick="submitApplication()" id="submitBtn">Submit Application</button>
+    <div id="applyStatus" class="status-msg"></div>
+  </div>
+
+  <div id="tab-curator" class="tab-content">
+    <p style="font-size:.85em;color:var(--muted);margin-bottom:16px">Curator dashboard. Only Level 3 badge holders can approve applications. Enter your curator address to view pending requests.</p>
+    <div class="input-group" style="margin-bottom:12px">
+      <input type="text" id="curatorAddr" placeholder="Your curator address (0x...)" style="flex:1">
+      <button class="btn btn-sm" onclick="loadPending()">Load</button>
+    </div>
+    <div id="pendingList" style="font-size:.85em;color:var(--muted)">Enter a curator address to see pending applications.</div>
+    <div id="curatorStatus" class="status-msg"></div>
+  </div>
+
+  <div id="tab-info" class="tab-content">
+    <div style="font-size:.85em;line-height:1.8">
+      <p><strong>The Lantern (Level I):</strong> Proof you are a unique human. Verified through a curator or existing Level 3 holder. Grants access to Class A contracts, oracle monitoring, and basic governance.</p>
+      <p style="margin-top:12px"><strong>The Compass (Level II):</strong> Verified builder. Requires Level 1 + bonding period. Grants access to Class B contracts, validator seats, and professional oracle badges.</p>
+      <p style="margin-top:12px"><strong>The Lighthouse (Level III):</strong> Elected curator. Community vote every 90 days. Can issue badges, manage deployment classes, and access emergency controls.</p>
+      <p style="margin-top:16px;color:var(--copper)"><strong>Identity is encrypted.</strong> Disclosure only on verified legal request with on-chain approval via community vote.</p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p style="font-style:italic;color:var(--copper);font-size:.9em">"The light doesn't push. It shows."</p>
+  <p style="margin-top:8px">WayChain — Actually Decentralized. Chain ID 10008.</p>
+</div>
+
+<script>
+const RPC = 'https://api.waychain.org';
+
+async function rpcCall(method, params) {
+  const resp = await fetch(RPC, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({jsonrpc:'2.0', method, params, id:1})
+  });
+  const data = await resp.json();
+  if (data.error) throw new Error(data.error.message);
+  return data.result;
+}
+
+function showStatus(el, msg, type) {
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+}
+
+async function lookupBadge() {
+  const addr = document.getElementById('addrInput').value.trim();
+  const msg = document.getElementById('statusMsg');
+  const result = document.getElementById('resultCard');
+  if (!addr) { showStatus(msg, 'Enter an address', 'error'); return; }
+  
+  msg.className = 'status-msg';
+  document.getElementById('lookupBtn').disabled = true;
+  
+  try {
+    const levelHex = await rpcCall('way_getDoxLevel', [addr]);
+    const level = parseInt(levelHex, 16);
+    
+    document.getElementById('resultAddr').textContent = addr;
+    const el = document.getElementById('resultLevel');
+    const desc = document.getElementById('resultDesc');
+    const action = document.getElementById('actionArea');
+    
+    const levels = ['No Badge', 'Level I — The Lantern', 'Level II — The Compass', 'Level III — The Lighthouse'];
+    const descs = [
+      'This address has no Dox_Dev badge. Apply for Level I to begin.',
+      'Verified human. Can deploy Class A contracts and participate in governance.',
+      'Verified builder. Can deploy Class B contracts, run a validator, and earn professional oracle badges.',
+      'Elected curator. Can issue badges, manage deployment classes, and submit governance proposals.'
+    ];
+    
+    el.textContent = levels[level] || 'Unknown';
+    el.className = 'level level-' + level;
+    desc.textContent = descs[level] || '';
+    
+    if (level === 0) {
+      action.innerHTML = '<button class="btn btn-sm" onclick="switchTab(\'apply\',document.querySelectorAll(\'.tab\')[0])">Apply for Badge →</button>';
+    } else if (level === 3) {
+      action.innerHTML = '<button class="btn btn-sm btn-outline" onclick="switchTab(\'curator\',document.querySelectorAll(\'.tab\')[1])">Curator Dashboard →</button>';
+    } else {
+      action.innerHTML = '';
+    }
+    
+    result.className = 'result-card visible';
+    showStatus(msg, '', '');
+  } catch(e) {
+    showStatus(msg, 'Error: ' + e.message, 'error');
+  } finally {
+    document.getElementById('lookupBtn').disabled = false;
+  }
+}
+
+async function submitApplication() {
+  const addr = document.getElementById('applyAddr').value.trim();
+  const profession = document.getElementById('applyProfession').value;
+  const status = document.getElementById('applyStatus');
+  
+  if (!addr) { showStatus(status, 'Enter your address', 'error'); return; }
+  if (!profession) { showStatus(status, 'Select a profession', 'error'); return; }
+  
+  document.getElementById('submitBtn').disabled = true;
+  showStatus(status, 'Submitting application...', 'info');
+  
+  try {
+    const result = await rpcCall('way_applyBadge', [addr, profession]);
+    showStatus(status, '✅ Application submitted! A curator will review your request.', 'success');
+  } catch(e) {
+    if (e.message.includes('not verified') || e.message.includes('Dox_Dev 2+')) {
+      showStatus(status, '⚠️ You need Dox_Dev Level 2+ to apply for a professional badge. Start with Level I verification.', 'error');
+    } else {
+      showStatus(status, 'Error: ' + e.message, 'error');
+    }
+  } finally {
+    document.getElementById('submitBtn').disabled = false;
+  }
+}
+
+async function loadPending() {
+  const addr = document.getElementById('curatorAddr').value.trim();
+  const list = document.getElementById('pendingList');
+  const status = document.getElementById('curatorStatus');
+  
+  if (!addr) { showStatus(status, 'Enter your curator address', 'error'); return; }
+  
+  showStatus(status, 'Loading...', 'info');
+  
+  try {
+    const apps = await rpcCall('way_getPendingApplications', []);
+    if (!apps || apps.length === 0) {
+      list.innerHTML = '<p style="color:var(--muted)">No pending applications.</p>';
+      showStatus(status, '', '');
+      return;
+    }
+    
+    let html = '<table class="app-table"><tr><th>Address</th><th>Profession</th><th>Status</th><th>Action</th></tr>';
+    for (const app of apps) {
+      const statusClass = app.status === 'pending' ? 'pending' : app.status === 'verified' ? 'verified' : 'rejected';
+      html += `<tr>
+        <td style="font-family:monospace;font-size:.85em">${app.address.slice(0,10)}...</td>
+        <td>${app.profession}</td>
+        <td class="${statusClass}">${app.status}</td>
+        <td>${app.status === 'pending' ? `<button class="btn btn-sm" onclick="approveBadge('${addr}','${app.address}','${app.profession}')">✓ Approve</button>` : '—'}</td>
+      </tr>`;
+    }
+    html += '</table>';
+    list.innerHTML = html;
+    showStatus(status, '', '');
+  } catch(e) {
+    showStatus(status, 'Error: ' + e.message, 'error');
+  }
+}
+
+async function approveBadge(curator, applicant, profession) {
+  const status = document.getElementById('curatorStatus');
+  showStatus(status, 'Approving...', 'info');
+  try {
+    const result = await rpcCall('way_approveBadge', [curator, applicant, profession]);
+    showStatus(status, '✅ Badge approved!', 'success');
+    loadPending();
+  } catch(e) {
+    showStatus(status, 'Error: ' + e.message, 'error');
+  }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+</script>
+
+</body>
+</html>

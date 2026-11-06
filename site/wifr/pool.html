@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIFR Pool Verification — 1M WAY Locked</title>
+<style>
+:root { --warm:#FFF8F0; --slate:#2A2A2A; --copper:#B87333; --amber:#FFBF00; --green:#4CAF50; }
+* { margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+body { background: var(--slate); color: var(--warm); padding: 40px 20px; }
+.container { max-width: 700px; margin: 0 auto; }
+.pool-status { 
+  background: #1e1e1e; 
+  border: 2px solid var(--amber); 
+  border-radius: 8px; 
+  padding: 25px; 
+  margin: 20px 0;
+  text-align: center;
+}
+.pool-status .amount { 
+  font-size: 2.5em; 
+  color: var(--green); 
+  font-weight: 700; 
+}
+.code-block { 
+  background: #0a0a0a; 
+  border: 1px solid var(--copper); 
+  border-radius: 6px; 
+  padding: 15px; 
+  font-family: monospace; 
+  font-size: 14px; 
+  margin: 15px 0;
+}
+.btn { 
+  background: var(--copper); 
+  color: var(--slate); 
+  border: none; 
+  padding: 12px 24px; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-weight: 600;
+  margin: 10px 0;
+  display: inline-block;
+}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+  <h1>WIFR Pool Verification</h1>
+  
+  <div class="pool-status">
+    <div class="amount">1,000,000 WAY</div>
+    <div style="color:var(--copper);margin-top:10px">Publicly Locked & Verifiable</div>
+    <div style="font-size:12px;color:#9A9A9A;margin-top:10px">Immutable contract - no withdrawal keys</div>
+  </div>
+  
+  <h2>Pool Address</h2>
+  <div class="code-block">0x0000000000000000000000000000000000000021<br>(WayChain Precompile • WIFRGantletRewards)</div>
+  
+  <h2>Verification</h2>
+  <p>Check on WayChain explorer:</p>
+  <ol>
+    <li>Contract shows 1,000,000 WAY balance</li>
+    <li>No owner/withdraw functions</li>
+    <li>Immutability verified via precompile (0x13)</li>
+  </ol>
+  
+  <h2>Backed Ratio</h2>
+  <p>1,000 WIFR = 1 WAY</p>
+  <p style="color:var(--amber)">Pool values are resolved by the live WayChain runtime. Verify current state on RPC before treating totals as static.</p>
+  
+  <a href="/wifr/bridge" class="btn">Burn WIFR & Claim</a>
+</div>
+</body>
+</html>

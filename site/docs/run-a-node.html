@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WayChain — Run a Node</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--warm:#FFF8F0;--slate:#2A2A2A;--slate2:#1E1E1E;--slate3:#333;--fg:#E8E4DD;--muted:#9A9A9A;--copper:#B87333;--amber:#FFBF00;--green:#4CAF50;--red:#E53935;--border:#3A3A3A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--slate);color:var(--fg);line-height:1.8;font-size:18px;max-width:700px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:'Playfair Display',Georgia,serif}
+a{color:var(--copper);transition:color .2s}
+a:hover{color:var(--warm)}
+p{margin-bottom:16px}
+
+.nav{position:sticky;top:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:16px 0;background:var(--slate);border-bottom:1px solid var(--border);margin-bottom:40px}
+.nav-logo{font-family:'Playfair Display',Georgia,serif;font-size:1.1em;color:var(--warm);letter-spacing:1px}
+.nav-logo span{color:var(--copper)}
+.nav-links{display:flex;gap:16px}
+.nav-links a{font-size:.7em;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+.nav-links a:hover{color:var(--warm)}
+
+h1{font-size:2.2em;color:var(--warm);margin-bottom:8px}
+h2{font-size:1.5em;color:var(--copper);margin:32px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+h3{font-size:1.1em;color:var(--warm);margin:24px 0 8px}
+
+code{background:var(--slate2);padding:2px 8px;border-radius:4px;font-size:.85em;color:var(--copper)}
+pre{background:var(--slate2);padding:18px;border-radius:6px;overflow-x:auto;margin:16px 0;border:1px solid var(--border);font-size:.85em}
+pre code{background:none;padding:0}
+hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+
+.info-box{background:var(--slate2);border:1px solid var(--border);border-radius:8px;padding:20px;margin:16px 0}
+.info-box h4{color:var(--copper);margin-bottom:8px;font-family:'Playfair Display',Georgia,serif}
+
+.step{display:flex;gap:16px;margin:20px 0;align-items:flex-start}
+.step-num{background:var(--copper);color:var(--warm);min-width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85em;flex-shrink:0}
+.step-content{flex:1}
+
+table{width:100%;border-collapse:collapse;margin:16px 0}
+th{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--copper)}
+td{padding:8px 12px;border-bottom:1px solid var(--border)}
+
+.footer{text-align:center;padding:40px 0;color:var(--muted);font-size:.75em;border-top:1px solid var(--border);margin-top:40px}
+
+@media(max-width:768px){body{padding:0 16px;font-size:16px;line-height:2.0}h1{font-size:1.8em}h2{font-size:1.3em}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-logo"><span>⬡</span> WayChain</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/docs">Docs</a>
+    <a href="/whitepaper">Whitepaper</a>
+  </div>
+</div>
+
+<h1>Run a WayChain Node</h1>
+<p>WayChain is built in Go. A full node runs the daemon with embedded EVM, P2P networking, and JSON-RPC server. Minimum requirements are modest — a 2-core VPS with 4GB RAM and 10GB SSD is sufficient.</p>
+
+<hr>
+
+<h2>System Requirements</h2>
+
+<table>
+  <tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr>
+  <tr><td>CPU</td><td>2 cores</td><td>4 cores</td></tr>
+  <tr><td>RAM</td><td>2 GB</td><td>8 GB</td></tr>
+  <tr><td>Storage</td><td>5 GB SSD</td><td>20 GB SSD</td></tr>
+  <tr><td>OS</td><td>Linux (Ubuntu 22.04+)</td><td>Ubuntu 24.04</td></tr>
+  <tr><td>Go</td><td>1.23+</td><td>1.26</td></tr>
+  <tr><td>Network</td><td>Broadband</td><td>Static IP or Cloudflare Tunnel</td></tr>
+</table>
+
+<div class="info-box">
+  <h4>What a Node Does</h4>
+  <p>The WayChain daemon runs all four layers: <strong>BFT consensus</strong> (block production + finality), <strong>EVM execution</strong> (smart contracts + precompiles), <strong>P2P networking</strong> (block/tx gossip), and <strong>JSON-RPC server</strong> (HTTP + WebSocket). BoltDB handles persistent state.</p>
+</div>
+
+<hr>
+
+<h2>Installation</h2>
+
+<div class="step">
+  <div class="step-num">1</div>
+  <div class="step-content">
+    <h3>Install Go</h3>
+    <pre><code>wget https://go.dev/dl/go1.26.4.linux-amd64.tar.gz
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf go1.26.4.linux-amd64.tar.gz
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+source ~/.bashrc
+go version</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">2</div>
+  <div class="step-content">
+    <h3>Clone & Build</h3>
+    <pre><code>git clone https://github.com/ThinkIbrokeIt/waychain
+cd waychain/consensus
+go build .
+# Produces 'waychain-consensus' binary (or 'waychain' via go build -o waychain)</code></pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">3</div>
+  <div class="step-content">
+    <h3>Start the Daemon</h3>
+    <pre><code># Development mode (ephemeral state)
+WAYCHAIN_DEVNET=1 ./waychain-consensus
+
+# Production mode (persistent state at ~/.waychain/chain.db)
+./waychain-consensus</code></pre>
+    <p>The daemon starts the RPC server on <code>:9545</code> and P2P on <code>:9100</code>. Blocks begin producing immediately at 1 per second.</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="step-num">4</div>
+  <div class="step-content">
+    <h3>Verify It's Running</h3>
+    <pre><code># Check chain ID
+curl -s -X POST http://localhost:9545 \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","id":1}'
+
+# Should return: {"jsonrpc":"2.0","result":"0x2718","id":1}
+
+# Check latest block
+curl -s -X POST http://localhost:9545 \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","id":1}'</code></pre>
+  </div>
+</div>
+
+<hr>
+
+<h2>Systemd Service (Production)</h2>
+
+<p>For persistent operation, set up a systemd service:</p>
+
+<pre><code>sudo tee /etc/systemd/system/waychain.service &lt;&lt; 'EOF'
+[Unit]
+Description=WayChain Node
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USER
+WorkingDirectory=/home/YOUR_USER/waychain/consensus
+ExecStart=/home/YOUR_USER/waychain/consensus/waychain-consensus
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now waychain
+sudo journalctl -u waychain -f --no-pager</code></pre>
+
+<hr>
+
+<h2>Joining the Network</h2>
+
+<div class="info-box">
+  <h4>Current Network Status</h4>
+  <p>WayChain currently runs 3 validators on the devnet. P2P peer discovery is active — new nodes automatically connect to the mesh. The validator set is expandable to 200 seats via governance.</p>
+</div>
+
+<p>To join as a validator, you need:</p>
+<ul>
+  <li><strong>Dox_Dev Level 2+</strong> — verified human identity (badges available via curator application)</li>
+  <li><strong>32,000+ WAY</strong> — validator stake requirement</li>
+  <li><strong>A running full node</strong> — steps 1-4 above</li>
+  <li><strong>Open P2P port</strong> (9100) on your firewall</li>
+</ul>
+
+<p>To run as an attester (oracle):</p>
+<ul>
+  <li><strong>5,000+ WAY</strong> — oracle bond</li>
+  <li><strong>Dox_Dev Level 2+</strong> — verified professional</li>
+</ul>
+
+<hr>
+
+<h2>Configuration Options</h2>
+
+<table>
+  <tr><th>Flag / Env</th><th>Default</th><th>Purpose</th></tr>
+  <tr><td><code>WAYCHAIN_DEVNET=1</code></td><td>—</td><td>Ephemeral state (no disk writes)</td></tr>
+  <tr><td><code>-db /path/to/db</code></td><td><code>~/.waychain/chain.db</code></td><td>Custom BoltDB path</td></tr>
+  <tr><td><code>-port 9545</code></td><td><code>:9545</code></td><td>RPC HTTP server port</td></tr>
+  <tr><td><code>-p2p-port 9100</code></td><td><code>:9100</code></td><td>P2P gossip port</td></tr>
+</table>
+
+<hr>
+
+<h2>Troubleshooting</h2>
+
+<table>
+  <tr><th>Problem</th><th>Check</th></tr>
+  <tr><td>Daemon won't start</td><td>Go version: <code>go version</code> must be 1.23+</td></tr>
+  <tr><td>RPC not responding</td><td>Is the daemon running? <code>ps aux | grep waychain</code></td></tr>
+  <tr><td>Port already in use</td><td><code>sudo ss -tlnp | grep 9545</code></td></tr>
+  <tr><td>BoltDB corruption</td><td>Delete <code>~/.waychain/chain.db</code> and restart (devnet only)</td></tr>
+  <tr><td>No P2P peers</td><td>Check firewall: <code>sudo ufw status</code>, port 9100 must be open</td></tr>
+  <tr><td>Can't deploy contracts</td><td>Need Dox_Dev Level 2+ — check at <a href="/badge">/badge</a></td></tr>
+</table>
+
+<hr>
+
+<h2>Next Steps</h2>
+<p><a href="/docs">Getting Started guide</a> — RPC examples, developer resources.</p>
+<p><a href="https://github.com/ThinkIbrokeIt/waychain">GitHub monorepo</a> — full source code, issues, discussions.</p>
+<p><a href="/whitepaper">Whitepaper</a> — architecture, precompiles, live vs spec'd.</p>
+
+<div class="footer">
+  <p>WayChain — Actually Decentralized. Chain ID 10008.</p>
+  <p><a href="https://waychain.org">waychain.org</a></p>
+</div>
+
+</body>
+</html>
