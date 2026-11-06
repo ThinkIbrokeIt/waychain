@@ -739,7 +739,9 @@
       const prev = btn ? btn.textContent : '';
       if (btn) { btn.disabled = true; btn.textContent = '⏳ …'; }
       try {
-        const bH = await rpc('way_getBalance', ['0x' + toH(w.publicKey)]);
+        // Live node keys accounts by 20-byte address (w.address), not the 64-hex pubkey.
+        // way_getBalance(64-hex) returns 0x0; use the 20-byte display address (verified live).
+        const bH = await rpc('way_getBalance', [w.address]);
         document.getElementById('ba').innerHTML = w2W(BigInt(bH)) + ' <small>WAY</small>';
         setStatus('balance-status', '✅ Balance updated', 'ok');
       } catch (e) {
