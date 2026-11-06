@@ -1,10 +1,10 @@
 {
-  "version": "4.1.38",
+  "version": "4.1.39",
   "chain_id": 10008,
   "chain_id_hex": "0x2718",
   "name": "WayChain",
   "tagline": "Actually Decentralized",
-  "deployed_at": "2026-08-19",
+  "deployed_at": "2026-08-30",
   "whitepaper_sections": 22,
   "live_features": 24,
   "spec_features": 6,
