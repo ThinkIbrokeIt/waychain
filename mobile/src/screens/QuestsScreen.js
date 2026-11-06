@@ -103,7 +103,10 @@ export default function QuestsScreen({ navigation }) {
     await Promise.all(QUESTS.map(async (q) => {
       try {
         const s = await waychainRPC.questStatus(encodeTaskId(q.id), claimant);
-        next[q.id] = s === 'claimed' ? 'claimed' : s === 'verified' ? 'verified' : 'none';
+        // questStatus already normalizes to 'none' | 'claimed' | 'verified'.
+        // Anything else is treated as not-done so a bad/garbage node response
+        // can never render every quest as "complete".
+        next[q.id] = (s === 'claimed' || s === 'verified') ? s : 'none';
       } catch {
         next[q.id] = 'none';
       }

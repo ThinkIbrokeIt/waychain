@@ -69,9 +69,21 @@ mobile/android/
 # Vercel local
 .vercel/
 
-# Mobile working subtree (canonical source lives in waychain-mobile mirror)
-# This local copy is a parallel dev tree; ignore to keep git status clean.
-/mobile/
+# Mobile working subtree (canonical source lives in waychain-mobile mirror, but the
+# monorepo copy under mobile/ is actively edited — track its SOURCE, ignore build deps)
+/mobile/node_modules/
+/mobile/android/
+/mobile/ios/
+/mobile/.expo/
+/mobile/*.apk
+/mobile/*.aab
+/mobile/build-android.log
+/mobile/build-direct.log
+/mobile/shot_*.png
+/mobile/s_wallet.png
+/mobile/r_wallet.png
+/mobile/screenshot_header.png
+/mobile/.easignore.bak
 
 # Nested VCS mistakes
 **/.git/
