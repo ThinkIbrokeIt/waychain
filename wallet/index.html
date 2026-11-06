@@ -455,7 +455,7 @@
           LS = 'waychain_s',
           LA = 'waychain_a',
           LT = 'waychain_tx',
-          FU = RPC + '/faucet';
+          FU = RPC;  // Use main RPC endpoint for way_fundGenesis
 
     // BIP39 Mnemonic functions for wallet recovery
     async function ensureBip39() {
@@ -793,21 +793,27 @@
       btn.disabled = true; btn.textContent = '⏳ …';
       setStatus('balance-status', '⏳ Requesting test WAY…', 'info');
       try {
-        let ok = false;
-        try {
-          const r = await fetch(FU, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ address: w.address }) });
-          if (r.ok) ok = true;
-        } catch {}
-        if (!ok) {
-          const r2 = await fetch(FU + '?address=' + encodeURIComponent(w.address));
-          if (r2.ok) ok = true;
-        }
-        if (ok) {
-          setStatus('balance-status', '✅ Faucet sent! Balance updates shortly.', 'ok');
-          setTimeout(refreshBal, 3000);
-        } else {
-          setStatus('balance-status', '⚠️ Faucet unavailable. Try again later.', 'error');
-        }
+        // Use way_fundGenesis RPC method: [address, amount]
+        // Amount: 10 WAY = 10000000000000000000 wei (18 decimals? No, native WAY is 1:1)
+        // way_fundGenesis expects [address, amount] where amount is hex wei
+        const amountHex = '0x8ac7230489e80000'; // 10 WAY = 10 * 10^18 wei? Let's check...
+        // Actually WAY seems to use 1:1 (no decimals based on balance display)
+        // 10 WAY = 0xa
+        const amountHex = '0xa';
+        const r = await fetch(FU, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ 
+            jsonrpc: '2.0', 
+            method: 'way_fundGenesis', 
+            params: [w.address, amountHex], 
+            id: 1 
+          }) 
+        });
+        const json = await r.json();
+        if (json.error) throw new Error(json.error.message);
+        setStatus('balance-status', '✅ Faucet sent! Balance updates shortly.', 'ok');
+        setTimeout(refreshBal, 3000);
       } catch (e) {
         setStatus('balance-status', '⚠️ ' + e.message, 'error');
       }

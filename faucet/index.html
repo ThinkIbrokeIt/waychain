@@ -135,14 +135,37 @@ a:hover { color: var(--warm); }
 </div>
 
 <script>
-function requestTokens() {
+const RPC = 'https://api.waychain.org';
+
+async function requestTokens() {
   const addr = document.getElementById('addressInput').value.trim();
   if (!addr || !addr.startsWith('0x')) {
     alert('Enter a valid WayChain address (starts with 0x)');
     return;
   }
-  // In production, this would call the faucet API
-  document.getElementById('result').style.display = 'block';
+  const btn = document.querySelector('button[onclick="requestTokens()"]');
+  btn.disabled = true; btn.textContent = '⏳ Requesting…';
+  try {
+    const amountHex = '0xa'; // 10 WAY
+    const r = await fetch(RPC, { 
+      method: 'POST', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ 
+        jsonrpc: '2.0', 
+        method: 'way_fundGenesis', 
+        params: [addr, '0xa'], 
+        id: 1 
+      }) 
+    });
+    const json = await r.json();
+    if (json.error) throw new Error(json.error.message);
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').innerHTML = '<p style="color:var(--green)">✓ Sent 10 WAY! Check your balance at <a href="/explorer">/explorer</a></p>';
+  } catch (e) {
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').innerHTML = '<p style="color:var(--red)">❌ ' + e.message + '</p>';
+  }
+  btn.disabled = false; btn.textContent = 'Request 10 WAY';
 }
 </script>
 
