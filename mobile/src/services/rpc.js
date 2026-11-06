@@ -171,8 +171,18 @@ export const waychainRPC = {
   // is blocked). These make the mobile quest list reflect REAL on-chain state
   // instead of silently showing "none".
   questStatus: async (taskIdHex, claimantHex) => {
-    const r = await waychainRPC.call('way_taskStatus', [taskIdHex, claimantHex]);
-    return typeof r === 'string' ? r : 'none';
+    try {
+      const r = await waychainRPC.call('way_taskStatus', [taskIdHex, claimantHex]);
+      // Only the three known states are valid; anything else (object, number,
+      // unknown string, or a node returning a non-"none" default) must NOT be
+      // treated as complete. Normalize strictly.
+      if (r === 'claimed') return 'claimed';
+      if (r === 'verified') return 'verified';
+      return 'none';
+    } catch {
+      // Node may not expose way_taskStatus (e.g. local node) — default to none.
+      return 'none';
+    }
   },
   questPoolRemaining: async () => {
     const r = await waychainRPC.call('way_questPoolRemaining', []);
